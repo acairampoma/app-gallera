@@ -1,0 +1,178 @@
+{
+  "reportes": {
+    "estadisticas_generales": {
+      "resumen": {
+        "total_gallos": 12,
+        "gallos_activos": 10,
+        "total_peleas": 28,
+        "victorias": 20,
+        "derrotas": 7,
+        "empates": 1,
+        "porcentaje_exito": 71.4,
+        "total_ingresos": 15750.00,
+        "total_gastos": 8200.50,
+        "ganancia_neta": 7549.50
+      },
+      "top_gallos": [
+        {
+          "gallo_id": 1,
+          "nombre": "El Campeón",
+          "total_peleas": 8,
+          "victorias": 7,
+          "derrotas": 1,
+          "empates": 0,
+          "porcentaje": 87.5,
+          "total_premios": 4200.00,
+          "total_gastos": 960.00,
+          "ganancia": 3240.00
+        },
+        {
+          "gallo_id": 3,
+          "nombre": "Trueno",
+          "total_peleas": 5,
+          "victorias": 4,
+          "derrotas": 1,
+          "empates": 0,
+          "porcentaje": 80.0,
+          "total_premios": 2100.00,
+          "total_gastos": 580.00,
+          "ganancia": 1520.00
+        },
+        {
+          "gallo_id": 2,
+          "nombre": "Relámpago",
+          "total_peleas": 6,
+          "victorias": 3,
+          "derrotas": 3,
+          "empates": 0,
+          "porcentaje": 50.0,
+          "total_premios": 1200.00,
+          "total_gastos": 720.00,
+          "ganancia": 480.00
+        }
+      ],
+      "gastos_por_categoria": [
+        {
+          "categoria": "Alimentación",
+          "total": 2400.00,
+          "porcentaje": 29.3
+        },
+        {
+          "categoria": "Salud",
+          "total": 1800.50,
+          "porcentaje": 22.0
+        },
+        {
+          "categoria": "Entrenamiento",
+          "total": 1200.00,
+          "porcentaje": 14.6
+        },
+        {
+          "categoria": "Transporte",
+          "total": 800.00,
+          "porcentaje": 9.8
+        },
+        {
+          "categoria": "Otros",
+          "total": 2000.00,
+          "porcentaje": 24.3
+        }
+      ],
+      "ingresos_por_mes": [
+        {
+          "mes": "2024-09",
+          "total_premios": 1800.00,
+          "total_ventas": 0.00
+        },
+        {
+          "mes": "2024-10",
+          "total_premios": 2400.00,
+          "total_ventas": 500.00
+        },
+        {
+          "mes": "2024-11",
+          "total_premios": 1950.00,
+          "total_ventas": 0.00
+        },
+        {
+          "mes": "2024-12",
+          "total_premios": 2800.00,
+          "total_ventas": 1200.00
+        },
+        {
+          "mes": "2025-01",
+          "total_premios": 1300.00,
+          "total_ventas": 0.00
+        }
+      ]
+    },
+    "ranking_padrillos": [
+      {
+        "padre_id": 1,
+        "padre_nombre": "El Campeón",
+        "total_hijos": 5,
+        "hijos_ganadores": 4,
+        "porcentaje_exito": 80.0,
+        "total_premios_hijos": 6200.00
+      },
+      {
+        "padre_id": 5,
+        "padre_nombre": "Trueno Real",
+        "total_hijos": 3,
+        "hijos_ganadores": 2,
+        "porcentaje_exito": 66.7,
+        "total_premios_hijos": 3100.00
+      }
+    ],
+    "ranking_madres": [
+      {
+        "madre_id": 8,
+        "madre_nombre": "Centella Dorada",
+        "total_hijos": 4,
+        "hijos_ganadores": 3,
+        "porcentaje_exito": 75.0,
+        "total_premios_hijos": 4800.00
+      },
+      {
+        "madre_id": 12,
+        "madre_nombre": "Reina Victoria",
+        "total_hijos": 3,
+        "hijos_ganadores": 2,
+        "porcentaje_exito": 66.7,
+        "total_premios_hijos": 2500.00
+      }
+    ],
+    "reportes_disponibles": [
+      {
+        "tipo": "ficha_completa",
+        "nombre": "Ficha Completa",
+        "descripcion": "Datos y foto del ave",
+        "formato": "PDF"
+      },
+      {
+        "tipo": "ranking_padrillos",
+        "nombre": "Ranking Padrillos",
+        "descripcion": "Top reproductores con hijos ganadores",
+        "formato": "PDF"
+      },
+      {
+        "tipo": "ranking_madres",
+        "nombre": "Ranking Madres",
+        "descripcion": "Top madres con hijos ganadores",
+        "formato": "PDF"
+      },
+      {
+        "tipo": "cruces_exitosos",
+        "nombre": "Mejores Cruces - Padrillo/Madre",
+        "descripcion": "Estadísticas de cruces exitosos",
+        "formato": "PDF"
+      },
+      {
+        "tipo": "resumen_financiero",
+        "nombre": "Resumen Financiero",
+        "descripcion": "Ingresos, gastos y ganancias",
+        "formato": "PDF"
+      }
+    ]
+  }
+}

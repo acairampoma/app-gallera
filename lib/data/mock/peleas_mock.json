@@ -1,0 +1,86 @@
+{
+  "peleas": [
+    {
+      "id": 1,
+      "gallo_id": 1,
+      "fecha_pelea": "2025-01-15",
+      "hora_inicio": "15:30:00",
+      "lugar": "Coliseo San Juan",
+      "evento": "Torneo Regional Lima",
+      "gallo_rival": "Relámpago Azul",
+      "propietario_rival": "Carlos Mendoza",
+      "peso_gallo": 2.45,
+      "peso_rival": 2.50,
+      "resultado": "victoria",
+      "forma_victoria": "ko",
+      "duracion_pelea": 12,
+      "lesiones": "Ninguna",
+      "premio": 500.00,
+      "gastos": 80.00,
+      "notas": "Excelente desempeño, KO en el primer asalto",
+      "created_at": "2025-01-15T20:00:00.000Z",
+      "gallo": {
+        "id": 1,
+        "nombre": "El Campeón"
+      }
+    },
+    {
+      "id": 2,
+      "gallo_id": 2,
+      "fecha_pelea": "2025-01-10",
+      "hora_inicio": "14:00:00",
+      "lugar": "Arena Los Guerreros",
+      "evento": "Copa de Oro 2025",
+      "gallo_rival": "Tornado Negro",
+      "propietario_rival": "Luis Torres",
+      "peso_gallo": 2.38,
+      "peso_rival": 2.42,
+      "resultado": "derrota",
+      "forma_victoria": "puntos",
+      "duracion_pelea": 25,
+      "lesiones": "Corte menor en pata izquierda",
+      "premio": 0.00,
+      "gastos": 120.00,
+      "notas": "Pelea muy reñida, perdió por puntos",
+      "created_at": "2025-01-10T18:00:00.000Z",
+      "gallo": {
+        "id": 2,
+        "nombre": "Relámpago"
+      }
+    },
+    {
+      "id": 3,
+      "gallo_id": 1,
+      "fecha_pelea": "2024-12-20",
+      "hora_inicio": "16:30:00",
+      "lugar": "Coliseo El Dorado",
+      "evento": "Navidad Championship",
+      "gallo_rival": "El Destructor",
+      "propietario_rival": "Miguel Herrera",
+      "peso_gallo": 2.47,
+      "peso_rival": 2.45,
+      "resultado": "victoria",
+      "forma_victoria": "abandono",
+      "duracion_pelea": 18,
+      "lesiones": "Rasguño menor",
+      "premio": 800.00,
+      "gastos": 100.00,
+      "notas": "Rival abandonó en el segundo asalto",
+      "created_at": "2024-12-20T20:30:00.000Z",
+      "gallo": {
+        "id": 1,
+        "nombre": "El Campeón"
+      }
+    }
+  ],
+  "estadisticas_peleas": {
+    "total_peleas": 3,
+    "victorias": 2,
+    "derrotas": 1,
+    "empates": 0,
+    "porcentaje_exito": 66.7,
+    "total_premios": 1300.00,
+    "total_gastos": 300.00,
+    "ganancia_neta": 1000.00
+  }
+}

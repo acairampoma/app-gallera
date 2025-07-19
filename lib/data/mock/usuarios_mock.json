@@ -1,0 +1,51 @@
+{
+  "usuarios": [
+    {
+      "id": 1,
+      "nombre": "Juan",
+      "apellido": "Salas",
+      "email": "juan.salas@gallos.com",
+      "password": "123456",
+      "telefono": "+57 300 123 4567",
+      "direccion": "Calle 123 #45-67, Bogotá",
+      "fecha_registro": "2024-01-15T10:30:00.000Z",
+      "activo": true,
+      "avatar": null,
+      "created_at": "2024-01-15T10:30:00.000Z",
+      "updated_at": "2025-01-20T10:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "nombre": "Alan",
+      "apellido": "Cairampoma Carrillo",
+      "email": "alan.cairampoma@gallos.com",
+      "password": "123456",
+      "telefono": "987654322",
+      "direccion": "Lima, Perú",
+      "fecha_registro": "2025-01-01T00:00:00.000Z",
+      "activo": true,
+      "avatar": null,
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-20T10:00:00.000Z"
+    },
+    {
+      "id": 3,
+      "nombre": "Admin",
+      "apellido": "Sistema",
+      "email": "admin@gallos.com",
+      "password": "123456",
+      "telefono": "+57 300 999 9999",
+      "direccion": "Oficina Central",
+      "fecha_registro": "2024-01-01T00:00:00.000Z",
+      "activo": true,
+      "avatar": null,
+      "created_at": "2024-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-20T10:00:00.000Z"
+    }
+  ],
+  "sesiones": {
+    "usuario_activo": null,
+    "token": null,
+    "fecha_login": null
+  }
+}

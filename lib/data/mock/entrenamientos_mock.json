@@ -1,0 +1,76 @@
+{
+  "entrenamientos": [
+    {
+      "id": 1,
+      "gallo_id": 1,
+      "fecha_entrenamiento": "2025-01-12",
+      "tipo_entrenamiento": "Tope con espuelas forradas",
+      "duracion": 15,
+      "intensidad": "alta",
+      "peso_gallo": 2.45,
+      "ejercicios": "Sparring, acondicionamiento físico, trabajo de patas",
+      "observaciones": "Buen rendimiento, mucha resistencia",
+      "created_at": "2025-01-12T18:00:00.000Z",
+      "gallo": {
+        "id": 1,
+        "nombre": "El Campeón"
+      }
+    },
+    {
+      "id": 2,
+      "gallo_id": 2,
+      "fecha_entrenamiento": "2025-01-14",
+      "tipo_entrenamiento": "Sparring técnico",
+      "duracion": 20,
+      "intensidad": "media",
+      "peso_gallo": 2.38,
+      "ejercicios": "Trabajo técnico, esquivar, contraatacar",
+      "observaciones": "Mejoró la técnica de esquive",
+      "created_at": "2025-01-14T17:00:00.000Z",
+      "gallo": {
+        "id": 2,
+        "nombre": "Relámpago"
+      }
+    },
+    {
+      "id": 3,
+      "gallo_id": 1,
+      "fecha_entrenamiento": "2025-01-08",
+      "tipo_entrenamiento": "Acondicionamiento físico",
+      "duracion": 25,
+      "intensidad": "alta",
+      "peso_gallo": 2.47,
+      "ejercicios": "Carrera, saltos, resistencia",
+      "observaciones": "Excelente estado físico",
+      "created_at": "2025-01-08T16:30:00.000Z",
+      "gallo": {
+        "id": 1,
+        "nombre": "El Campeón"
+      }
+    }
+  ],
+  "estadisticas_entrenamiento": {
+    "total_entrenamientos": 15,
+    "esta_semana": 3,
+    "duracion_promedio": 18,
+    "intensidad_alta": 8,
+    "intensidad_media": 5,
+    "intensidad_baja": 2
+  },
+  "proximos_entrenamientos": [
+    {
+      "gallo_id": 1,
+      "gallo_nombre": "El Campeón",
+      "fecha_programada": "2025-01-22",
+      "tipo_entrenamiento": "Tope con espuelas forradas",
+      "dias_restantes": 2
+    },
+    {
+      "gallo_id": 2,
+      "gallo_nombre": "Relámpago",
+      "fecha_programada": "2025-01-23",
+      "tipo_entrenamiento": "Sparring técnico",
+      "dias_restantes": 3
+    }
+  ]
+}

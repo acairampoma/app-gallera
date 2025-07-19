@@ -1,0 +1,111 @@
+{
+  "dashboard": {
+    "usuario": {
+      "id": 2,
+      "nombre_completo": "Alan Cairampoma Carrillo"
+    },
+    "estadisticas": {
+      "total_gallos": 12,
+      "gallos_activos": 10,
+      "total_peleas": 28,
+      "peleas_ganadas": 20,
+      "peleas_perdidas": 7,
+      "peleas_empate": 1,
+      "porcentaje_victorias": 71.4,
+      "total_gastos": 8200.50,
+      "total_ingresos": 15750.00,
+      "ganancia_neta": 7549.50
+    },
+    "ultimas_peleas": [
+      {
+        "id": 1,
+        "gallo_id": 1,
+        "gallo_nombre": "El Campeón",
+        "fecha_pelea": "2025-01-15",
+        "resultado": "victoria",
+        "gallo_rival": "Relámpago Azul",
+        "lugar": "Coliseo San Juan",
+        "premio": 500.00
+      },
+      {
+        "id": 2,
+        "gallo_id": 2,
+        "gallo_nombre": "Relámpago",
+        "fecha_pelea": "2025-01-10",
+        "resultado": "derrota",
+        "gallo_rival": "Tornado Negro",
+        "lugar": "Arena Los Guerreros",
+        "premio": 0.00
+      },
+      {
+        "id": 3,
+        "gallo_id": 1,
+        "gallo_nombre": "El Campeón",
+        "fecha_pelea": "2024-12-20",
+        "resultado": "victoria",
+        "gallo_rival": "El Destructor",
+        "lugar": "Coliseo El Dorado",
+        "premio": 800.00
+      }
+    ],
+    "proximas_vacunas": [
+      {
+        "gallo_id": 2,
+        "gallo_nombre": "Relámpago",
+        "tipo_registro": "vacuna",
+        "descripcion": "Newcastle + Bronquitis",
+        "fecha_siguiente": "2025-01-25",
+        "dias_restantes": 5
+      },
+      {
+        "gallo_id": 3,
+        "gallo_nombre": "Trueno",
+        "tipo_registro": "vacuna",
+        "descripcion": "Gumboro",
+        "fecha_siguiente": "2025-01-30",
+        "dias_restantes": 10
+      }
+    ],
+    "top_gallos": [
+      {
+        "gallo_id": 1,
+        "nombre": "El Campeón",
+        "total_peleas": 8,
+        "victorias": 7,
+        "derrotas": 1,
+        "porcentaje": 87.5,
+        "total_premios": 4200.00
+      },
+      {
+        "gallo_id": 3,
+        "nombre": "Trueno",
+        "total_peleas": 5,
+        "victorias": 4,
+        "derrotas": 1,
+        "porcentaje": 80.0,
+        "total_premios": 2100.00
+      },
+      {
+        "gallo_id": 2,
+        "nombre": "Relámpago",
+        "total_peleas": 6,
+        "victorias": 3,
+        "derrotas": 3,
+        "porcentaje": 50.0,
+        "total_premios": 1200.00
+      }
+    ],
+    "resumen_financiero": {
+      "mes_actual": {
+        "ingresos": 1300.00,
+        "gastos": 850.00,
+        "ganancia": 450.00
+      },
+      "mes_anterior": {
+        "ingresos": 2100.00,
+        "gastos": 950.00,
+        "ganancia": 1150.00
+      }
+    }
+  }
+}

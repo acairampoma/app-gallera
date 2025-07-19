@@ -1,0 +1,95 @@
+{
+  "vacunas": [
+    {
+      "id": 1,
+      "gallo_id": 1,
+      "fecha_registro": "2025-01-10",
+      "tipo_registro": "vacuna",
+      "descripcion": "Newcastle + Bronquitis",
+      "veterinario": "Dr. García",
+      "medicamento": "Newcastle B1 + Bronquitis H120",
+      "dosis": "0.5ml subcutánea",
+      "fecha_aplicacion": "2025-01-10",
+      "fecha_siguiente": "2025-04-10",
+      "costo": 25.00,
+      "observaciones": "Sin reacciones adversas",
+      "created_at": "2025-01-10T09:00:00.000Z",
+      "gallo": {
+        "id": 1,
+        "nombre": "El Campeón"
+      }
+    },
+    {
+      "id": 2,
+      "gallo_id": 1,
+      "fecha_registro": "2025-01-05",
+      "tipo_registro": "tratamiento",
+      "descripcion": "Desparasitación interna",
+      "veterinario": "Dr. Pérez",
+      "medicamento": "Ivermectina",
+      "dosis": "2ml oral",
+      "fecha_aplicacion": "2025-01-05",
+      "fecha_siguiente": "2025-04-05",
+      "costo": 15.00,
+      "observaciones": "Tratamiento preventivo",
+      "created_at": "2025-01-05T16:00:00.000Z",
+      "gallo": {
+        "id": 1,
+        "nombre": "El Campeón"
+      }
+    },
+    {
+      "id": 3,
+      "gallo_id": 2,
+      "fecha_registro": "2025-01-08",
+      "tipo_registro": "vacuna",
+      "descripcion": "Viruela Aviar",
+      "veterinario": "Dr. García",
+      "medicamento": "Viruela Aviar - Cepa suave",
+      "dosis": "1 punción ala",
+      "fecha_aplicacion": "2025-01-08",
+      "fecha_siguiente": "2026-01-08",
+      "costo": 30.00,
+      "observaciones": "Gallo en perfecto estado",
+      "created_at": "2025-01-08T11:00:00.000Z",
+      "gallo": {
+        "id": 2,
+        "nombre": "Relámpago"
+      }
+    }
+  ],
+  "proximas_vacunas": [
+    {
+      "gallo_id": 2,
+      "gallo_nombre": "Relámpago",
+      "tipo_registro": "vacuna",
+      "descripcion": "Newcastle + Bronquitis",
+      "fecha_siguiente": "2025-01-25",
+      "dias_restantes": 5
+    },
+    {
+      "gallo_id": 3,
+      "gallo_nombre": "Trueno",
+      "tipo_registro": "vacuna",
+      "descripcion": "Gumboro",
+      "fecha_siguiente": "2025-01-30",
+      "dias_restantes": 10
+    }
+  ],
+  "calendario_vacunas": {
+    "enero_2025": [
+      {
+        "fecha": "2025-01-25",
+        "gallo_id": 2,
+        "gallo_nombre": "Relámpago",
+        "vacuna": "Newcastle + Bronquitis"
+      },
+      {
+        "fecha": "2025-01-30",
+        "gallo_id": 3,
+        "gallo_nombre": "Trueno",
+        "vacuna": "Gumboro"
+      }
+    ]
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "gallos": [
+    {
+      "id": 1,
+      "usuario_id": 2,
+      "nombre": "El Campeón",
+      "codigo_identificacion": "CAM001",
+      "fecha_nacimiento": "2023-05-15",
+      "peso": 2.45,
+      "color": "Colorado",
+      "estado": "activo",
+      "foto_principal": "assets/images/gallos/campeon.jpg",
+      "created_at": "2023-04-01T10:00:00.000Z",
+      "updated_at": "2025-01-20T15:30:00.000Z",
+      "raza": {
+        "id": 1,
+        "nombre": "Kelso"
+      },
+      "notas": "Gallo prometedor para competencias"
+    },
+    {
+      "id": 2,
+      "usuario_id": 2,
+      "nombre": "Relámpago",
+      "codigo_identificacion": "REL002",
+      "fecha_nacimiento": "2024-01-20",
+      "peso": 2.38,
+      "color": "Giro",
+      "estado": "activo",
+      "foto_principal": "assets/images/gallos/relampago.jpg",
+      "created_at": "2024-01-15T14:00:00.000Z",
+      "updated_at": "2025-01-20T15:30:00.000Z",
+      "raza": {
+        "id": 2,
+        "nombre": "Hatch"
+      },
+      "notas": "Muy prometedor para peleas rápidas"
+    },
+    {
+      "id": 3,
+      "usuario_id": 2,
+      "nombre": "Trueno",
+      "codigo_identificacion": "TRU003",
+      "fecha_nacimiento": "2023-08-10",
+      "peso": 2.52,
+      "color": "Negro",
+      "estado": "activo",
+      "foto_principal": "assets/images/gallos/trueno.jpg",
+      "created_at": "2023-08-05T16:00:00.000Z",
+      "updated_at": "2025-01-20T15:30:00.000Z",
+      "raza": {
+        "id": 1,
+        "nombre": "Kelso"
+      },
+      "notas": "Hijo de El Campeón, muy prometedor"
+    }
+  ],
+  "razas": [
+    {
+      "id": 1,
+      "nombre": "Kelso",
+      "descripcion": "Raza americana veloz",
+      "origen": "Estados Unidos"
+    },
+    {
+      "id": 2,
+      "nombre": "Hatch",
+      "descripcion": "Raza americana fuerte",
+      "origen": "Estados Unidos"
+    },
+    {
+      "id": 3,
+      "nombre": "Asil",
+      "descripcion": "Raza asiática resistente",
+      "origen": "Asia"
+    }
+  ]
+}
