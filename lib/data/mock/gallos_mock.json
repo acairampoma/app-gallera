@@ -5,10 +5,13 @@
       "usuario_id": 2,
       "nombre": "El Campeón",
       "codigo_identificacion": "CAM001",
-      "fecha_nacimiento": "2023-05-15",
+      "fecha_nacimiento": "2022-05-15",
       "peso": 2.45,
+      "altura": 58,
       "color": "Colorado",
       "estado": "activo",
+      "padre_id": 4,
+      "madre_id": 5,
       "foto_principal": "assets/images/gallos/campeon.jpg",
       "created_at": "2023-04-01T10:00:00.000Z",
       "updated_at": "2025-01-20T15:30:00.000Z",
@@ -16,17 +19,21 @@
         "id": 1,
         "nombre": "Kelso"
       },
-      "notas": "Gallo prometedor para competencias"
+      "notas": "Gallo campeón con excelente genealogía",
+      "procedencia": "Criadero Los Reyes - Lima"
     },
     {
       "id": 2,
       "usuario_id": 2,
       "nombre": "Relámpago",
       "codigo_identificacion": "REL002",
-      "fecha_nacimiento": "2024-01-20",
+      "fecha_nacimiento": "2023-01-20",
       "peso": 2.38,
+      "altura": 56,
       "color": "Giro",
       "estado": "activo",
+      "padre_id": 6,
+      "madre_id": 7,
       "foto_principal": "assets/images/gallos/relampago.jpg",
       "created_at": "2024-01-15T14:00:00.000Z",
       "updated_at": "2025-01-20T15:30:00.000Z",
@@ -34,7 +41,8 @@
         "id": 2,
         "nombre": "Hatch"
       },
-      "notas": "Muy prometedor para peleas rápidas"
+      "notas": "Velocidad increíble, hijo de línea pura",
+      "procedencia": "Criadero San Martín - Arequipa"
     },
     {
       "id": 3,
@@ -43,8 +51,11 @@
       "codigo_identificacion": "TRU003",
       "fecha_nacimiento": "2023-08-10",
       "peso": 2.52,
+      "altura": 60,
       "color": "Negro",
       "estado": "activo",
+      "padre_id": 1,
+      "madre_id": 8,
       "foto_principal": "assets/images/gallos/trueno.jpg",
       "created_at": "2023-08-05T16:00:00.000Z",
       "updated_at": "2025-01-20T15:30:00.000Z",
@@ -52,27 +63,232 @@
         "id": 1,
         "nombre": "Kelso"
       },
-      "notas": "Hijo de El Campeón, muy prometedor"
+      "notas": "Hijo de El Campeón, hereda su fuerza",
+      "procedencia": "Criadero propio"
+    },
+    {
+      "id": 4,
+      "usuario_id": 2,
+      "nombre": "Gallo Dorado",
+      "codigo_identificacion": "DOR004",
+      "fecha_nacimiento": "2020-03-10",
+      "peso": 2.60,
+      "altura": 62,
+      "color": "Dorado",
+      "estado": "retirado",
+      "padre_id": 9,
+      "madre_id": 10,
+      "foto_principal": "assets/images/gallos/gallo1.webp",
+      "created_at": "2020-03-01T10:00:00.000Z",
+      "updated_at": "2025-01-20T15:30:00.000Z",
+      "raza": {
+        "id": 1,
+        "nombre": "Kelso"
+      },
+      "notas": "Padre legendario, múltiples victorias",
+      "procedencia": "Criadero Elite - USA"
+    },
+    {
+      "id": 5,
+      "usuario_id": 2,
+      "nombre": "Gallina Pintada",
+      "codigo_identificacion": "PIN005",
+      "fecha_nacimiento": "2021-07-20",
+      "peso": 2.20,
+      "altura": 52,
+      "color": "Pintado",
+      "estado": "activo",
+      "padre_id": 11,
+      "madre_id": null,
+      "foto_principal": "assets/images/gallos/gallo2.webp",
+      "created_at": "2021-07-15T10:00:00.000Z",
+      "updated_at": "2025-01-20T15:30:00.000Z",
+      "raza": {
+        "id": 1,
+        "nombre": "Kelso"
+      },
+      "notas": "Madre excelente reproductora",
+      "procedencia": "Criadero Los Andes - Cusco"
+    },
+    {
+      "id": 6,
+      "usuario_id": 2,
+      "nombre": "Gallo Fuerte",
+      "codigo_identificacion": "FUE006",
+      "fecha_nacimiento": "2021-02-14",
+      "peso": 2.55,
+      "altura": 59,
+      "color": "Colorado",
+      "estado": "retirado",
+      "padre_id": 12,
+      "madre_id": null,
+      "foto_principal": "assets/images/gallos/gallo3.webp",
+      "created_at": "2021-02-10T10:00:00.000Z",
+      "updated_at": "2025-01-20T15:30:00.000Z",
+      "raza": {
+        "id": 2,
+        "nombre": "Hatch"
+      },
+      "notas": "Padre de Relámpago, gran peleador",
+      "procedencia": "Criadero Hatch Original - México"
+    },
+    {
+      "id": 7,
+      "usuario_id": 2,
+      "nombre": "Gallina Estrella",
+      "codigo_identificacion": "EST007",
+      "fecha_nacimiento": "2022-01-05",
+      "peso": 2.15,
+      "altura": 50,
+      "color": "Canelo",
+      "estado": "activo",
+      "padre_id": null,
+      "madre_id": null,
+      "foto_principal": "assets/images/gallos/gallo4.webp",
+      "created_at": "2022-01-01T10:00:00.000Z",
+      "updated_at": "2025-01-20T15:30:00.000Z",
+      "raza": {
+        "id": 2,
+        "nombre": "Hatch"
+      },
+      "notas": "Madre de Relámpago, línea pura",
+      "procedencia": "Criadero Las Estrellas - Piura"
+    },
+    {
+      "id": 8,
+      "usuario_id": 2,
+      "nombre": "Gallina Aurora",
+      "codigo_identificacion": "AUR008",
+      "fecha_nacimiento": "2022-06-15",
+      "peso": 2.25,
+      "altura": 51,
+      "color": "Giro",
+      "estado": "activo",
+      "padre_id": null,
+      "madre_id": null,
+      "foto_principal": "assets/images/gallos/gallo5.webp",
+      "created_at": "2022-06-10T10:00:00.000Z",
+      "updated_at": "2025-01-20T15:30:00.000Z",
+      "raza": {
+        "id": 1,
+        "nombre": "Kelso"
+      },
+      "notas": "Madre de Trueno, excelente genética",
+      "procedencia": "Criadero Aurora - Trujillo"
+    },
+    {
+      "id": 9,
+      "usuario_id": 2,
+      "nombre": "Abuelo Tsunami",
+      "codigo_identificacion": "TSU009",
+      "fecha_nacimiento": "2018-04-20",
+      "peso": 2.70,
+      "altura": 65,
+      "color": "Negro",
+      "estado": "retirado",
+      "padre_id": null,
+      "madre_id": null,
+      "foto_principal": "assets/images/gallos/gallo6.webp",
+      "created_at": "2018-04-15T10:00:00.000Z",
+      "updated_at": "2025-01-20T15:30:00.000Z",
+      "raza": {
+        "id": 1,
+        "nombre": "Kelso"
+      },
+      "notas": "Abuelo paterno de El Campeón, leyenda",
+      "procedencia": "Criadero Tsunami - Filipinas"
+    },
+    {
+      "id": 10,
+      "usuario_id": 2,
+      "nombre": "Abuela Certera",
+      "codigo_identificacion": "CER010",
+      "fecha_nacimiento": "2019-01-10",
+      "peso": 2.10,
+      "altura": 48,
+      "color": "Colorado",
+      "estado": "retirado",
+      "padre_id": null,
+      "madre_id": null,
+      "foto_principal": "assets/images/gallos/gallo7.webp",
+      "created_at": "2019-01-05T10:00:00.000Z",
+      "updated_at": "2025-01-20T15:30:00.000Z",
+      "raza": {
+        "id": 1,
+        "nombre": "Kelso"
+      },
+      "notas": "Abuela paterna de El Campeón, gran reproductora",
+      "procedencia": "Criadero Certero - España"
+    },
+    {
+      "id": 11,
+      "usuario_id": 2,
+      "nombre": "Abuelo Cohete",
+      "codigo_identificacion": "COH011",
+      "fecha_nacimiento": "2019-08-30",
+      "peso": 2.65,
+      "altura": 63,
+      "color": "Giro",
+      "estado": "retirado",
+      "padre_id": null,
+      "madre_id": null,
+      "foto_principal": "assets/images/gallos/gallo8.webp",
+      "created_at": "2019-08-25T10:00:00.000Z",
+      "updated_at": "2025-01-20T15:30:00.000Z",
+      "raza": {
+        "id": 1,
+        "nombre": "Kelso"
+      },
+      "notas": "Abuelo materno de El Campeón, velocidad pura",
+      "procedencia": "Criadero Cohete - Colombia"
+    },
+    {
+      "id": 12,
+      "usuario_id": 2,
+      "nombre": "Bisabuelo Hatch",
+      "codigo_identificacion": "HAT012",
+      "fecha_nacimiento": "2018-12-05",
+      "peso": 2.75,
+      "altura": 66,
+      "color": "Negro",
+      "estado": "retirado",
+      "padre_id": null,
+      "madre_id": null,
+      "foto_principal": "assets/images/gallos/campeon.jpg",
+      "created_at": "2018-12-01T10:00:00.000Z",
+      "updated_at": "2025-01-20T15:30:00.000Z",
+      "raza": {
+        "id": 2,
+        "nombre": "Hatch"
+      },
+      "notas": "Bisabuelo de Relámpago, línea fundadora",
+      "procedencia": "Criadero Original Hatch - USA"
     }
   ],
   "razas": [
     {
       "id": 1,
       "nombre": "Kelso",
-      "descripcion": "Raza americana veloz",
+      "descripcion": "Raza americana veloz y resistente",
       "origen": "Estados Unidos"
     },
     {
       "id": 2,
       "nombre": "Hatch",
-      "descripcion": "Raza americana fuerte",
+      "descripcion": "Raza americana fuerte y agresiva",
       "origen": "Estados Unidos"
     },
     {
       "id": 3,
       "nombre": "Asil",
-      "descripcion": "Raza asiática resistente",
+      "descripcion": "Raza asiática resistente y noble",
       "origen": "Asia"
+    },
+    {
+      "id": 4,
+      "nombre": "Sweater",
+      "descripcion": "Raza americana de combate",
+      "origen": "Estados Unidos"
     }
   ]
 }

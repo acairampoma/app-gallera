@@ -4,7 +4,13 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../shared/widgets/base_screen.dart';
 import '../../../shared/theme/app_colors.dart';
-import '../widgets/add_gallo_simple_dialog.dart';
+import '../widgets/add_gallo_dialog.dart';
+import '../widgets/edit_gallo_dialog.dart';
+import 'add_gallo_multistep_screen.dart';
+import 'edit_gallo_multistep_screen.dart';
+import 'genealogy_tree_screen.dart';
+import '../../../services/connection_service.dart';
+import '../../../services/gallo_service.dart';
 
 class PedigriScreen extends StatefulWidget {
   const PedigriScreen({Key? key}) : super(key: key);
@@ -34,39 +40,58 @@ class _PedigriScreenState extends State<PedigriScreen> {
   }
 
   Future<void> _loadData() async {
+    print('🐓 === PEDIGRI SCREEN - CARGANDO DATOS REALES ===');
+    setState(() => isLoading = true);
+    
     try {
-      // 🔥 ÉPICO: Primero intentar cargar datos guardados
-      final savedGallos = await _loadSavedGallos();
+      // 🔥 SOLO BACKEND REAL - NO MÁS MOCK
+      print('🌐 Intentando conectar al backend Railway...');
+      final gallosBackend = await GalloService.getGallos();
       
-      if (savedGallos.isNotEmpty) {
-        // Si hay datos guardados, usarlos
-        setState(() {
-          gallos = savedGallos;
-          gallosFiltrados = List.from(gallos);
-        });
-        print('📱 CARGADOS ${savedGallos.length} gallos guardados');
-      }
+      print('✅ Gallos recibidos del backend: ${gallosBackend.length}');
       
-      // Cargar razas del JSON original
+      setState(() {
+        gallos = gallosBackend;
+        gallosFiltrados = List.from(gallos);
+        print('🎯 Gallos cargados en UI: ${gallos.length}');
+      });
+      
+      // Cargar razas del JSON (mantener por ahora)
       final String gallosJson = await rootBundle.loadString('lib/data/mock/gallos_mock.json');
       final data = json.decode(gallosJson);
       
       setState(() {
-        // Solo cargar gallos del JSON si no hay guardados
-        if (savedGallos.isEmpty) {
-          gallos = data['gallos'] ?? [];
-          gallosFiltrados = List.from(gallos);
-          print('📁 CARGADOS ${gallos.length} gallos del JSON original');
-        }
         razas = data['razas'] ?? [];
         isLoading = false;
       });
       
+      print('✅ === DATOS CARGADOS EXITOSAMENTE ===');
+      
     } catch (e) {
-      print('❌ Error loading gallos data: $e');
+      print('❌ === ERROR CARGANDO DATOS DEL BACKEND ===');
+      print('💥 Error: $e');
+      
+      // 🔥 NO FALLBACK - MOSTRAR ERROR
       setState(() {
+        gallos = [];
+        gallosFiltrados = [];
         isLoading = false;
       });
+      
+      // Mostrar snackbar con error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error conectando al servidor: $e'),
+            backgroundColor: Colors.red,
+            action: SnackBarAction(
+              label: 'Reintentar',
+              textColor: Colors.white,
+              onPressed: _loadData,
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -106,7 +131,7 @@ class _PedigriScreenState extends State<PedigriScreen> {
       subtitle: 'Registro genealógico',
       currentIndex: 1,
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddGalloDialog(),
+        onPressed: () => _navigateToAddGalloMultistep(), // 🚀 NUEVA PANTALLA
         backgroundColor: AppColors.primary,
         heroTag: "add_gallo",
         child: const Icon(Icons.add, color: Colors.white),
@@ -120,8 +145,12 @@ class _PedigriScreenState extends State<PedigriScreen> {
   Widget _buildContent() {
     return Column(
       children: [
+        // 📊 SECCIÓN DE ESTADÍSTICAS SEPARADA
+        _buildStatsSection(),
+        const SizedBox(height: 16),
+        // 🔍 BÚSQUEDA
         _buildSearchBar(),
-        _buildStatsBar(), // 🆕 NUEVO: Mostrar estadísticas
+        // 📱 LISTA DE GALLOS
         Expanded(
           child: gallosFiltrados.isEmpty ? _buildEmptyState() : _buildGallosList(),
         ),
@@ -129,46 +158,73 @@ class _PedigriScreenState extends State<PedigriScreen> {
     );
   }
 
-  // 🆕 BARRA DE ESTADÍSTICAS ÉPICA
-  Widget _buildStatsBar() {
+  // 📊 ESTADÍSTICAS CENTRADAS - TODO EL ANCHO - VERSIÓN MEJORADA
+  Widget _buildStatsSection() {
+    final totalGallos = gallos.length;
+    final gallosMostrados = gallosFiltrados.length;
+    final gallosActivos = gallos.where((g) => g['estado'] == 'activo').length;
+    
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-      ),
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem('📱 Total', '${gallos.length}'),
-          _buildStatItem('👁️ Mostrando', '${gallosFiltrados.length}'),
-          _buildStatItem('🏆 Activos', '${gallos.where((g) => g['estado'] == 'activo').length}'),
+          Expanded(child: _buildMiniStatCard('📱', '$totalGallos', 'Total', Colors.blue)),
+          const SizedBox(width: 8),
+          Expanded(child: _buildMiniStatCard('👁️', '$gallosMostrados', 'Mostrando', Colors.green)),
+          const SizedBox(width: 8),
+          Expanded(child: _buildMiniStatCard('🏆', '$gallosActivos', 'Activos', Colors.orange)),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+  Widget _buildMiniStatCard(String emoji, String value, String label, Color color) {
+    return Container(
+      width: double.infinity, // 🔥 OCUPAR TODO EL ANCHO DISPONIBLE
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12), // 🔥 MÁS PADDING
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12), // 🔥 BORDES MÁS REDONDEADOS
+        border: Border.all(color: color.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
+        ],
+      ),
+      child: Column( // 🔥 CAMBIAR A COLUMN PARA CENTRAR VERTICALMENTE
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            emoji, 
+            style: const TextStyle(fontSize: 18), // 🔥 EMOJI MÁS GRANDE
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20, // 🔥 NÚMERO MÁS GRANDE
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 
@@ -267,7 +323,11 @@ class _PedigriScreenState extends State<PedigriScreen> {
   }
 
   Widget _buildGalloCard(Map<String, dynamic> gallo) {
-    final raza = gallo['raza'] ?? {};
+    // 🔥 MOSTRAR DATOS REALES DEL BACKEND - SIN VALORES POR DEFECTO
+    final razaTexto = _mapRazaIdToDisplayName(gallo['raza_id']?.toString()) ?? 
+                      gallo['raza']?.toString() ?? 
+                      'Sin especificar';
+    final colorTexto = gallo['color_placa'] ?? gallo['color_plumaje'] ?? gallo['color'] ?? 'Sin especificar';
     
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -282,8 +342,8 @@ class _PedigriScreenState extends State<PedigriScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              // 🖼️ FOTO DEL GALLO - MEJORADA PARA ASSETS
-              _buildGalloImage(gallo['foto_principal']),
+              // 🖼️ FOTO DEL GALLO - MEJORADA PARA BACKEND URLs
+              _buildGalloImage(gallo['foto_principal_url']),
               const SizedBox(width: 16),
               // Información del gallo
               Expanded(
@@ -329,8 +389,9 @@ class _PedigriScreenState extends State<PedigriScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
+                    // 🔥 RAZA CORREGIDA - CON VALOR POR DEFECTO REAL
                     Text(
-                      'Raza: ${raza['nombre'] ?? 'N/A'}',
+                      'Raza: $razaTexto',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[600],
@@ -345,12 +406,43 @@ class _PedigriScreenState extends State<PedigriScreen> {
                           Colors.blue,
                         ),
                         const SizedBox(width: 8),
+                        // 🔥 COLOR CORREGIDO - PRIORIZAR color_plumaje
                         _buildInfoChip(
-                          gallo['color'] ?? 'N/A',
+                          colorTexto,
                           Icons.palette,
                           Colors.orange,
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 10), // Reducido de 12 a 10
+                    // 🌳 BOTÓN COMPACTO Y ELEGANTE
+                    InkWell(
+                      onTap: () => _showGenealogyTree(gallo),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), // Más compacto
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1),
+                          border: Border.all(color: Colors.green.withOpacity(0.3)),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.account_tree, size: 14, color: Colors.green),
+                            SizedBox(width: 6),
+                            Text(
+                              'Ver Árbol Genealógico',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.green,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -370,18 +462,18 @@ class _PedigriScreenState extends State<PedigriScreen> {
   // 🖼️ WIDGET PARA MOSTRAR IMAGEN DEL GALLO
   Widget _buildGalloImage(String? fotoPath) {
     return Container(
-      width: 80,
-      height: 80,
+      width: 70,
+      height: 70,
       decoration: BoxDecoration(
         color: AppColors.primary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: AppColors.primary.withOpacity(0.3),
           width: 2,
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         child: _buildImageWidget(fotoPath),
       ),
     );
@@ -396,8 +488,34 @@ class _PedigriScreenState extends State<PedigriScreen> {
       );
     }
 
-    // 🔥 ÉPICO: Manejar tanto assets como fotos "simuladas"
-    if (fotoPath.startsWith('assets/')) {
+    // 🔥 MANEJAR URLs DE CLOUDINARY Y ASSETS
+    if (fotoPath.startsWith('http')) {
+      // URLs de internet (Cloudinary)
+      return Image.network(
+        fotoPath,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                  : null,
+              strokeWidth: 2,
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          print('❌ Error cargando imagen: $fotoPath - $error');
+          return const Icon(
+            Icons.pets,
+            size: 40,
+            color: AppColors.primary,
+          );
+        },
+      );
+    } else if (fotoPath.startsWith('assets/')) {
+      // Assets locales
       try {
         return Image.asset(
           fotoPath,
@@ -418,7 +536,7 @@ class _PedigriScreenState extends State<PedigriScreen> {
         );
       }
     } else {
-      // Para fotos que no sean assets, mostrar ícono
+      // Fallback para rutas desconocidas
       return const Icon(
         Icons.pets,
         size: 40,
@@ -440,26 +558,31 @@ class _PedigriScreenState extends State<PedigriScreen> {
   }
 
   Widget _buildInfoChip(String text, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 12,
-              color: color,
-              fontWeight: FontWeight.w500,
+    return Flexible(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 12, color: color),
+            const SizedBox(width: 3),
+            Flexible(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: color,
+                  fontWeight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -506,14 +629,18 @@ class _PedigriScreenState extends State<PedigriScreen> {
   }
 
   Widget _buildGalloDetailContent(Map<String, dynamic> gallo) {
-    final raza = gallo['raza'] ?? {};
+    // 🔥 MOSTRAR DATOS REALES DEL BACKEND - SIN VALORES POR DEFECTO
+    final razaTexto = _mapRazaIdToDisplayName(gallo['raza_id']?.toString()) ?? 
+                      gallo['raza']?.toString() ?? 
+                      'Sin especificar';
+    final colorTexto = gallo['color_placa'] ?? gallo['color_plumaje'] ?? gallo['color'] ?? 'Sin especificar';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            _buildGalloImage(gallo['foto_principal']),
+            _buildGalloImage(gallo['foto_principal_url']),  // 🔥 CORREGIDO
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -541,10 +668,23 @@ class _PedigriScreenState extends State<PedigriScreen> {
         const SizedBox(height: 24),
         
         _buildDetailSection('Información Básica', [
-          _buildDetailRow('Raza', raza['nombre'] ?? 'N/A'),
+          // 🔥 RAZA CORREGIDA - TEXTO DIRECTO
+          _buildDetailRow('Raza', razaTexto),
           _buildDetailRow('Peso', '${gallo['peso'] ?? 0} kg'),
-          _buildDetailRow('Color', gallo['color'] ?? 'N/A'),
+          // 🔥 COLOR CORREGIDO - MÚTIPLES FUENTES POSIBLES
+          _buildDetailRow('Color', colorTexto),
           _buildDetailRow('Estado', gallo['estado'] ?? 'N/A'),
+          // 🆕 CAMPOS ADICIONALES SI EXISTEN
+          if (gallo['color_patas'] != null) 
+            _buildDetailRow('Color Patas', gallo['color_patas'].toString()),
+          if (gallo['color_placa'] != null) 
+            _buildDetailRow('Color Placa', gallo['color_placa'].toString()),
+          if (gallo['ubicacion_placa'] != null) 
+            _buildDetailRow('Ubicación Placa', gallo['ubicacion_placa'].toString()),
+          if (gallo['criador'] != null && gallo['criador'].toString().isNotEmpty) 
+            _buildDetailRow('Criador', gallo['criador'].toString()),
+          if (gallo['propietario_actual'] != null && gallo['propietario_actual'].toString().isNotEmpty) 
+            _buildDetailRow('Propietario', gallo['propietario_actual'].toString()),
         ]),
         
         const SizedBox(height: 24),
@@ -631,6 +771,109 @@ class _PedigriScreenState extends State<PedigriScreen> {
     );
   }
 
+  // 🚀 NAVEGAR A PANTALLA MULTISTEP - VERSIÓN ÉPICA CON REFRESH COMPLETO
+  void _navigateToAddGalloMultistep() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddGalloMultistepScreen(),
+      ),
+    );
+    
+    // 🔥 MANEJAR RESULTADO ÉPICO DEL FORMULARIO
+    if (result != null && result is Map<String, dynamic>) {
+      print('🎯 === RESULTADO DEL FORMULARIO ===');
+      print('📊 Datos recibidos: ${result.keys}');
+      
+      // Verificar si tiene flag de refrescar lista
+      if (result['action'] == 'REFRESH_LIST') {
+        print('🔄 === REFRESCANDO LISTA COMPLETA DEL BACKEND ===');
+        
+        // MOSTRAR MENSAJE DE ÉXITO INMEDIATAMENTE
+        final totalRegistros = result['total_registros_creados'] ?? 1;
+        final nombreGallo = result['gallo_principal']?['nombre'] ?? 'Gallo';
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('🎉 ¡$nombreGallo creado! ($totalRegistros registros)'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        
+        // REFRESCAR DATOS DESDE EL BACKEND PARA OBTENER LOS 3 GALLOS
+        await _refreshFromBackendAfterCreate(result);
+      } else {
+        // Fallback: agregar solo el resultado (modo antiguo)
+        setState(() {
+          gallos.add(result);
+          _filterGallos(_searchQuery);
+        });
+        
+        _saveGallos();
+        print('🎉 GALLO AGREGADO (MODO SIMPLE): ${result['nombre']}');
+      }
+    }
+  }
+  
+  // 🔄 REFRESH ÉPICO DESPUÉS DE CREAR GALLO
+  Future<void> _refreshFromBackendAfterCreate(Map<String, dynamic> resultData) async {
+    try {
+      print('🔄 Iniciando refresh épico...');
+      
+      // Mostrar indicador de carga sutil
+      setState(() => isLoading = true);
+      
+      // Obtener datos frescos del backend
+      final gallosFrescos = await GalloService.getGallos();
+      
+      print('✅ Gallos frescos obtenidos: ${gallosFrescos.length}');
+      
+      // Actualizar estado con datos frescos
+      setState(() {
+        gallos = gallosFrescos;
+        gallosFiltrados = List.from(gallos);
+        isLoading = false;
+      });
+      
+      // Guardar en caché
+      await _saveGallos();
+      
+      // Mostrar confirmación final
+      final totalNuevos = resultData['total_registros_creados'] ?? 1;
+      final galloPrincipal = resultData['gallo_principal']?['nombre'] ?? 'Gallo';
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '🎯 Lista actualizada: $galloPrincipal + familia genealógica ($totalNuevos gallos)'
+            ),
+            backgroundColor: Colors.blue,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      
+      print('🎉 === REFRESH ÉPICO COMPLETADO ===');
+      print('📱 Total gallos actuales: ${gallos.length}');
+      
+    } catch (e) {
+      print('❌ Error en refresh épico: $e');
+      
+      setState(() => isLoading = false);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('⚠️ Gallo creado, pero no se pudo actualizar la lista: $e'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
+  }
+
   void _showAddGalloDialog() {
     showDialog(
       context: context,
@@ -640,12 +883,10 @@ class _PedigriScreenState extends State<PedigriScreen> {
         onGalloAdded: (nuevoGallo) {
           setState(() {
             gallos.add(nuevoGallo);
-            _filterGallos(_searchQuery); // Refresh filtered list
+            _filterGallos(_searchQuery);
           });
           
-          // 🔥 ÉPICO: GUARDAR AUTOMÁTICAMENTE
           _saveGallos();
-          
           print('🎉 GALLO AGREGADO: ${nuevoGallo['nombre']}');
           print('📱 TOTAL GALLOS: ${gallos.length}');
         },
@@ -653,13 +894,158 @@ class _PedigriScreenState extends State<PedigriScreen> {
     );
   }
 
-  void _showEditGalloDialog(Map<String, dynamic> gallo) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('🔧 Función de edición próximamente'),
-        backgroundColor: Colors.orange,
+  void _showEditGalloDialog(Map<String, dynamic> gallo) async {
+    // Navegar a la pantalla de edición multistep
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditGalloMultistepScreen(
+          gallo: gallo,
+        ),
       ),
     );
+
+    // 🔥 MANEJAR RESULTADO ÉPICO DEL FORMULARIO DE EDICIÓN - MEJORADO
+    if (result != null && result is Map<String, dynamic>) {
+      print('🎯 === RESULTADO DE LA EDICIÓN ===');
+      print('📊 Datos recibidos: ${result.keys}');
+      print('📝 Datos completos: $result');
+      
+      // 🔥 DETECTAR DIFERENTES TIPOS DE RESULTADO
+      if (result.containsKey('action') && result['action'] == 'REFRESH_LIST') {
+        print('🔄 === REFRESCANDO LISTA DESPUÉS DE EDITAR (MODO ÉPICO) ===');
+        
+        // MOSTRAR MENSAJE DE ÉXITO INMEDIATAMENTE
+        final nombreGallo = result['gallo_actualizado']?['nombre'] ?? gallo['nombre'] ?? 'Gallo';
+        final tieneExpansion = result['expansion_genealogica'] == true;
+        final registrosNuevos = result['registros_nuevos_creados'] ?? 0;
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                tieneExpansion 
+                  ? '🎉 $nombreGallo actualizado! (+$registrosNuevos registros)'
+                  : '✅ $nombreGallo actualizado exitosamente!'
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        
+        // 🔥 REFRESCAR DATOS DESDE EL BACKEND INMEDIATAMENTE
+        await _refreshFromBackendAfterEdit(result);
+        
+      } else if (result.containsKey('success') && result['success'] == true) {
+        print('🔄 === MODO DE COMPATIBILIDAD - REFRESCANDO ===');
+        
+        // Modo de compatibilidad: refrescar sin flags especiales
+        await _loadData();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ ${gallo['nombre']} actualizado exitosamente'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+        
+      } else if (result == true) {
+        print('🔄 === MODO LEGACY - REFRESCANDO ===');
+        
+        // Fallback: si solo retorna true (modo antiguo)
+        await _loadData();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Gallo actualizado exitosamente'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        print('⚠️ === RESULTADO DESCONOCIDO - REFRESCANDO POR SEGURIDAD ===');
+        
+        // Si no reconocemos el formato, refrescar por seguridad
+        await _loadData();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Cambios guardados'),
+              backgroundColor: Colors.blue,
+            ),
+          );
+        }
+      }
+    } else {
+      print('ℹ️ === NO SE RECIBIÓ RESULTADO DE LA EDICIÓN ===');
+      // Si no hay resultado, asumir que no hubo cambios
+    }
+  }
+  
+  // 🔄 REFRESH ÉPICO DESPUÉS DE EDITAR GALLO
+  Future<void> _refreshFromBackendAfterEdit(Map<String, dynamic> resultData) async {
+    try {
+      print('🔄 Iniciando refresh épico después de editar...');
+      
+      // Mostrar indicador de carga sutil
+      setState(() => isLoading = true);
+      
+      // Obtener datos frescos del backend
+      final gallosFrescos = await GalloService.getGallos();
+      
+      print('✅ Gallos frescos obtenidos: ${gallosFrescos.length}');
+      
+      // Actualizar estado con datos frescos
+      setState(() {
+        gallos = gallosFrescos;
+        gallosFiltrados = List.from(gallos);
+        isLoading = false;
+      });
+      
+      // Guardar en caché
+      await _saveGallos();
+      
+      // Mostrar confirmación final
+      final nombreGallo = resultData['gallo_actualizado']?['nombre'] ?? 'Gallo';
+      final tieneExpansion = resultData['expansion_genealogica'] == true;
+      final registrosNuevos = resultData['registros_nuevos_creados'] ?? 0;
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              tieneExpansion
+                ? '🎯 Lista actualizada: $nombreGallo + expansión genealógica ($registrosNuevos nuevos)'
+                : '🎯 Lista actualizada: $nombreGallo modificado'
+            ),
+            backgroundColor: Colors.blue,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      
+      print('🎉 === REFRESH EDICIÓN ÉPICO COMPLETADO ===');
+      print('📱 Total gallos actuales: ${gallos.length}');
+      
+    } catch (e) {
+      print('❌ Error en refresh épico después de editar: $e');
+      
+      setState(() => isLoading = false);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('⚠️ Gallo actualizado, pero no se pudo refrescar la lista: $e'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
   }
 
   void _deleteGallo(Map<String, dynamic> gallo) {
@@ -674,26 +1060,80 @@ class _PedigriScreenState extends State<PedigriScreen> {
             child: const Text('Cancelar'),
           ),
           TextButton(
-            onPressed: () {
-              setState(() {
-                gallos.removeWhere((g) => g['id'] == gallo['id']);
-                _filterGallos(_searchQuery);
-              });
-              
-              // Guardar cambios
-              _saveGallos();
-              
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('🗑️ Gallo \"${gallo['nombre']}\" eliminado'),
-                  backgroundColor: Colors.red,
+              
+              // Mostrar loading
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(
+                  child: CircularProgressIndicator(),
                 ),
               );
+              
+              try {
+                // Intentar eliminar en el backend
+                final success = await GalloService.deleteGallo(gallo['id']);
+                
+                if (success) {
+                  setState(() {
+                    gallos.removeWhere((g) => g['id'] == gallo['id']);
+                    _filterGallos(_searchQuery);
+                  });
+                  
+                  // Guardar cambios localmente también
+                  await _saveGallos();
+                  
+                  if (mounted) {
+                    Navigator.pop(context); // Cerrar loading
+                    
+                    final connectionService = ConnectionService();
+                    final isOffline = connectionService.isOffline;
+                    
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          isOffline 
+                            ? '🗑️ Gallo \"${gallo['nombre']}\" eliminado localmente. Se sincronizará cuando haya conexión.'
+                            : '🗑️ Gallo \"${gallo['nombre']}\" eliminado exitosamente'
+                        ),
+                        backgroundColor: isOffline ? Colors.orange : Colors.red,
+                        duration: Duration(seconds: isOffline ? 4 : 2),
+                      ),
+                    );
+                  }
+                } else {
+                  throw Exception('No se pudo eliminar el gallo');
+                }
+              } catch (e) {
+                if (mounted) {
+                  Navigator.pop(context); // Cerrar loading
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('❌ Error al eliminar: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showGenealogyTree(Map<String, dynamic> gallo) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => GenealogyTreeScreen(
+          galloSeleccionado: gallo,
+          todosLosGallos: gallos,
+        ),
       ),
     );
   }
@@ -718,5 +1158,33 @@ class _PedigriScreenState extends State<PedigriScreen> {
         }).toList();
       }
     });
+  }
+
+  // 🔥 HELPER: CONVERTIR RAZA_ID DEL BACKEND A NOMBRE LEGIBLE
+  String? _mapRazaIdToDisplayName(String? razaId) {
+    if (razaId == null || razaId.isEmpty) return null;
+    
+    // Mapear IDs del backend a nombres legibles
+    switch (razaId.toUpperCase()) {
+      case 'KELSO_AMERICANO': return 'Kelso';
+      case 'HATCH_AMERICANO': return 'Hatch';
+      case 'ALBANY_AMERICANO': return 'Albany';
+      case 'SWEATER_AMERICANO': return 'Sweater';
+      case 'RADIO_AMERICANO': return 'Radio';
+      case 'CLARET_AMERICANO': return 'Claret';
+      case 'LAW_AMERICANO': return 'Law';
+      case 'GREY_AMERICANO': return 'Grey';
+      case 'ROUNDHEAD_AMERICANO': return 'Roundhead';
+      case 'BUTCHER_AMERICANO': return 'Butcher';
+      case 'MCLEAN_AMERICANO': return 'McLean';
+      case 'WHITEHACKLE_AMERICANO': return 'Whitehackle';
+      case 'ASIL_PERUANO': return 'Asil';
+      case 'SHAMO_JAPONES': return 'Shamo';
+      case 'NAVAJERO': return 'Thai';
+      default: 
+        // Si no coincide con ningún mapeo conocido, mostrar el ID tal como viene
+        return razaId.replaceAll('_', ' ').toLowerCase().split(' ').map((word) => 
+            word.isEmpty ? word : word[0].toUpperCase() + word.substring(1)).join(' ');
+    }
   }
 }

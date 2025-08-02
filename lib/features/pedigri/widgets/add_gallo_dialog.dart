@@ -813,30 +813,193 @@ class _AddGalloDialogState extends State<AddGalloDialog> {
   }
 
   void _selectPhoto() {
-    // Simular selección de foto
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Seleccionar Foto'),
-        content: const Text('Función de cámara/galería próximamente implementada.\n\nPor ahora se asignará una foto predeterminada.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: AppColors.primary,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Seleccionar Foto del Gallo',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildPhotoOption(
+                            icon: Icons.camera_alt,
+                            title: 'Cámara',
+                            subtitle: 'Tomar foto',
+                            color: Colors.blue,
+                            onTap: () => _takePhoto('camera'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildPhotoOption(
+                            icon: Icons.photo_library,
+                            title: 'Galería',
+                            subtitle: 'Elegir foto',
+                            color: Colors.green,
+                            onTap: () => _takePhoto('gallery'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (_fotoPath != null)
+                      SizedBox(
+                        width: double.infinity,
+                        child: _buildPhotoOption(
+                          icon: Icons.delete,
+                          title: 'Quitar Foto',
+                          subtitle: 'Eliminar actual',
+                          color: Colors.red,
+                          onTap: () => _removePhoto(),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _fotoPath = 'gallo_${DateTime.now().millisecondsSinceEpoch}.jpg';
-              });
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Foto agregada exitosamente')),
-              );
-            },
-            child: const Text('Usar Foto Default'),
-          ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPhotoOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: color.withOpacity(0.3)),
+          borderRadius: BorderRadius.circular(12),
+          color: color.withOpacity(0.05),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 32),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _takePhoto(String source) async {
+    Navigator.pop(context); // Cerrar bottom sheet
+    
+    // Simular delay de cámara/galería
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    setState(() {
+      _fotoPath = 'gallo_${source}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: 8),
+            Text('Foto capturada desde ${source == 'camera' ? 'cámara' : 'galería'}'),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  void _removePhoto() {
+    Navigator.pop(context);
+    setState(() {
+      _fotoPath = null;
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.delete, color: Colors.white),
+            SizedBox(width: 8),
+            Text('Foto eliminada'),
+          ],
+        ),
+        backgroundColor: Colors.orange,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }

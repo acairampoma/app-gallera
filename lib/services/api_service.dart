@@ -1,0 +1,645 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart'; // Para kIsWeb
+
+class ApiService {
+  // 🌐 URL del backend Railway
+  static const String baseUrl = 'https://gallerappback-production.up.railway.app';
+  
+  // 🔑 Headers estándar
+  static const Map<String, String> headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+
+  // 🔐 Headers con token JWT
+  static Future<Map<String, String>> _getAuthHeaders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token');
+    
+    return {
+      ...headers,
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
+  // 📧 LOGIN con JWT - VERSIÓN SIMPLIFICADA
+  static Future<AuthResponse> login(String email, String password) async {
+    try {
+      print('🔥 === API SERVICE LOGIN - MODO REAL ===');
+      print('🌐 URL: $baseUrl/auth/login');
+      print('📧 Email: $email');
+      print('🔑 Password: ${password.replaceAll(RegExp(r'.'), '*')}');
+      print('🕐 Timestamp: ${DateTime.now()}');
+      print('📱 Platform: ${kIsWeb ? "WEB" : Platform.operatingSystem}');
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/login'),
+        headers: headers,
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      print('📡 Status Code: ${response.statusCode}');
+      print('📄 Response Headers: ${response.headers}');
+      print('📄 Response Body RAW: "${response.body}"');
+      print('📄 Response Body Length: ${response.body.length}');
+
+      if (response.statusCode == 200) {
+        final responseText = response.body.trim();
+        
+        if (responseText.isEmpty) {
+          throw ApiException('Respuesta vacía del servidor');
+        }
+        
+        // Intentar parsear JSON
+        Map<String, dynamic> data;
+        try {
+          data = jsonDecode(responseText);
+          print('📊 JSON parseado exitosamente: $data');
+        } catch (e) {
+          print('❌ Error parseando JSON: $e');
+          throw ApiException('Respuesta inválida del servidor: $responseText');
+        }
+        
+        // 💾 Guardar tokens de manera flexible
+        final prefs = await SharedPreferences.getInstance();
+        
+        try {
+          // Intentar diferentes estructuras de respuesta
+          String? accessToken;
+          String? refreshToken;
+          Map<String, dynamic>? userInfo;
+          
+          if (data['token'] != null && data['token'] is Map) {
+            // Estructura: { "token": { "access_token": "...", "refresh_token": "..." } }
+            accessToken = data['token']['access_token'];
+            refreshToken = data['token']['refresh_token'];
+          } else if (data['access_token'] != null) {
+            // Estructura: { "access_token": "...", "refresh_token": "..." }
+            accessToken = data['access_token'];
+            refreshToken = data['refresh_token'];
+          } else {
+            throw ApiException('No se encontraron tokens en la respuesta');
+          }
+          
+          if (data['user'] != null) {
+            userInfo = data['user'];
+          } else {
+            throw ApiException('No se encontró información del usuario');
+          }
+          
+          // Guardar tokens
+          await prefs.setString('access_token', accessToken!);
+          if (refreshToken != null) {
+            await prefs.setString('refresh_token', refreshToken);
+          }
+          await prefs.setInt('user_id', userInfo!['id']);
+          await prefs.setString('user_email', userInfo['email']);
+          
+          print('✅ Tokens guardados exitosamente');
+          
+          return AuthResponse.fromJson(data);
+        } catch (e) {
+          print('❌ Error procesando datos: $e');
+          throw ApiException('Error procesando respuesta del servidor: $e');
+        }
+      } else {
+        final errorText = response.body;
+        print('❌ Error HTTP ${response.statusCode}: $errorText');
+        
+        if (errorText.isNotEmpty) {
+          try {
+            final error = jsonDecode(errorText);
+            throw ApiException(error['message'] ?? error['detail'] ?? 'Error de login');
+          } catch (e) {
+            throw ApiException('Error del servidor (${response.statusCode}): $errorText');
+          }
+        } else {
+          throw ApiException('Error del servidor (${response.statusCode})');
+        }
+      }
+    } catch (e) {
+      print('💥 Exception en login: $e');
+      if (e is ApiException) {
+        rethrow;
+      } else {
+        throw ApiException('Error de conexión: $e');
+      }
+    }
+  }
+
+  // 🆕 REGISTRO con perfil automático
+  static Future<RegisterResponse> register({
+    required String email,
+    required String password,
+    required String nombreCompleto,
+    String? telefono,
+    String? nombreGalpon,
+    String ciudad = 'Lima',
+    String ubigeo = '150101',
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/register'),
+        headers: headers,
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+          'nombre_completo': nombreCompleto,
+          'telefono': telefono,
+          'nombre_galpon': nombreGalpon,
+          'ciudad': ciudad,
+          'ubigeo': ubigeo,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return RegisterResponse.fromJson(data);
+      } else {
+        final error = jsonDecode(response.body);
+        throw ApiException(error['message'] ?? 'Error de registro');
+      }
+    } catch (e) {
+      throw ApiException('Error de conexión: $e');
+    }
+  }
+
+  // 👤 OBTENER USUARIO ACTUAL
+  static Future<UserModel> getCurrentUser() async {
+    try {
+      final authHeaders = await _getAuthHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/auth/me'),
+        headers: authHeaders,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return UserModel.fromJson(data);
+      } else {
+        throw ApiException('Error obteniendo usuario');
+      }
+    } catch (e) {
+      throw ApiException('Error de conexión: $e');
+    }
+  }
+
+  // 👤 OBTENER MI PERFIL
+  static Future<ProfileModel> getMyProfile() async {
+    try {
+      final authHeaders = await _getAuthHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/profiles/me'),
+        headers: authHeaders,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return ProfileModel.fromJson(data);
+      } else {
+        throw ApiException('Error obteniendo perfil');
+      }
+    } catch (e) {
+      throw ApiException('Error de conexión: $e');
+    }
+  }
+
+  // ✏️ ACTUALIZAR PERFIL
+  static Future<ProfileModel> updateProfile({
+    String? nombreCompleto,
+    String? telefono,
+    String? nombreGalpon,
+    String? direccion,
+    String? ciudad,
+    String? biografia,
+  }) async {
+    try {
+      final authHeaders = await _getAuthHeaders();
+      
+      // Solo enviar campos que no son null
+      final body = <String, dynamic>{};
+      if (nombreCompleto != null) body['nombre_completo'] = nombreCompleto;
+      if (telefono != null) body['telefono'] = telefono;
+      if (nombreGalpon != null) body['nombre_galpon'] = nombreGalpon;
+      if (direccion != null) body['direccion'] = direccion;
+      if (ciudad != null) body['ciudad'] = ciudad;
+      if (biografia != null) body['biografia'] = biografia;
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/profiles/me'),
+        headers: authHeaders,
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return ProfileModel.fromJson(data);
+      } else {
+        throw ApiException('Error actualizando perfil');
+      }
+    } catch (e) {
+      throw ApiException('Error de conexión: $e');
+    }
+  }
+
+  // 🚪 LOGOUT MEJORADO con respuesta del servidor
+  static Future<LogoutResponse?> logout() async {
+    LogoutResponse? logoutResponse;
+    
+    try {
+      // 🌐 Logout en el servidor con respuesta mejorada
+      final authHeaders = await _getAuthHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/logout'),
+        headers: authHeaders,
+      );
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        logoutResponse = LogoutResponse.fromJson(data);
+        print('✅ Logout del servidor exitoso: ${logoutResponse.message}');
+      }
+    } catch (e) {
+      // Si falla el logout del servidor, seguimos limpiando local
+      print('⚠️ Error en logout del servidor: $e');
+    } finally {
+      // 🗑️ SIEMPRE limpiar tokens locales
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('access_token');
+      await prefs.remove('refresh_token');
+      await prefs.remove('user_id');
+      await prefs.remove('user_email');
+      
+      print('✅ Tokens limpiados correctamente');
+    }
+    
+    return logoutResponse;
+  }
+
+  // 🔄 REFRESH TOKEN
+  static Future<bool> refreshToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final refreshToken = prefs.getString('refresh_token');
+      
+      if (refreshToken == null) return false;
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/refresh'),
+        headers: headers,
+        body: jsonEncode({
+          'refresh_token': refreshToken,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        
+        // 💾 Actualizar tokens
+        await prefs.setString('access_token', data['access_token']);
+        await prefs.setString('refresh_token', data['refresh_token']);
+        
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // 📷 SUBIR AVATAR a Cloudinary - VERSIÓN UNIVERSAL (Móvil + Web)
+  static Future<ProfileModel> uploadAvatar(File imageFile) async {
+    try {
+      final authHeaders = await _getAuthHeaders();
+      
+      // 🌍 SOLUCIÓN UNIVERSAL: Detectar plataforma
+      if (kIsWeb) {
+        // 🔄 VERSIÓN WEB: Usar bytes en lugar de MultipartFile
+        print('🌍 Subiendo avatar desde WEB...');
+        
+        final bytes = await imageFile.readAsBytes();
+        final base64Image = base64Encode(bytes);
+        
+        // Enviar como JSON con base64
+        final response = await http.post(
+          Uri.parse('$baseUrl/profiles/avatar/web'),
+          headers: authHeaders,
+          body: jsonEncode({
+            'image_data': base64Image,
+            'filename': 'avatar.jpg',
+          }),
+        );
+        
+        print('📷 Web response status: ${response.statusCode}');
+        print('📷 Web response body: ${response.body}');
+        
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          print('✅ Avatar subido exitosamente desde WEB: ${data['avatar_url']}');
+          return ProfileModel.fromJson(data);
+        } else {
+          final error = jsonDecode(response.body);
+          throw ApiException(error['message'] ?? 'Error subiendo avatar desde WEB');
+        }
+      } else {
+        // 📱 VERSIÓN MÓVIL: Usar MultipartFile tradicional
+        print('📱 Subiendo avatar desde MÓVIL...');
+        
+        // Crear FormData para multipart
+        final request = http.MultipartRequest(
+          'POST',
+          Uri.parse('$baseUrl/profiles/avatar'),
+        );
+        
+        // Agregar headers de autenticación
+        request.headers.addAll(authHeaders);
+        
+        // Agregar archivo
+        final multipartFile = await http.MultipartFile.fromPath(
+          'file',
+          imageFile.path,
+          filename: 'avatar.jpg',
+        );
+        request.files.add(multipartFile);
+        
+        print('📷 Subiendo avatar móvil: ${imageFile.path}');
+        
+        // Enviar request
+        final streamedResponse = await request.send();
+        final response = await http.Response.fromStream(streamedResponse);
+        
+        print('📷 Mobile response status: ${response.statusCode}');
+        print('📷 Mobile response body: ${response.body}');
+        
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          print('✅ Avatar subido exitosamente desde MÓVIL: ${data['avatar_url']}');
+          return ProfileModel.fromJson(data);
+        } else {
+          final error = jsonDecode(response.body);
+          throw ApiException(error['message'] ?? 'Error subiendo avatar desde MÓVIL');
+        }
+      }
+    } catch (e) {
+      print('💥 Error subiendo avatar: $e');
+      throw ApiException('Error subiendo avatar: $e');
+    }
+  }
+  
+  // 🗑️ ELIMINAR AVATAR
+  static Future<void> removeAvatar() async {
+    try {
+      final authHeaders = await _getAuthHeaders();
+      
+      final response = await http.delete(
+        Uri.parse('$baseUrl/profiles/avatar'),
+        headers: authHeaders,
+      );
+      
+      if (response.statusCode != 200) {
+        final error = jsonDecode(response.body);
+        throw ApiException(error['message'] ?? 'Error eliminando avatar');
+      }
+      
+      print('✅ Avatar eliminado exitosamente');
+    } catch (e) {
+      throw ApiException('Error eliminando avatar: $e');
+    }
+  }
+  
+  // 🔐 CAMBIAR CONTRASEÑA
+  static Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final authHeaders = await _getAuthHeaders();
+      
+      final response = await http.put(
+        Uri.parse('$baseUrl/auth/change-password'),
+        headers: authHeaders,
+        body: jsonEncode({
+          'current_password': currentPassword,
+          'new_password': newPassword,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('✅ Contraseña cambiada exitosamente');
+        return true;
+      } else {
+        final error = jsonDecode(response.body);
+        throw ApiException(error['message'] ?? 'Error cambiando contraseña');
+      }
+    } catch (e) {
+      print('💥 Error cambiando contraseña: $e');
+      throw ApiException('Error cambiando contraseña: $e');
+    }
+  }
+  
+  // 🔍 VERIFICAR TOKEN
+  static Future<bool> hasValidToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token');
+    return token != null;
+  }
+}
+
+// 🔥 MODELOS DE DATOS
+
+class AuthResponse {
+  final UserModel user;
+  final ProfileModel? profile;
+  final TokenModel? token;
+
+  AuthResponse({
+    required this.user,
+    this.profile,
+    this.token,
+  });
+
+  factory AuthResponse.fromJson(Map<String, dynamic> json) {
+    return AuthResponse(
+      user: UserModel.fromJson(json['user']),
+      profile: json['profile'] != null ? ProfileModel.fromJson(json['profile']) : null,
+      token: json['token'] != null ? TokenModel.fromJson(json['token']) : null,
+    );
+  }
+}
+
+class RegisterResponse {
+  final UserModel user;
+  final ProfileModel? profile;
+  final String message;
+  final Map<String, dynamic>? loginCredentials;
+  final String redirectTo;
+
+  RegisterResponse({
+    required this.user,
+    this.profile,
+    required this.message,
+    this.loginCredentials,
+    this.redirectTo = 'login',
+  });
+
+  factory RegisterResponse.fromJson(Map<String, dynamic> json) {
+    return RegisterResponse(
+      user: UserModel.fromJson(json['user']),
+      profile: json['profile'] != null ? ProfileModel.fromJson(json['profile']) : null,
+      message: json['message'],
+      loginCredentials: json['login_credentials'],
+      redirectTo: json['redirect_to'] ?? 'login',
+    );
+  }
+}
+
+class UserModel {
+  final int id;
+  final String email;
+  final bool isActive;
+  final bool isVerified;
+  final bool isPremium;
+  final DateTime? lastLogin;
+  final DateTime createdAt;
+
+  UserModel({
+    required this.id,
+    required this.email,
+    required this.isActive,
+    required this.isVerified,
+    required this.isPremium,
+    this.lastLogin,
+    required this.createdAt,
+  });
+
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['id'],
+      email: json['email'],
+      isActive: json['is_active'],
+      isVerified: json['is_verified'],
+      isPremium: json['is_premium'],
+      lastLogin: json['last_login'] != null 
+          ? DateTime.parse(json['last_login']) 
+          : null,
+      createdAt: DateTime.parse(json['created_at']),
+    );
+  }
+}
+
+class ProfileModel {
+  final int id;
+  final int userId;
+  final String nombreCompleto;
+  final String? telefono;
+  final String? nombreGalpon;
+  final String? direccion;
+  final String? ciudad;
+  final String? ubigeo;
+  final String? pais;
+  final String? avatarUrl;
+  final DateTime? fechaNacimiento;
+  final String? biografia;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  ProfileModel({
+    required this.id,
+    required this.userId,
+    required this.nombreCompleto,
+    this.telefono,
+    this.nombreGalpon,
+    this.direccion,
+    this.ciudad,
+    this.ubigeo,
+    this.pais,
+    this.avatarUrl,
+    this.fechaNacimiento,
+    this.biografia,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory ProfileModel.fromJson(Map<String, dynamic> json) {
+    return ProfileModel(
+      id: json['id'],
+      userId: json['user_id'],
+      nombreCompleto: json['nombre_completo'],
+      telefono: json['telefono'],
+      nombreGalpon: json['nombre_galpon'],
+      direccion: json['direccion'],
+      ciudad: json['ciudad'],
+      ubigeo: json['ubigeo'],
+      pais: json['pais'],
+      avatarUrl: json['avatar_url'],
+      fechaNacimiento: json['fecha_nacimiento'] != null 
+          ? DateTime.parse(json['fecha_nacimiento']) 
+          : null,
+      biografia: json['biografia'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
+    );
+  }
+}
+
+class TokenModel {
+  final String accessToken;
+  final String refreshToken;
+  final String tokenType;
+  final int expiresIn;
+
+  TokenModel({
+    required this.accessToken,
+    required this.refreshToken,
+    required this.tokenType,
+    required this.expiresIn,
+  });
+
+  factory TokenModel.fromJson(Map<String, dynamic> json) {
+    return TokenModel(
+      accessToken: json['access_token'],
+      refreshToken: json['refresh_token'],
+      tokenType: json['token_type'],
+      expiresIn: json['expires_in'],
+    );
+  }
+}
+
+class LogoutResponse {
+  final String message;
+  final bool success;
+  final String redirectTo;
+  final bool clearSession;
+
+  LogoutResponse({
+    required this.message,
+    this.success = true,
+    this.redirectTo = 'login',
+    this.clearSession = true,
+  });
+
+  factory LogoutResponse.fromJson(Map<String, dynamic> json) {
+    return LogoutResponse(
+      message: json['message'],
+      success: json['success'] ?? true,
+      redirectTo: json['redirect_to'] ?? 'login',
+      clearSession: json['clear_session'] ?? true,
+    );
+  }
+}
+
+class ApiException implements Exception {
+  final String message;
+  
+  ApiException(this.message);
+  
+  @override
+  String toString() => message;
+}

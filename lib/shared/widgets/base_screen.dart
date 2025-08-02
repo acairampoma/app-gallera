@@ -3,6 +3,7 @@ import 'bottom_nav_bar.dart';
 import 'quick_nav_fab.dart';
 import '../theme/app_colors.dart';
 import '../../services/auth_service.dart';
+import 'connection/connection_banner.dart';
 
 class BaseScreen extends StatefulWidget {
   final String title;
@@ -37,7 +38,16 @@ class _BaseScreenState extends State<BaseScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white, // 🔥 FONDO BLANCO PURO
-      appBar: widget.showAppBar
+      body: Column(
+        children: [
+          // 🌐 Banner de conexión
+          const ConnectionBanner(),
+          
+          // Contenido principal
+          Expanded(
+            child: Scaffold(
+              backgroundColor: Colors.white,
+              appBar: widget.showAppBar
           ? AppBar(
               title: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,8 +76,8 @@ class _BaseScreenState extends State<BaseScreen> {
               actions: widget.actions,
             )
           : null,
-      body: widget.child,
-      bottomNavigationBar: widget.showBottomNavBar
+              body: widget.child,
+              bottomNavigationBar: widget.showBottomNavBar
           ? BottomNavBar(
               currentIndex: widget.currentIndex,
               onTap: (index) {
@@ -100,8 +110,12 @@ class _BaseScreenState extends State<BaseScreen> {
               },
             )
           : null,
-      floatingActionButton: widget.floatingActionButton ?? 
-          (widget.showQuickNav ? const QuickNavFAB() : null),
+              floatingActionButton: widget.floatingActionButton ?? 
+                  (widget.showQuickNav ? const QuickNavFAB() : null),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

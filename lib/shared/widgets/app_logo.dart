@@ -36,7 +36,7 @@ class AppLogo extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(size * 0.15),
             child: Image.asset(
-              'assets/images/logo/logo.webp', // 🔥 TU LOGO REAL
+              'assets/images/logo/logo2.webp', // 🔥 NUEVO LOGO CASTA DE REYES
               fit: BoxFit.contain,
               width: size,
               height: size,
@@ -65,20 +65,28 @@ class AppLogo extends StatelessWidget {
         if (showText) ...[
           SizedBox(height: size * 0.1),
           Text(
-            'GallosPro',
+            'Casta de Reyes',
             style: TextStyle(
-              fontSize: size * 0.24,
-              fontWeight: FontWeight.bold,
+              fontSize: size * 0.22,
+              fontWeight: FontWeight.w900,
               color: AppColors.primary,
-              letterSpacing: 1.5,
+              letterSpacing: 2.0,
+              shadows: [
+                Shadow(
+                  offset: Offset(1, 1),
+                  blurRadius: 3,
+                  color: Colors.black26,
+                ),
+              ],
             ),
           ),
           Text(
-            'Gestión Profesional de Gallos',
+            'Gestión Profesional de Gallos de Pelea',
             style: TextStyle(
-              fontSize: size * 0.11,
+              fontSize: size * 0.09,
               color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
             ),
             textAlign: TextAlign.center,
           ),

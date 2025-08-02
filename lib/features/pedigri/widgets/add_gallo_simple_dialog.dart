@@ -1,417 +1,290 @@
 import 'package:flutter/material.dart';
 import '../../../shared/theme/app_colors.dart';
 
-class AddGalloDialog extends StatefulWidget {
+// 🔥 WIDGET SIMPLE PARA AGREGAR GALLO RÁPIDO
+class AddGalloSimpleDialog extends StatefulWidget {
   final List<dynamic> razas;
-  final List<dynamic> gallosExistentes;
   final Function(Map<String, dynamic>) onGalloAdded;
 
-  const AddGalloDialog({
+  const AddGalloSimpleDialog({
     Key? key,
     required this.razas,
-    required this.gallosExistentes,
     required this.onGalloAdded,
   }) : super(key: key);
 
   @override
-  State<AddGalloDialog> createState() => _AddGalloDialogState();
+  State<AddGalloSimpleDialog> createState() => _AddGalloSimpleDialogState();
 }
 
-class _AddGalloDialogState extends State<AddGalloDialog> {
+class _AddGalloSimpleDialogState extends State<AddGalloSimpleDialog> {
   final _formKey = GlobalKey<FormState>();
-  
-  // FORMULARIO SUPER SIMPLIFICADO - Solo 4 campos
   final _nombreController = TextEditingController();
-  final _anilloController = TextEditingController();
+  final _codigoController = TextEditingController();
   final _pesoController = TextEditingController();
+  final _colorController = TextEditingController();
   
-  String? _razaSeleccionada;
-  String? _fotoSeleccionada;
-  
-  // 3 fotos predefinidas para la demo
-  final Map<String, String> _fotosDisponibles = {
-    'assets/images/gallos/campeon.jpg': '🏆 El Campeón',
-    'assets/images/gallos/relampago.jpg': '⚡ Relámpago', 
-    'assets/images/gallos/trueno.jpg': '⛈️ Trueno',
-  };
+  int? _razaSeleccionada;
+  bool _isLoading = false;
 
   @override
   void dispose() {
     _nombreController.dispose();
-    _anilloController.dispose();
+    _codigoController.dispose();
     _pesoController.dispose();
+    _colorController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: _buildFormulario(),
-              ),
-            ),
-            _buildButtons(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.pets, color: Colors.white, size: 28),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Text(
-              '🐓 Nuevo Gallo',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.close, color: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFormulario() {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. FOTO - SELECTOR SIMPLE
-          const Text(
-            '📷 Foto del Gallo',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          _buildFotoSelector(),
-          
-          const SizedBox(height: 24),
-          
-          // 2. DATOS BÁSICOS
-          const Text(
-            '📝 Datos Básicos',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          // Nombre
-          TextFormField(
-            controller: _nombreController,
-            decoration: const InputDecoration(
-              labelText: '🐓 Nombre del Gallo',
-              hintText: 'Ej: El Campeón',
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'El nombre es obligatorio';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-
-          // Anillo
-          TextFormField(
-            controller: _anilloController,
-            decoration: const InputDecoration(
-              labelText: '🏷️ Número de Anillo',
-              hintText: 'Ej: CAM004',
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'El anillo es obligatorio';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-
-          // Peso
-          TextFormField(
-            controller: _pesoController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: '⚖️ Peso (kg)',
-              hintText: 'Ej: 2.5',
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'El peso es obligatorio';
-              }
-              final peso = double.tryParse(value);
-              if (peso == null || peso <= 0 || peso > 5) {
-                return 'Peso válido: 0.1 - 5.0 kg';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-
-          // Raza - Dropdown simple
-          const Text('🧬 Raza:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[400]!),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _razaSeleccionada,
-                hint: const Text('Seleccionar raza'),
-                isExpanded: true,
-                items: widget.razas.map<DropdownMenuItem<String>>((raza) {
-                  return DropdownMenuItem<String>(
-                    value: raza['nombre'],
-                    child: Text(raza['nombre']),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _razaSeleccionada = value;
-                  });
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFotoSelector() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
-        color: Colors.grey[50],
-      ),
-      child: Column(
-        children: [
-          if (_fotoSeleccionada != null) ...[
-            // Mostrar foto seleccionada
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.primary, width: 2),
-              ),
-              child: const Icon(Icons.pets, size: 40, color: AppColors.primary),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _fotosDisponibles[_fotoSeleccionada!] ?? 'Foto seleccionada',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-          ],
-          
-          ElevatedButton.icon(
-            onPressed: _mostrarSelectorFotos,
-            icon: const Icon(Icons.photo_library),
-            label: Text(_fotoSeleccionada == null ? 'Seleccionar Foto' : 'Cambiar Foto'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _mostrarSelectorFotos() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
         padding: const EdgeInsets.all(20),
+        constraints: const BoxConstraints(maxWidth: 400, maxHeight: 600),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              '📷 Seleccionar Foto',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            ...(_fotosDisponibles.entries.map((entry) {
-              return ListTile(
-                leading: Container(
-                  width: 40,
-                  height: 40,
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.pets, color: AppColors.primary),
+                  child: const Icon(
+                    Icons.pets,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
                 ),
-                title: Text(entry.value),
-                trailing: _fotoSeleccionada == entry.key 
-                    ? const Icon(Icons.check_circle, color: Colors.green)
-                    : null,
-                onTap: () {
-                  setState(() {
-                    _fotoSeleccionada = entry.key;
-                  });
-                  Navigator.pop(context);
-                },
-              );
-            }).toList()),
-            const SizedBox(height: 10),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Agregar Gallo',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildButtons() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        border: Border(top: BorderSide(color: Colors.grey[300]!)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: _guardarGallo,
-              icon: const Icon(Icons.save),
-              label: const Text('Guardar'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+            const SizedBox(height: 20),
+            
+            // Form
+            Flexible(
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      _buildTextField(
+                        controller: _nombreController,
+                        label: 'Nombre del Gallo',
+                        icon: Icons.pets,
+                        validator: (value) {
+                          if (value?.isEmpty ?? true) {
+                            return 'El nombre es requerido';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      _buildTextField(
+                        controller: _codigoController,
+                        label: 'Código/Anillo',
+                        icon: Icons.confirmation_number,
+                        hintText: 'Ej: CAM001',
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      _buildDropdown(),
+                      const SizedBox(height: 16),
+                      
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              controller: _pesoController,
+                              label: 'Peso (kg)',
+                              icon: Icons.monitor_weight,
+                              keyboardType: TextInputType.number,
+                              hintText: '2.5',
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildTextField(
+                              controller: _colorController,
+                              label: 'Color',
+                              icon: Icons.palette,
+                              hintText: 'Colorado',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
-        ],
+            
+            const SizedBox(height: 20),
+            
+            // Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _isLoading ? null : () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text('Cancelar'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _saveGallo,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text('Guardar'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  void _guardarGallo() {
-    // Validar formulario
-    if (!(_formKey.currentState?.validate() ?? false)) {
-      return;
-    }
-
-    if (_razaSeleccionada == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Selecciona una raza'),
-          backgroundColor: Colors.orange,
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    String? hintText,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hintText,
+        prefixIcon: Icon(icon, color: AppColors.primary),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
         ),
-      );
-      return;
-    }
-
-    if (_fotoSeleccionada == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Selecciona una foto'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    // Crear nuevo gallo - ESTRUCTURA SIMPLIFICADA
-    final nuevoGallo = {
-      'id': DateTime.now().millisecondsSinceEpoch,
-      'usuario_id': 2,
-      'nombre': _nombreController.text.trim(),
-      'codigo_identificacion': _anilloController.text.trim(),
-      'fecha_nacimiento': DateTime.now().subtract(const Duration(days: 365)).toIso8601String().split('T')[0],
-      'peso': double.parse(_pesoController.text),
-      'color': 'Colorado', // Default
-      'estado': 'activo',
-      'foto_principal': _fotoSeleccionada!,
-      'created_at': DateTime.now().toIso8601String(),
-      'updated_at': DateTime.now().toIso8601String(),
-      'raza': {
-        'id': 1,
-        'nombre': _razaSeleccionada!,
-      },
-      'notas': 'Gallo registrado desde la app',
-    };
-
-    // Simular guardado en \"assets\" (en realidad se guarda en memoria)
-    print('💾 SIMULANDO GUARDADO DE FOTO: $_fotoSeleccionada');
-    print('🐓 GALLO CREADO: ${nuevoGallo['nombre']}');
-
-    // Llamar callback
-    widget.onGalloAdded(nuevoGallo);
-
-    // Cerrar dialog
-    Navigator.pop(context);
-
-    // Mostrar confirmación épica
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text('🎉 ¡Gallo \"${_nombreController.text}\" creado exitosamente!'),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 3),
-        action: SnackBarAction(
-          label: 'Ver',
-          textColor: Colors.white,
-          onPressed: () {},
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
       ),
     );
+  }
+
+  Widget _buildDropdown() {
+    return DropdownButtonFormField<int>(
+      value: _razaSeleccionada,
+      decoration: InputDecoration(
+        labelText: 'Raza',
+        prefixIcon: const Icon(Icons.category, color: AppColors.primary),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+      ),
+      items: widget.razas.map<DropdownMenuItem<int>>((raza) {
+        return DropdownMenuItem<int>(
+          value: raza['id'],
+          child: Text(raza['nombre'] ?? 'Sin nombre'),
+        );
+      }).toList(),
+      onChanged: (value) {
+        setState(() {
+          _razaSeleccionada = value;
+        });
+      },
+    );
+  }
+
+  void _saveGallo() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Simular delay
+    await Future.delayed(const Duration(seconds: 1));
+
+    final razaSeleccionada = widget.razas.firstWhere(
+      (raza) => raza['id'] == _razaSeleccionada,
+      orElse: () => {'id': 1, 'nombre': 'Sin raza'},
+    );
+
+    final nuevoGallo = {
+      'id': DateTime.now().millisecondsSinceEpoch, // ID temporal único
+      'nombre': _nombreController.text,
+      'codigo_identificacion': _codigoController.text.isNotEmpty 
+          ? _codigoController.text 
+          : 'AUTO${DateTime.now().millisecondsSinceEpoch % 10000}',
+      'peso': double.tryParse(_pesoController.text) ?? 0.0,
+      'color': _colorController.text.isNotEmpty ? _colorController.text : 'Sin especificar',
+      'raza': razaSeleccionada,
+      'estado': 'activo',
+      'fecha_nacimiento': DateTime.now().toIso8601String().split('T')[0],
+      'created_at': DateTime.now().toIso8601String(),
+      'foto_principal': null,
+    };
+
+    widget.onGalloAdded(nuevoGallo);
+    
+    if (mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✅ Gallo "${nuevoGallo['nombre']}" agregado exitosamente'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 }

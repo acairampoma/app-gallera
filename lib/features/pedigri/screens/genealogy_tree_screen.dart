@@ -1,0 +1,1020 @@
+import 'package:flutter/material.dart';
+import '../../../shared/theme/app_colors.dart';
+import '../../../services/gallo_service.dart';
+import '../../../services/connection_service.dart';
+
+class GenealogyTreeScreen extends StatefulWidget {
+  final Map<String, dynamic> galloSeleccionado;
+  final List<dynamic> todosLosGallos;
+
+  const GenealogyTreeScreen({
+    Key? key,
+    required this.galloSeleccionado,
+    required this.todosLosGallos,
+  }) : super(key: key);
+
+  @override
+  State<GenealogyTreeScreen> createState() => _GenealogyTreeScreenState();
+}
+
+class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
+  double _scale = 1.0;
+  Map<String, dynamic>? _arbolCompleto;
+  bool _isLoading = true;
+  String? _error;
+  
+  // Datos del árbol
+  Map<String, dynamic>? _galloBase;
+  Map<String, dynamic>? _padre;
+  Map<String, dynamic>? _madre;
+  Map<String, dynamic>? _abueloPaterno;
+  Map<String, dynamic>? _abuelaPaterna;
+  Map<String, dynamic>? _abueloMaterno;
+  Map<String, dynamic>? _abuelaMaterna;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarArbolGenealogico();
+  }
+
+  // 🌳 CARGAR ÁRBOL DESDE BACKEND
+  Future<void> _cargarArbolGenealogico() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final galloId = widget.galloSeleccionado['id'];
+      print('🌳 Cargando árbol genealógico para gallo ID: $galloId');
+      
+      final arbolData = await GalloService.getGenealogiaCompleta(galloId);
+      
+      if (arbolData['success'] == true && arbolData['data'] != null) {
+        final data = arbolData['data'];
+        final arbol = data['arbol_genealogico']['ancestros'];
+        
+        setState(() {
+          _arbolCompleto = data;
+          _galloBase = arbol;
+          _padre = arbol['padre'];
+          _madre = arbol['madre'];
+          
+          // Abuelos paternos
+          if (_padre != null) {
+            _abueloPaterno = _padre!['padre'];
+            _abuelaPaterna = _padre!['madre'];
+          }
+          
+          // Abuelos maternos
+          if (_madre != null) {
+            _abueloMaterno = _madre!['padre'];
+            _abuelaMaterna = _madre!['madre'];
+          }
+          
+          _isLoading = false;
+        });
+        
+        print('✅ Árbol genealógico cargado exitosamente');
+      } else {
+        throw Exception('No se pudo cargar el árbol genealógico');
+      }
+    } catch (e) {
+      print('❌ Error cargando árbol: $e');
+      
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+      
+      // Fallback a modo local
+      _cargarGenealogiaLocal();
+    }
+  }
+
+  // 📱 FALLBACK: Cargar desde datos locales
+  void _cargarGenealogiaLocal() {
+    final padreId = widget.galloSeleccionado['padre_id'];
+    if (padreId != null) {
+      _padre = widget.todosLosGallos.where((g) => g['id'] == padreId).firstOrNull;
+    }
+
+    final madreId = widget.galloSeleccionado['madre_id'];
+    if (madreId != null) {
+      _madre = widget.todosLosGallos.where((g) => g['id'] == madreId).firstOrNull;
+    }
+
+    if (_padre != null) {
+      final abueloPatId = _padre!['padre_id'];
+      final abuelaPatId = _padre!['madre_id'];
+      
+      if (abueloPatId != null) {
+        _abueloPaterno = widget.todosLosGallos.where((g) => g['id'] == abueloPatId).firstOrNull;
+      }
+      if (abuelaPatId != null) {
+        _abuelaPaterna = widget.todosLosGallos.where((g) => g['id'] == abuelaPatId).firstOrNull;
+      }
+    }
+
+    if (_madre != null) {
+      final abueloMatId = _madre!['padre_id'];
+      final abuelaMatId = _madre!['madre_id'];
+      
+      if (abueloMatId != null) {
+        _abueloMaterno = widget.todosLosGallos.where((g) => g['id'] == abueloMatId).firstOrNull;
+      }
+      if (abuelaMatId != null) {
+        _abuelaMaterna = widget.todosLosGallos.where((g) => g['id'] == abuelaMatId).firstOrNull;
+      }
+    }
+    
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  // 📈 TARJETA DE ESTADÍSTICAS DEL ÁRBOL
+  Widget _buildStatsCard() {
+    final stats = _arbolCompleto?['estadisticas'];
+    if (stats == null) return const SizedBox.shrink();
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.green.shade400, Colors.green.shade600],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const Text(
+            '📈 Estadísticas del Árbol',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatItem(
+                '📄',
+                '${stats['generaciones_hacia_arriba'] ?? 0}',
+                'Generaciones\nRegistradas',
+              ),
+              _buildStatItem(
+                '👨‍👩‍👧‍👦',
+                '${(_padre != null ? 1 : 0) + (_madre != null ? 1 : 0)}',
+                'Padres\nRegistrados',
+              ),
+              _buildStatItem(
+                '👴👵',
+                '${(_abueloPaterno != null ? 1 : 0) + (_abuelaPaterna != null ? 1 : 0) + (_abueloMaterno != null ? 1 : 0) + (_abuelaMaterna != null ? 1 : 0)}',
+                'Abuelos\nRegistrados',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String emoji, String value, String label) {
+    return Column(
+      children: [
+        Text(
+          emoji,
+          style: const TextStyle(fontSize: 24),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.white70,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  // 🖼️ WIDGET PARA MOSTRAR IMAGEN DE CLOUDINARY
+  Widget _buildNetworkImage(String? fotoUrl, double iconSize) {
+    if (fotoUrl == null || fotoUrl.isEmpty) {
+      return Icon(
+        Icons.pets,
+        size: iconSize,
+        color: AppColors.primary,
+      );
+    }
+
+    // 🔥 MANEJAR URLs DE CLOUDINARY Y ASSETS
+    if (fotoUrl.startsWith('http')) {
+      // URLs de internet (Cloudinary)
+      return Image.network(
+        fotoUrl,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                  : null,
+              strokeWidth: 1,
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          print('❌ Error cargando imagen en árbol: $fotoUrl - $error');
+          return Icon(
+            Icons.pets,
+            size: iconSize,
+            color: AppColors.primary,
+          );
+        },
+      );
+    } else if (fotoUrl.startsWith('assets/')) {
+      // Assets locales
+      return Image.asset(
+        fotoUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(
+            Icons.pets,
+            size: iconSize,
+            color: AppColors.primary,
+          );
+        },
+      );
+    } else {
+      // Fallback para rutas desconocidas
+      return Icon(
+        Icons.pets,
+        size: iconSize,
+        color: AppColors.primary,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
+      appBar: AppBar(
+        title: const Text(
+          '🌳 Árbol Genealógico',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        actions: [
+          if (!_isLoading) 
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _cargarArbolGenealogico,
+              tooltip: 'Recargar árbol',
+            ),
+        ],
+      ),
+      body: _isLoading 
+        ? const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('🌳 Cargando árbol genealógico...'),
+              ],
+            ),
+          )
+        : Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: Transform.scale(
+                  scale: _scale,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: _buildGenealogyTree(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            heroTag: "zoom_in",
+            mini: true,
+            onPressed: () {
+              setState(() {
+                _scale = (_scale + 0.2).clamp(0.5, 2.0);
+              });
+            },
+            backgroundColor: AppColors.primary,
+            child: const Icon(Icons.zoom_in, color: Colors.white),
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton(
+            heroTag: "zoom_out",
+            mini: true,
+            onPressed: () {
+              setState(() {
+                _scale = (_scale - 0.2).clamp(0.5, 2.0);
+              });
+            },
+            backgroundColor: AppColors.primary,
+            child: const Icon(Icons.zoom_out, color: Colors.white),
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton(
+            heroTag: "reset_zoom",
+            mini: true,
+            onPressed: () {
+              setState(() {
+                _scale = 1.0;
+              });
+            },
+            backgroundColor: Colors.grey[600],
+            child: const Icon(Icons.home, color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Column(
+        children: [
+          Text(
+            widget.galloSeleccionado['nombre'] ?? 'Gallo Seleccionado',
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Línea de sangre: ${widget.galloSeleccionado['raza']?['nombre'] ?? 'N/A'}',
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.white70,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGenealogyTree() {
+    return Column(
+      children: [
+        // 1. GALLO PRINCIPAL (ARRIBA)
+        _buildGenerationSection(
+          '🏆 GALLO PRINCIPAL',
+          [_buildGalloCard(widget.galloSeleccionado, '👑 EL CAMPEÓN', isMainGallo: true)],
+          AppColors.primary,
+        ),
+        
+        if (_padre != null || _madre != null) ...[
+          _buildVerticalConnector(),
+          _buildHorizontalSplitter(),
+          
+          // 2. PADRES (GENERACIÓN -1)
+          _buildGenerationSection(
+            '👨‍👩‍👦 PADRES',
+            [
+              Row(
+                children: [
+                  Expanded(child: _buildGalloCard(_padre, '👨 PADRE')),
+                  const SizedBox(width: 24),
+                  Expanded(child: _buildGalloCard(_madre, '👩 MADRE')),
+                ],
+              ),
+            ],
+            Colors.blue,
+          ),
+          
+          if (_abueloPaterno != null || _abuelaPaterna != null || 
+              _abueloMaterno != null || _abuelaMaterna != null) ...[
+            _buildParentToGrandparentConnectors(),
+            
+            // 3. ABUELOS (GENERACIÓN -2)
+            _buildGenerationSection(
+              '👴👵 ABUELOS',
+              [
+                Column(
+                  children: [
+                    if (_abueloPaterno != null || _abuelaPaterna != null) ...[
+                      _buildSubGenerationLabel('Línea Paterna'),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(child: _buildGalloCard(_abueloPaterno, '👴 ABUELO PAT.')),
+                          const SizedBox(width: 16),
+                          Expanded(child: _buildGalloCard(_abuelaPaterna, '👵 ABUELA PAT.')),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                    
+                    if (_abueloMaterno != null || _abuelaMaterna != null) ...[
+                      _buildSubGenerationLabel('Línea Materna'),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(child: _buildGalloCard(_abueloMaterno, '👴 ABUELO MAT.')),
+                          const SizedBox(width: 16),
+                          Expanded(child: _buildGalloCard(_abuelaMaterna, '👵 ABUELA MAT.')),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+              Colors.orange,
+            ),
+          ],
+        ],
+        
+        const SizedBox(height: 32),
+        _buildStatsCard(),
+        const SizedBox(height: 20),
+        _buildBackToListButton(),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildGenerationSection(String title, List<Widget> children, Color color) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [color, color.withOpacity(0.7)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(25),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVerticalConnector() {
+    return Container(
+      width: 4,
+      height: 30,
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primary.withOpacity(0.5)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(2),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.3),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHorizontalSplitter() {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 3,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.transparent, AppColors.primary.withOpacity(0.7)],
+                ),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.5),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Container(
+              height: 3,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primary.withOpacity(0.7), Colors.transparent],
+                ),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildParentToGrandparentConnectors() {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 15),
+      child: Row(
+        children: [
+          Expanded(
+            child: (_abueloPaterno != null || _abuelaPaterna != null)
+                ? Column(
+                    children: [
+                      Container(
+                        width: 3,
+                        height: 25,
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Colors.blue,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
+          const SizedBox(width: 24),
+          Expanded(
+            child: (_abueloMaterno != null || _abuelaMaterna != null)
+                ? Column(
+                    children: [
+                      Container(
+                        width: 3,
+                        height: 25,
+                        decoration: BoxDecoration(
+                          color: Colors.pink.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Colors.pink,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubGenerationLabel(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.grey[400]!),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey[700],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBackToListButton() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      child: ElevatedButton.icon(
+        onPressed: () {
+          Navigator.pop(context);
+        },
+        icon: const Icon(Icons.list_alt, size: 24),
+        label: const Text(
+          '📋 Regresar a la Lista',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.green,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          elevation: 5,
+          shadowColor: Colors.green.withOpacity(0.5),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGalloCard(Map<String, dynamic>? gallo, String label, {bool isMainGallo = false}) {
+    if (gallo == null) {
+      return _buildEmptyCard(label);
+    }
+
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isMainGallo ? AppColors.primary : Colors.grey[400],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () => _showGalloDetail(gallo),
+          child: Container(
+            width: isMainGallo ? 280 : 240,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color: isMainGallo ? AppColors.primary : Colors.grey[300]!,
+                width: isMainGallo ? 3 : 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: isMainGallo ? 80 : 60,
+                  height: isMainGallo ? 80 : 60,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.primary, width: 2),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: _buildNetworkImage(gallo['foto_principal_url'], isMainGallo ? 40 : 30),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  gallo['nombre'] ?? 'Sin nombre',
+                  style: TextStyle(
+                    fontSize: isMainGallo ? 18 : 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    gallo['codigo_identificacion'] ?? 'N/A',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Raza: ${gallo['raza']?['nombre'] ?? gallo['raza_nombre'] ?? 'N/A'}\n'
+                  'Peso: ${gallo['peso'] ?? 0}kg\n'
+                  'Estado: ${gallo['estado'] ?? 'N/A'}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    height: 1.3,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyCard(String label) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.grey[400],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: 240,
+          height: 180,
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: Colors.grey[300]!, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.help_outline,
+                size: 40,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'No registrado',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showGalloDetail(Map<String, dynamic> gallo) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        minChildSize: 0.4,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.primary, width: 2),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: _buildNetworkImage(gallo['foto_principal_url'], 40),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    gallo['nombre'] ?? 'Sin nombre',
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Código: ${gallo['codigo_identificacion'] ?? 'N/A'}',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      'Generación: ${gallo['generacion'] ?? 0}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        _buildDetailRow('Raza', gallo['raza']?['nombre'] ?? gallo['raza_nombre'] ?? 'N/A'),
+                        _buildDetailRow('Peso', '${gallo['peso'] ?? 0} kg'),
+                        _buildDetailRow('Color', gallo['color'] ?? 'N/A'),
+                        _buildDetailRow('Estado', gallo['estado'] ?? 'N/A'),
+                        _buildDetailRow('Fecha Nacimiento', gallo['fecha_nacimiento'] ?? 'N/A'),
+                        if (gallo['procedencia'] != null && gallo['procedencia'].toString().isNotEmpty)
+                          _buildDetailRow('Procedencia', gallo['procedencia']),
+                        if (gallo['notas'] != null && gallo['notas'].toString().isNotEmpty)
+                          _buildDetailRow('Notas', gallo['notas']),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            minimumSize: const Size(double.infinity, 50),
+                          ),
+                          child: const Text(
+                            'Cerrar',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

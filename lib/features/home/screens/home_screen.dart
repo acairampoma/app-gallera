@@ -2,9 +2,33 @@ import 'package:flutter/material.dart';
 import '../../../shared/widgets/base_screen.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../services/auth_service.dart';
+import '../../suscripcion/screens/suscripcion_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      // Cargar datos del usuario desde el backend
+      await AuthService.instance.loadCurrentUser();
+      if (mounted) {
+        setState(() {}); // Actualizar UI
+      }
+    } catch (e) {
+      print('💥 Error cargando datos usuario: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,8 +58,11 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildUserName() {
+    final user = AuthService.instance.currentUser;
+    final profile = AuthService.instance.currentProfile;
+    
     return Text(
-      AuthService.instance.currentUser?.nombreCompleto ?? 'Usuario',
+      profile?.nombreCompleto ?? user?.email ?? 'Usuario',
       style: const TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.bold,
@@ -46,6 +73,9 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildWelcomeCard() {
+    final user = AuthService.instance.currentUser;
+    final profile = AuthService.instance.currentProfile;
+    
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
@@ -55,18 +85,38 @@ class HomeScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
+            // 📷 AVATAR CON FOTO DE PERFIL (igual que ProfileScreen)
             Container(
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: const Color(0xFFD32F2F).withOpacity(0.2),
+                color: AppColors.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(15),
+                border: Border.all(
+                  color: AppColors.primary,
+                  width: 2,
+                ),
               ),
-              child: const Icon(
-                Icons.person,
-                size: 40,
-                color: Color(0xFFD32F2F),
-              ),
+              child: profile?.avatarUrl != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(13),
+                      child: Image.network(
+                        profile!.avatarUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.person,
+                            size: 35,
+                            color: AppColors.primary,
+                          );
+                        },
+                      ),
+                    )
+                  : const Icon(
+                      Icons.person,
+                      size: 35,
+                      color: AppColors.primary,
+                    ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -82,7 +132,46 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   _buildUserName(),
+                  // 🏠 MOSTRAR GALPÓN SI EXISTE
+                  if (profile?.nombreGalpon != null) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.home,
+                          size: 14,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            profile!.nombreGalpon!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
+              ),
+            ),
+            // 👑 BADGE DE ESTADO (Premium/Verificado)
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: user?.isPremium == true ? Colors.amber : Colors.green,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                user?.isPremium == true ? Icons.star : Icons.verified,
+                color: Colors.white,
+                size: 16,
               ),
             ),
           ],
@@ -124,7 +213,7 @@ class HomeScreen extends StatelessWidget {
         title: 'Peleas',
         icon: Icons.sports_mma,
         color: Colors.red,
-        subtitle: 'Registro de combates',
+        subtitle: 'Combates',
         onTap: () {
           Navigator.pushNamed(context, '/peleas');
         },
@@ -133,18 +222,23 @@ class HomeScreen extends StatelessWidget {
         title: 'Reportes',
         icon: Icons.bar_chart,
         color: Colors.purple,
-        subtitle: 'Estadísticas y PDF',
+        subtitle: 'Estadísticas',
         onTap: () {
           Navigator.pushNamed(context, '/reportes');
         },
       ),
       _MenuItem(
-        title: 'Suscripción',
-        icon: Icons.credit_card,
-        color: Colors.grey,
-        subtitle: 'Planes y pagos',
+        title: 'Suscripciones',
+        icon: Icons.card_membership,
+        color: Colors.amber,
+        subtitle: 'Planes y precios',
         onTap: () {
-          // Navegar a pantalla de Suscripción
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const SuscripcionScreen(),
+            ),
+          );
         },
       ),
     ];
