@@ -59,14 +59,14 @@ class ConnectionService {
     _updateStatus(ConnectionStatus.checking);
     
     try {
-      // Primero verificar conectividad del dispositivo
-      final connectivityResult = await _connectivity.checkConnectivity();
-      
-      if (connectivityResult == ConnectivityResult.none) {
-        print('📴 Sin conexión a internet');
-        _updateStatus(ConnectionStatus.offline);
-        return;
-      }
+      // Primero verificar conectividad del dispositivo - Comentado temporalmente
+      // final connectivityResult = await _connectivity.checkConnectivity();
+      // 
+      // if (connectivityResult == ConnectivityResult.none) {
+      //   print('📴 Sin conexión a internet');
+      //   _updateStatus(ConnectionStatus.offline);
+      //   return;
+      // }
       
       // Intentar conectar con el backend
       print('🔍 Verificando conexión con backend...');
