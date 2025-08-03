@@ -2,7 +2,7 @@ name: gallos_app_new
 description: "Casta de Gallos - Aplicación profesional para criadores de gallos de pelea"
 publish_to: 'none'
 
-version: 1.0.6+600  # Third attempt - previous 501 already uploaded
+version: 1.0.6+601  # Third attempt - previous 501 already uploaded
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
