@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+// import 'package:flutter_localizations/flutter_localizations.dart'; // Comentado
 import 'package:gallos_app_new/shared/theme/app_colors.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/home/screens/home_screen.dart';
@@ -45,16 +45,16 @@ class CastaDeGallosApp extends StatelessWidget {
       title: 'Casta de Gallos - Criadores Profesionales',
       debugShowCheckedModeBanner: false,
       
-      // 🌐 LOCALIZACIONES para DatePicker y otros widgets
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('es', 'ES'), // Español
-        Locale('en', 'US'), // Inglés
-      ],
+      // 🌐 LOCALIZACIONES comentadas por conflicto
+      // localizationsDelegates: const [
+      //   GlobalMaterialLocalizations.delegate,
+      //   GlobalWidgetsLocalizations.delegate,
+      //   GlobalCupertinoLocalizations.delegate,
+      // ],
+      // supportedLocales: const [
+      //   Locale('es', 'ES'), // Español
+      //   Locale('en', 'US'), // Inglés
+      // ],
       theme: ThemeData(
         primarySwatch: Colors.red,
         primaryColor: AppColors.primary,
