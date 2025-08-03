@@ -63,13 +63,13 @@ class AppTheme {
       ),
       
       // ⚪ Cards BLANCAS con sombra
-      cardTheme: CardTheme(
+      cardTheme: const CardThemeData(
         elevation: 4,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.all(Radius.circular(16)),
         ),
         color: Colors.white,
-        shadowColor: Colors.grey.withOpacity(0.2),
+        shadowColor: Colors.grey, // shadowColor debe ser Color, no Color.withOpacity
       ),
       
       // 🔴 Bottom Navigation BLANCO con selección ROJA

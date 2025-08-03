@@ -74,10 +74,10 @@ class CastaDeGallosApp extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-        cardTheme: CardTheme(
+        cardTheme: const CardThemeData(
           elevation: 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.all(Radius.circular(15)),
           ),
           color: AppColors.surface,
         ),
