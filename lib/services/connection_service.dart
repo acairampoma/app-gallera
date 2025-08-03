@@ -2,7 +2,7 @@
 // 🌐 Servicio para monitorear el estado de conexión y gestionar modo online/offline
 
 import 'dart:async';
-import 'package:connectivity_plus/connectivity_plus.dart';
+// import 'package:connectivity_plus/connectivity_plus.dart'; // Comentado temporalmente
 import 'package:http/http.dart' as http;
 
 enum ConnectionStatus {
@@ -31,17 +31,17 @@ class ConnectionService {
   
   // ⏱️ Timer para chequeo periódico
   Timer? _connectivityTimer;
-  final Connectivity _connectivity = Connectivity();
-  StreamSubscription<ConnectivityResult>? _connectivitySubscription;
+  // final Connectivity _connectivity = Connectivity(); // Comentado temporalmente
+  // StreamSubscription<ConnectivityResult>? _connectivitySubscription; // Comentado temporalmente
 
   // 🚀 Inicializar servicio
   Future<void> initialize() async {
     print('🌐 Inicializando ConnectionService...');
     
-    // Escuchar cambios de conectividad del dispositivo
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((_) {
-      checkConnection();
-    });
+    // Escuchar cambios de conectividad del dispositivo - Comentado temporalmente
+    // _connectivitySubscription = _connectivity.onConnectivityChanged.listen((_) {
+    //   checkConnection();
+    // });
     
     // Chequeo inicial
     await checkConnection();
