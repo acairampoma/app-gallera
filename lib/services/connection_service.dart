@@ -137,7 +137,7 @@ class ConnectionService {
   // 🛑 Limpiar recursos
   void dispose() {
     _connectivityTimer?.cancel();
-    _connectivitySubscription?.cancel();
+    // _connectivitySubscription?.cancel(); // Comentado temporalmente
     _connectionStatusController.close();
   }
 
