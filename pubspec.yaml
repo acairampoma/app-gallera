@@ -19,7 +19,7 @@ dependencies:
   
   # HTTP y conectividad
   http: ^1.1.2
-  connectivity_plus: ^6.0.0
+  # connectivity_plus: ^6.0.0  # Comentado temporalmente para pasar revisión Apple
   
   # UI y multimedia
   image_picker: ^1.0.7
