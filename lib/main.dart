@@ -23,11 +23,11 @@ void main() async {
   // 🌐 Inicializar ConnectionService
   await ConnectionService().initialize();
   
-  runApp(const GallosProApp());
+  runApp(const CastaDeGallosApp());
 }
 
-class GallosProApp extends StatelessWidget {
-  const GallosProApp({super.key});
+class CastaDeGallosApp extends StatelessWidget {
+  const CastaDeGallosApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +42,7 @@ class GallosProApp extends StatelessWidget {
     );
 
     return MaterialApp(
-      title: 'GallosPro - 🔥 Backend Real',
+      title: 'Casta de Gallos - Criadores Profesionales',
       debugShowCheckedModeBanner: false,
       
       // 🌐 LOCALIZACIONES para DatePicker y otros widgets
