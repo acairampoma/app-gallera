@@ -7,6 +7,7 @@ import '../../../shared/widgets/error_widget.dart' as custom_error;
 import '../../../services/gallo_service.dart';
 import '../services/reportes_service.dart';
 import '../models/documentos_model.dart';
+import '../../../services/pdf_download_service.dart';
 
 class DocumentosTab extends StatefulWidget {
   const DocumentosTab({super.key});
@@ -458,19 +459,66 @@ class _DocumentosTabState extends State<DocumentosTab>
             },
             child: const Text('Ver Datos'),
           ),
+          // 🔥 DESCARGA DIRECTA DESDE BASE64
           ElevatedButton.icon(
+            onPressed: () {
+              print('🔥 Descargando PDF desde Base64...');
+              Navigator.of(context).pop();
+              
+              // Descargar usando el base64 que ya tenemos
+              final pdfBase64 = response['pdf_base64'] as String;
+              final fileName = 'ficha_${nombreGallo}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+              
+              try {
+                PDFDownloadService.downloadPDFFromBase64(pdfBase64, fileName);
+                
+                // Mostrar éxito
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(Icons.check_circle, color: Colors.white),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text('🔥 Descargando PDF de "$nombreGallo"...'),
+                        ),
+                      ],
+                    ),
+                    backgroundColor: AppColors.success,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+                
+              } catch (e) {
+                print('❌ Error descargando: $e');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('❌ Error descargando PDF: $e'),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
+            },
+            icon: const Icon(Icons.download, size: 18),
+            label: const Text('📥 Descargar'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.success,
+              foregroundColor: Colors.white,
+            ),
+          ),
+          // Botón alternativo API directa
+          TextButton.icon(
             onPressed: () async {
-              print('📥 Usuario quiere descargar PDF...');
+              print('📥 Descarga alternativa vía API...');
               Navigator.of(context).pop();
               
               // Intentar descarga PDF directa
               await _descargarPDFDirecto(response['data']['gallo']['id'], nombreGallo);
             },
-            icon: const Icon(Icons.download, size: 18),
-            label: const Text('Descargar PDF'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+            icon: const Icon(Icons.cloud_download, size: 16),
+            label: const Text('API'),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.primary,
             ),
           ),
         ],
