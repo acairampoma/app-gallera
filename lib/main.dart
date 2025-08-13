@@ -7,10 +7,13 @@ import 'features/home/screens/home_screen.dart';
 import 'features/perfil/screens/perfil_screen.dart';
 import 'features/pedigri/screens/pedigri_screen.dart';
 import 'features/pedigri/screens/add_gallo_multistep_screen.dart'; // 🆕 NUEVA PANTALLA
-import 'features/vacunas/screens/vacunas_screen.dart';
-import 'features/topes/screens/topes_screen.dart';
-import 'features/peleas/screens/peleas_screen.dart';
+import 'features/vacunas/screens/vacunas_screen_real.dart';
+import 'features/topes/screens/topes_gallos_screen.dart';
+import 'features/peleas/screens/peleas_gallos_screen.dart';
 import 'features/reportes/screens/reportes_screen.dart';
+import 'features/inversiones/screens/inversiones_screen.dart';
+import 'features/planes/screens/planes_screen.dart';
+import 'features/admin/screens/admin_dashboard_screen.dart';
 import 'services/auth_service.dart';
 import 'services/connection_service.dart';
 
@@ -74,10 +77,10 @@ class CastaDeGallosApp extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-        cardTheme: const CardThemeData(
+        cardTheme: CardTheme(
           elevation: 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(15)),
+            borderRadius: BorderRadius.circular(15),
           ),
           color: AppColors.surface,
         ),
@@ -120,10 +123,13 @@ class CastaDeGallosApp extends StatelessWidget {
         '/pedigri': (context) => const PedigriScreen(),
         '/add-gallo-multistep': (context) => const AddGalloMultistepScreen(),
         '/reportes': (context) => const ReportesScreen(),
+        '/inversiones': (context) => const InversionesScreen(),
         '/perfil': (context) => const PerfilScreen(),
-        '/vacunas': (context) => const VacunasScreen(),
-        '/topes': (context) => const TopesScreen(),
-        '/peleas': (context) => const PeleasScreen(),
+        '/vacunas': (context) => const VacunasScreenReal(),
+        '/topes': (context) => const TopesGallosScreen(),
+        '/peleas': (context) => const PeleasGallosScreen(),
+        '/planes': (context) => const PlanesScreen(),
+        '/admin-dashboard': (context) => const AdminDashboardScreen(),
         // Suscripciones se navega directamente con MaterialPageRoute
       },
     );

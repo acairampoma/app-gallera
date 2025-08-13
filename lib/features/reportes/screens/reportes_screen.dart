@@ -1,8 +1,14 @@
+// 📊🐓 PANTALLA ÉPICA DE REPORTES - LA MEJOR DEL MUNDO GALLÍSTICO
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:flutter/services.dart';
-import '../../../shared/widgets/base_screen.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/widgets/loading_widget.dart';
+import '../../../shared/widgets/error_widget.dart' as custom_error;
+import '../services/reportes_service.dart';
+import '../models/dashboard_model.dart';
+import '../widgets/filtros_simple_widget.dart';
+import '../widgets/dashboard_tab.dart';
+import '../widgets/rankings_tab.dart';
+import '../widgets/documentos_tab.dart';
 
 class ReportesScreen extends StatefulWidget {
   const ReportesScreen({Key? key}) : super(key: key);
@@ -11,572 +17,376 @@ class ReportesScreen extends StatefulWidget {
   State<ReportesScreen> createState() => _ReportesScreenState();
 }
 
-class _ReportesScreenState extends State<ReportesScreen> with SingleTickerProviderStateMixin {
-  Map<String, dynamic> reportesData = {};
-  bool isLoading = true;
+class _ReportesScreenState extends State<ReportesScreen> 
+    with TickerProviderStateMixin {
+  
+  // 🎯 CONTROLADORES Y ESTADO
   late TabController _tabController;
-
+  final ReportesService _reportesService = ReportesService();
+  
+  // 📊 DATOS DEL DASHBOARD
+  DashboardModel? _dashboardData;
+  bool _isLoading = true;
+  String? _error;
+  
+  // 🗓️ FILTROS DINÁMICOS
+  int? _anoSeleccionado;
+  int? _mesSeleccionado;
+  List<int> _anosDisponibles = [];
+  
+  // 🎨 ANIMACIONES
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  
   @override
   void initState() {
     super.initState();
+    
+    // Inicializar controladores
     _tabController = TabController(length: 3, vsync: this);
-    _loadData();
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
+    
+    // Cargar datos iniciales
+    _initializeData();
+    _fadeController.forward();
   }
-
+  
   @override
   void dispose() {
     _tabController.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
-
-  Future<void> _loadData() async {
+  
+  // 🚀 INICIALIZAR DATOS ÉPICOS
+  Future<void> _initializeData() async {
     try {
-      final String reportesJson = await rootBundle.loadString('lib/data/mock/reportes_mock.json');
-      final data = json.decode(reportesJson);
       setState(() {
-        reportesData = data['reportes'] ?? {};
-        isLoading = false;
+        _isLoading = true;
+        _error = null;
       });
+      
+      // Generar años disponibles simples (2020-2025)
+      _anosDisponibles = List.generate(6, (index) => 2020 + index).reversed.toList();
+      
+      // Si no hay filtros, usar período actual
+      if (_anoSeleccionado == null && _mesSeleccionado == null) {
+        // Usar valores por defecto
+        _anoSeleccionado = 2025;
+        _mesSeleccionado = 8;
+        // final current = periodosResponse['periodo_actual'];
+        // if (current != null) {
+        //   _anoSeleccionado = current['ano'];
+        //   _mesSeleccionado = current['mes'];
+        // }
+      }
+      
+      // Cargar dashboard con filtros
+      await _loadDashboard();
+      
     } catch (e) {
-      print('Error loading reportes data: $e');
       setState(() {
-        isLoading = false;
+        _error = 'Error cargando reportes: $e';
+        _isLoading = false;
+      });
+      
+      // Mostrar error en snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            action: SnackBarAction(
+              label: 'Reintentar',
+              textColor: Colors.white,
+              onPressed: _initializeData,
+            ),
+          ),
+        );
+      }
+    }
+  }
+  
+  // 📊 CARGAR DASHBOARD CON FILTROS
+  Future<void> _loadDashboard() async {
+    try {
+      print('🚀 === INICIANDO CARGA DE DASHBOARD ===');
+      print('🚀 Filtros: año=$_anoSeleccionado, mes=$_mesSeleccionado');
+      
+      final data = await _reportesService.getDashboard(
+        ano: _anoSeleccionado,
+        mes: _mesSeleccionado,
+      );
+      
+      print('🚀 === DATOS RECIBIDOS DEL SERVICIO ===');
+      print('🚀 Data es null: ${data == null}');
+      print('🚀 Data es Map: ${data is Map<String, dynamic>}');
+      
+      if (data != null) {
+        print('🚀 Keys del JSON: ${data.keys.toList()}');
+        print('🚀 JSON completo: $data');
+      }
+      
+      // Validar que tenemos datos antes de parsear
+      if (data != null && data is Map<String, dynamic>) {
+        setState(() {
+          try {
+            print('🚀 === INICIANDO PARSEO DEL MODELO ===');
+            _dashboardData = DashboardModel.fromJson(data);
+            print('🚀 === MODELO PARSEADO EXITOSAMENTE ===');
+            _error = null;
+          } catch (parseError) {
+            print('❌ Error parseando dashboard: $parseError');
+            print('❌ Stack trace: ${StackTrace.current}');
+            _error = 'Error procesando datos del dashboard: $parseError';
+          }
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = 'No se recibieron datos del servidor';
+          _isLoading = false;
+        });
+      }
+      
+    } catch (e) {
+      print('❌ Error general cargando dashboard: $e');
+      print('❌ Stack trace: ${StackTrace.current}');
+      setState(() {
+        _error = 'Error conectando con el servidor: $e';
+        _isLoading = false;
       });
     }
+  }
+  
+  // 🔄 REFRESH DATOS
+  Future<void> _refreshData() async {
+    await _loadDashboard();
+  }
+  
+  // 🗓️ CAMBIAR FILTROS
+  void _onFiltrosChanged({int? ano, int? mes}) {
+    if (ano != _anoSeleccionado || mes != _mesSeleccionado) {
+      setState(() {
+        _anoSeleccionado = ano;
+        _mesSeleccionado = mes;
+        _isLoading = true;
+      });
+      _loadDashboard();
+    }
+  }
+
+  // 🎨 BUILD PRINCIPAL
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              // 🎯 APP BAR ÉPICO
+              SliverAppBar(
+                expandedHeight: 160,
+                floating: false,
+                pinned: true,
+                elevation: 0,
+                backgroundColor: AppColors.primary,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppColors.primary,
+                          AppColors.primary.withOpacity(0.8),
+                        ],
+                      ),
+                    ),
+                    child: SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 8),
+                            // Título épico - más compacto
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.analytics,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '🐓 Reportes Épicos',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Dashboard gallístico avanzado',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            // 🗓️ FILTROS WIDGET ÉPICOS
+                            FiltrosSimpleWidget(
+                              anoSeleccionado: _anoSeleccionado,
+                              mesSeleccionado: _mesSeleccionado,
+                              anosDisponibles: _anosDisponibles,
+                              onFiltrosChanged: _onFiltrosChanged,
+                              isLoading: _isLoading,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              
+              // 🎯 TABS ÉPICOS
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _StickyTabBarDelegate(
+                  TabBar(
+                    controller: _tabController,
+                    labelColor: AppColors.primary,
+                    unselectedLabelColor: Colors.grey[600],
+                    indicatorColor: AppColors.primary,
+                    indicatorWeight: 3,
+                    labelStyle: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    unselectedLabelStyle: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                    tabs: const [
+                      Tab(
+                        icon: Icon(Icons.dashboard),
+                        text: 'Dashboard',
+                      ),
+                      Tab(
+                        icon: Icon(Icons.leaderboard),
+                        text: 'Rankings',
+                      ),
+                      Tab(
+                        icon: Icon(Icons.description),
+                        text: 'Documentos',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ];
+          },
+          
+          // 📱 BODY CON TABS
+          body: _buildBody(),
+        ),
+      ),
+    );
+  }
+  
+  // 📱 BUILD BODY SEGÚN ESTADO
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const LoadingWidget(message: 'Cargando reportes épicos...');
+    }
+    
+    if (_error != null) {
+      return custom_error.ErrorWidget(
+        message: _error!,
+        onRetry: _refreshData,
+      );
+    }
+    
+    if (_dashboardData == null) {
+      return const Center(
+        child: Text(
+          'No hay datos disponibles',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
+    }
+    
+    return TabBarView(
+      controller: _tabController,
+      children: [
+        // 📊 DASHBOARD TAB
+        DashboardTab(
+          dashboardData: _dashboardData!,
+          onRefresh: _refreshData,
+        ),
+        
+        // 🏆 RANKINGS TAB ÉPICO
+        RankingsTab(
+          anoSeleccionado: _anoSeleccionado,
+          mesSeleccionado: _mesSeleccionado,
+        ),
+        
+        // 📄 DOCUMENTOS TAB ÉPICO
+        const DocumentosTab(),
+      ],
+    );
+  }
+}
+
+// 🎯 DELEGATE PARA STICKY TAB BAR
+class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
+  const _StickyTabBarDelegate(this.tabBar);
+
+  final TabBar tabBar;
+
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: Colors.white,
+      child: tabBar,
+    );
   }
 
   @override
-  Widget build(BuildContext context) {
-    return BaseScreen(
-      title: 'Reportes',
-      subtitle: 'Estadísticas y documentos PDF',
-      currentIndex: 2,
-      child: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _buildContent(),
-    );
-  }
-
-  Widget _buildContent() {
-    return Column(
-      children: [
-        Container(
-          color: Colors.white,
-          child: TabBar(
-            controller: _tabController,
-            labelColor: AppColors.primary,
-            unselectedLabelColor: Colors.grey[600],
-            indicatorColor: AppColors.primary,
-            tabs: const [
-              Tab(text: 'Dashboard'),
-              Tab(text: 'Rankings'),
-              Tab(text: 'Documentos'),
-            ],
-          ),
-        ),
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              _buildDashboardTab(),
-              _buildRankingsTab(),
-              _buildDocumentosTab(),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDashboardTab() {
-    final resumen = reportesData['estadisticas_generales']?['resumen'] ?? {};
-    final gastosPorCategoria = reportesData['estadisticas_generales']?['gastos_por_categoria'] ?? [];
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildStatsCards(resumen),
-          const SizedBox(height: 24),
-          _buildFinancialSummary(resumen),
-          const SizedBox(height: 24),
-          _buildExpenseBreakdown(gastosPorCategoria),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatsCards(Map<String, dynamic> resumen) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Resumen General',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                'Total Gallos',
-                '${resumen['total_gallos'] ?? 0}',
-                Icons.pets,
-                AppColors.primary,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildStatCard(
-                'Activos',
-                '${resumen['gallos_activos'] ?? 0}',
-                Icons.check_circle,
-                Colors.green,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                'Total Peleas',
-                '${resumen['total_peleas'] ?? 0}',
-                Icons.sports_mma,
-                Colors.orange,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildStatCard(
-                'Victorias',
-                '${resumen['victorias'] ?? 0}',
-                Icons.emoji_events,
-                Colors.amber,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _buildStatCard(
-          'Porcentaje de Éxito',
-          '${resumen['porcentaje_exito'] ?? 0}%',
-          Icons.trending_up,
-          Colors.purple,
-          isWide: true,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatCard(String title, String value, IconData icon, Color color, {bool isWide = false}) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              size: 32,
-              color: color,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: isWide ? 28 : 24,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFinancialSummary(Map<String, dynamic> resumen) {
-    final totalIngresos = resumen['total_ingresos'] ?? 0.0;
-    final totalGastos = resumen['total_gastos'] ?? 0.0;
-    final gananciaNeta = resumen['ganancia_neta'] ?? 0.0;
-
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Resumen Financiero',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildFinancialRow('Ingresos', totalIngresos, Colors.green),
-            const SizedBox(height: 8),
-            _buildFinancialRow('Gastos', totalGastos, Colors.red),
-            const Divider(),
-            _buildFinancialRow('Ganancia Neta', gananciaNeta, 
-                gananciaNeta >= 0 ? Colors.green : Colors.red, isTotal: true),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFinancialRow(String label, double amount, Color color, {bool isTotal = false}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: isTotal ? 16 : 14,
-            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-        Text(
-          'S/. ${amount.toStringAsFixed(2)}',
-          style: TextStyle(
-            fontSize: isTotal ? 16 : 14,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildExpenseBreakdown(List<dynamic> gastosPorCategoria) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Gastos por Categoría',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ...gastosPorCategoria.map((gasto) {
-              final categoria = gasto['categoria'] ?? '';
-              final total = gasto['total'] ?? 0.0;
-              final porcentaje = gasto['porcentaje'] ?? 0.0;
-              
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(categoria),
-                        Text(
-                          'S/. ${total.toStringAsFixed(2)}',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    LinearProgressIndicator(
-                      value: porcentaje / 100,
-                      backgroundColor: Colors.grey[300],
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        _getCategoryColor(categoria),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(
-                          '${porcentaje.toStringAsFixed(1)}%',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Color _getCategoryColor(String categoria) {
-    switch (categoria.toLowerCase()) {
-      case 'alimentación':
-        return Colors.green;
-      case 'salud':
-        return Colors.blue;
-      case 'entrenamiento':
-        return Colors.orange;
-      case 'transporte':
-        return Colors.purple;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  Widget _buildRankingsTab() {
-    final topGallos = reportesData['estadisticas_generales']?['top_gallos'] ?? [];
-    final rankingPadrillos = reportesData['ranking_padrillos'] ?? [];
-    final rankingMadres = reportesData['ranking_madres'] ?? [];
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildRankingSection('Top Gallos', topGallos, Icons.emoji_events),
-          const SizedBox(height: 24),
-          _buildRankingSection('Ranking Padrillos', rankingPadrillos, Icons.male),
-          const SizedBox(height: 24),
-          _buildRankingSection('Ranking Madres', rankingMadres, Icons.female),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRankingSection(String title, List<dynamic> ranking, IconData icon) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: AppColors.primary),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (ranking.isEmpty)
-              const Text('No hay datos disponibles')
-            else
-              ...ranking.asMap().entries.map((entry) {
-                final index = entry.key;
-                final item = entry.value;
-                return _buildRankingItem(item, index + 1);
-              }).toList(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRankingItem(Map<String, dynamic> item, int position) {
-    final nombre = item['nombre'] ?? item['padre_nombre'] ?? item['madre_nombre'] ?? 'N/A';
-    final porcentaje = item['porcentaje'] ?? item['porcentaje_exito'] ?? 0.0;
-    final premios = item['ganancia'] ?? item['total_premios_hijos'] ?? 0.0;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: position <= 3 ? _getPositionColor(position).withOpacity(0.1) : Colors.grey[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: position <= 3 ? _getPositionColor(position) : Colors.grey[300]!,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: _getPositionColor(position),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                '$position',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  nombre,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Text(
-                      '${porcentaje.toStringAsFixed(1)}% éxito',
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    const SizedBox(width: 16),
-                    Text(
-                      'S/. ${premios.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _getPositionColor(int position) {
-    switch (position) {
-      case 1:
-        return Colors.amber; // Oro
-      case 2:
-        return Colors.grey; // Plata
-      case 3:
-        return Colors.brown; // Bronce
-      default:
-        return Colors.grey[600]!;
-    }
-  }
-
-  Widget _buildDocumentosTab() {
-    final reportesDisponibles = reportesData['reportes_disponibles'] ?? [];
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
-      itemCount: reportesDisponibles.length,
-      itemBuilder: (context, index) {
-        final reporte = reportesDisponibles[index];
-        return _buildDocumentCard(reporte);
-      },
-    );
-  }
-
-  Widget _buildDocumentCard(Map<String, dynamic> reporte) {
-    final nombre = reporte['nombre'] ?? 'Reporte';
-    final descripcion = reporte['descripcion'] ?? '';
-    final tipo = reporte['tipo'] ?? '';
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        leading: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Icon(
-            Icons.picture_as_pdf,
-            color: AppColors.primary,
-            size: 30,
-          ),
-        ),
-        title: Text(
-          nombre,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        subtitle: Text(
-          descripcion,
-          style: const TextStyle(fontSize: 14),
-        ),
-        trailing: ElevatedButton(
-          onPressed: () => _generateReport(tipo, nombre),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-          child: const Text('PDF'),
-        ),
-      ),
-    );
-  }
-
-  void _generateReport(String tipo, String nombre) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Generando $nombre...'),
-        backgroundColor: Colors.green,
-        action: SnackBarAction(
-          label: 'Ver',
-          textColor: Colors.white,
-          onPressed: () {
-            // TODO: Abrir PDF generado
-          },
-        ),
-      ),
-    );
+  bool shouldRebuild(_StickyTabBarDelegate oldDelegate) {
+    return tabBar != oldDelegate.tabBar;
   }
 }

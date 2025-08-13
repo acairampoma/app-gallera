@@ -17,7 +17,7 @@ class _SuscripcionScreenState extends State<SuscripcionScreen> {
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         title: const Text(
-          'GalloApp Pro',
+          'Casta de Gallos',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,

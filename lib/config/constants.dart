@@ -7,7 +7,7 @@ class Constants {
   static const String cloudinaryUploadPreset = 'gallos_preset'; // ⚠️ CAMBIAR POR TU PRESET
   
   // 🌐 API CONFIGURATION
-  static const String baseApiUrl = 'https://tu-backend.com/api/v1'; // ⚠️ CAMBIAR POR TU API
+  static const String baseApiUrl = 'https://gallerappback-production.up.railway.app/api/v1'; // 🚀 Railway Backend
   
   // 📱 APP CONFIGURATION
   static const String appName = 'GallosPro';

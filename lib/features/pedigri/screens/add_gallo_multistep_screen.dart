@@ -5,6 +5,9 @@ import 'package:intl/intl.dart';
 import 'package:flutter/foundation.dart';
 import '../../../services/gallo_service.dart';
 import '../../../services/gallo_service_v2.dart';
+import '../../../services/suscripcion_service.dart'; // ✅ AGREGADO
+import '../../../shared/widgets/limite_interceptor.dart'; // ✅ AGREGADO
+import '../../../models/suscripcion_models.dart'; // ✅ AGREGADO
 
 class AddGalloMultistepScreen extends StatefulWidget {
   const AddGalloMultistepScreen({Key? key}) : super(key: key);
@@ -1230,10 +1233,80 @@ class _AddGalloMultistepScreenState extends State<AddGalloMultistepScreen> with 
   
   // ===== MÉTODO ÉPICO DE GUARDADO - INTEGRACIÓN TOTAL =====
   Future<void> _guardarGalloCompleto() async {
-    setState(() => _isLoading = true);
-    
     try {
       print('🔥 === INICIANDO GUARDADO ÉPICO ===');
+      
+      // 🚨 VALIDAR LÍMITES DE SUSCRIPCIÓN PRIMERO (DIRECTO)
+      try {
+        print('🔍 [AddGallo] Validando límites de gallos...');
+        
+        final validacion = await SuscripcionService.validarLimite(
+          recursoTipo: RecursoTipo.gallos.value,
+          galloId: null,
+        );
+        
+        print('🔍 [AddGallo] Resultado: puedeCrear=${validacion.puedeCrear}');
+        
+        if (!validacion.puedeCrear) {
+          print('❌ [AddGallo] Límite alcanzado - Mostrando popup directo');
+          
+          if (mounted) {
+            await showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                backgroundColor: Colors.white,
+                title: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(4),
+                      topRight: Radius.circular(4),
+                    ),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.warning, color: Colors.white, size: 28),
+                      SizedBox(width: 12),
+                      Text('Límite Alcanzado', style: TextStyle(color: Colors.white)),
+                    ],
+                  ),
+                ),
+                titlePadding: EdgeInsets.zero,
+                content: Text(
+                  '${validacion.mensajeError ?? "Has alcanzado el límite de gallos"}\n\n'
+                  '¿Deseas actualizar tu plan para crear más gallos?'
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancelar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.pushNamed(context, '/planes');
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                    child: const Text('Actualizar Plan', style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
+            );
+          }
+          
+          return; // Salir sin crear el gallo
+        }
+        
+        print('✅ [AddGallo] Límite OK - Continuando con creación...');
+      } catch (e) {
+        print('❌ [AddGallo] Error en validación de límites: $e');
+        _showEpicSnackbar('⚠️ Error validando límites. Continuando...', Colors.orange);
+        // Continuar sin validación en caso de error del servidor
+      }
+      
+      // 🔄 AHORA SÍ ACTIVAR LOADING PARA EL GUARDADO REAL
+      setState(() => _isLoading = true);
       
       // 1. 🔍 VALIDACIONES RÁPIDAS
       if (_nombreController.text.trim().isEmpty) {

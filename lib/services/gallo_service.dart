@@ -27,42 +27,36 @@ class GalloService {
     print('🔥 === GALLO SERVICE - PROBANDO ENDPOINTS ===');
     print('🌐 Conectando a Railway backend...');
     
-    // 🔍 ENDPOINTS A PROBAR
-    final endpointsToTry = [
-      '$_baseUrl/api/v1/gallos/',       // 🔥 CORRECTO (con barra final)
-      '$_baseUrl/api/v1/gallos',        // Sin barra final
-      '$_baseUrl/api/gallos',           // Sin v1
-      '$_baseUrl/gallos',               // Sin api
-    ];
+    // 🔍 ENDPOINT CORRECTO DEL BACKEND
+    final endpoint = '$_baseUrl/api/v1/gallos/';  // Este es el correcto según main.py
     
     final headers = await _getAuthHeaders();
     final token = headers['Authorization'];
     
     print('🔑 Token presente: ${token != null ? "SÍ" : "NO"}');
     
-    for (String endpoint in endpointsToTry) {
-      try {
-        print('🔍 Probando: $endpoint');
+    try {
+      print('🔍 Llamando: $endpoint');
+      
+      final response = await http.get(
+        Uri.parse(endpoint),
+        headers: headers,
+      ).timeout(const Duration(seconds: 10));
+      
+      print('📡 Status: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        print('✅ ¡GALLOS OBTENIDOS!');
+        print('📝 Body preview: ${response.body.length > 200 ? response.body.substring(0, 200) + "..." : response.body}');
         
-        final response = await http.get(
-          Uri.parse(endpoint),
-          headers: headers,
-        ).timeout(const Duration(seconds: 10));
+        final data = json.decode(response.body);
         
-        print('📡 Status: ${response.statusCode}');
+        List<Map<String, dynamic>> gallosList = [];
         
-        if (response.statusCode == 200) {
-          print('✅ ¡ENDPOINT ENCONTRADO!: $endpoint');
-          print('📝 Body preview: ${response.body.length > 200 ? response.body.substring(0, 200) + "..." : response.body}');
-          
-          final data = json.decode(response.body);
-          
-          List<Map<String, dynamic>> gallosList = [];
-          
-          // Intentar diferentes estructuras de respuesta
-          if (data is List) {
-            gallosList = List<Map<String, dynamic>>.from(data);
-            print('✅ Estructura: Array directo - ${gallosList.length} gallos');
+        // Intentar diferentes estructuras de respuesta
+        if (data is List) {
+          gallosList = List<Map<String, dynamic>>.from(data);
+          print('✅ Estructura: Array directo - ${gallosList.length} gallos');
           } else if (data is Map) {
             if (data['data'] != null && data['data']['gallos'] != null) {
               gallosList = List<Map<String, dynamic>>.from(data['data']['gallos']);
@@ -75,34 +69,28 @@ class GalloService {
               print('✅ Estructura data array: ${gallosList.length} gallos');
             } else {
               print('❌ Estructura no reconocida: ${data.keys}');
-              continue; // Probar siguiente endpoint
+              gallosList = []; // Lista vacía si no reconocemos la estructura
             }
           } else {
             print('❌ Tipo de respuesta no válido: ${data.runtimeType}');
-            continue;
+            gallosList = [];
           }
           
           print('✅ === ÉXITO: ${gallosList.length} GALLOS DEL BACKEND ===');
           return gallosList;
           
-        } else if (response.statusCode == 401) {
-          print('🚫 ERROR 401 en $endpoint: Token inválido');
-          // Continuar probando otros endpoints
-        } else {
-          print('❌ Error ${response.statusCode} en $endpoint: ${response.body}');
-          // Continuar probando
-        }
-        
-      } catch (e) {
-        print('❌ Error en $endpoint: $e');
-        // Continuar con el siguiente endpoint
+      } else if (response.statusCode == 401) {
+        print('🚫 ERROR 401: Token inválido');
+        throw Exception('Token de autenticación inválido');
+      } else {
+        print('❌ Error ${response.statusCode}: ${response.body}');
+        throw Exception('Error obteniendo gallos: ${response.statusCode}');
       }
+      
+    } catch (e) {
+      print('❌ Error en getGallos: $e');
+      throw Exception('Error conectando con el servidor: $e');
     }
-    
-    // 🔥 SI TODOS FALLAN
-    print('❌ === TODOS LOS ENDPOINTS FALLARON ===');
-    print('💥 Endpoints probados: ${endpointsToTry.join(", ")}');
-    throw Exception('No se pudo conectar a ningún endpoint del backend');
   }
 
   // 🐓 CREAR GALLO - SOLO BACKEND REAL

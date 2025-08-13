@@ -1,0 +1,53 @@
+name: gallos_app_new
+description: "Casta de Gallos - Aplicación profesional para criadores de gallos de pelea"
+publish_to: 'none'
+
+version: 1.0.6+602
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'  # ✅ CAMBIO: Más compatible
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Estado y navegación
+  provider: ^6.1.1
+  go_router: ^12.1.3
+  
+  # HTTP y conectividad
+  http: ^1.1.2
+  
+  # UI y multimedia
+  image_picker: ^1.0.7
+  cached_network_image: ^3.3.1
+  video_player: ^2.8.1
+  
+  # Almacenamiento local
+  shared_preferences: ^2.2.2
+  
+  # Utilidades
+  intl: ^0.18.1
+  uuid: ^4.2.1
+  
+  # Iconos
+  cupertino_icons: ^1.0.2
+  
+  # Crypto para encriptación
+  crypto: ^3.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0  # ✅ CAMBIO: Versión más estable
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - lib/data/mock/
+    - assets/images/
+    - assets/images/gallos/
+    - assets/images/logo/
+    - assets/images/icono/
+    - assets/images/yape/

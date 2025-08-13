@@ -2,16 +2,14 @@ name: gallos_app_new
 description: "Casta de Gallos - Aplicación profesional para criadores de gallos de pelea"
 publish_to: 'none'
 
-version: 1.0.6+602  # Third attempt - previous 501 already uploaded
+version: 1.0.6+602
 
 environment:
-  sdk: '>=3.2.0 <4.0.0'
+  sdk: '>=3.0.0 <4.0.0'  # ✅ CAMBIO: Más compatible
 
 dependencies:
   flutter:
     sdk: flutter
-  # flutter_localizations:
-  #   sdk: flutter  # Comentado para evitar conflicto intl
   
   # Estado y navegación
   provider: ^6.1.1
@@ -19,19 +17,18 @@ dependencies:
   
   # HTTP y conectividad
   http: ^1.1.2
-  # connectivity_plus: ^6.0.0  # Comentado temporalmente para pasar revisión Apple
+  http_parser: ^4.0.2
   
   # UI y multimedia
   image_picker: ^1.0.7
   cached_network_image: ^3.3.1
-  # file_picker: ^8.0.0+1  # Comentado para iOS build
   video_player: ^2.8.1
   
-  # Almacenamiento local (cache mínimo)
+  # Almacenamiento local
   shared_preferences: ^2.2.2
   
   # Utilidades
-  intl: ^0.18.1  # Requerido por el código
+  intl: ^0.18.1
   uuid: ^4.2.1
   
   # Iconos
@@ -39,14 +36,14 @@ dependencies:
   
   # Crypto para encriptación
   crypto: ^3.0.3
+  
+  # Gráficos
+  fl_chart: ^0.66.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
-  
-  # Para generar iconos personalizados 🔥
-  flutter_launcher_icons: ^0.13.1
+  flutter_lints: ^3.0.0  # ✅ CAMBIO: Versión más estable
 
 flutter:
   uses-material-design: true
@@ -57,17 +54,5 @@ flutter:
     - assets/images/gallos/
     - assets/images/logo/
     - assets/images/icono/
-
-# Configuración de iconos épicos 🔥
-flutter_icons:
-  android: "launcher_icon"
-  ios: true
-  image_path: "assets/images/logo/logo2.webp"
-  adaptive_icon_background: "#d32f2f"
-  adaptive_icon_foreground: "assets/images/logo/logo2.webp"
-  
-  # Iconos para diferentes tamaños
-  android_round_icon: true
-  
-  # Configuración iOS
-  remove_alpha_ios: true
+    - assets/images/yape/
+    - assets/images/modulos/  # 🖼️ AGREGAMOS LA CARPETA DE MÓDULOS

@@ -6,8 +6,11 @@ import '../../../shared/widgets/base_screen.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/api_service.dart';
+import '../../../services/admin_service.dart';
+import '../../../services/admin_notification_service.dart';
 import '../../../utils/password_validator.dart';
 import '../../auth/screens/login_screen.dart';
+import '../../admin/screens/admin_dashboard_screen.dart';
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({Key? key}) : super(key: key);
@@ -324,6 +327,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
               const SizedBox(height: 24),
               _buildMenuOptions(context),
               const SizedBox(height: 24),
+              _buildAdminButton(context),
+              const SizedBox(height: 16),
               _buildLogoutButton(context),
             ],
           ),
@@ -947,6 +952,90 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
+  Widget _buildAdminButton(BuildContext context) {
+    // Solo mostrar si es admin real
+    final userEmail = AuthService.instance.currentUser?.email;
+    if (userEmail != 'juan.salas.nuevo@galloapp.com') {
+      return const SizedBox.shrink();
+    }
+    
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: AdminNotificationService.obtenerPagosPendientes(),
+      builder: (context, snapshot) {
+        final pagosPendientes = snapshot.data?.length ?? 0;
+        
+        return Container(
+          width: double.infinity,
+          child: Stack(
+            children: [
+              ElevatedButton.icon(
+                onPressed: () async {
+                  try {
+                    print('[Perfil] Admin navegando a Panel Admin...');
+                    await _navegarAPanelAdmin(context);
+                    print('[Perfil] Admin regresó del Panel Admin');
+                  } catch (e) {
+                    print('[Perfil] Error al abrir Panel Admin: $e');
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No se pudo abrir el Panel Admin. Intenta nuevamente.'),
+                        ),
+                      );
+                    }
+                  }
+                },
+                icon: const Icon(Icons.admin_panel_settings),
+                label: const Text('👑 Panel de Administración'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              // Badge de notificaciones pendientes
+              if (pagosPendientes > 0)
+                Positioned(
+                  right: 12,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.red.withOpacity(0.5),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 24,
+                      minHeight: 24,
+                    ),
+                    child: Text(
+                      '$pagosPendientes',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildLogoutButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
@@ -1213,6 +1302,49 @@ class _PerfilScreenState extends State<PerfilScreen> {
         );
       },
     );
+  }
+
+  // ========================================
+  // MÉTODOS ADMIN
+  // ========================================
+
+  Future<bool> _esUsuarioAdmin() async {
+    try {
+      final userEmail = await AuthService.instance.getCurrentUserEmail();
+      print('🔍 EMAIL ACTUAL: $userEmail');
+      print('🔍 COMPARANDO CON: juan.salas.nuevo@galloapp.com');
+      final esAdmin = userEmail == 'juan.salas.nuevo@galloapp.com';
+      print('🔍 ES ADMIN: $esAdmin');
+      return esAdmin;
+    } catch (e) {
+      print('❌ ERROR VERIFICANDO ADMIN: $e');
+      return false;
+    }
+  }
+
+  Future<void> _navegarAPanelAdmin(BuildContext context) async {
+    try {
+      print('🚀 INTENTANDO NAVEGAR AL PANEL ADMIN...');
+      
+      // Verificar email primero
+      final userEmail = await AuthService.instance.getCurrentUserEmail();
+      print('📧 Email del usuario: $userEmail');
+      
+      // Por ahora, navegar directamente para debug
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const AdminDashboardScreen(),
+        ),
+      );
+    } catch (e) {
+      print('❌ ERROR NAVEGANDO AL PANEL: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error accediendo al panel: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }
 

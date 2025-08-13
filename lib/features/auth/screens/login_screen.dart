@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/app_logo.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/admin_notification_service.dart';
+import '../../../services/user_notification_service.dart';
 import '../../../utils/password_validator.dart';
 import '../../home/screens/home_screen.dart';
 
@@ -138,9 +140,9 @@ class _LoginScreenState extends State<LoginScreen>
   }
   
   void _initTestData() {
-    // Pre-llenar datos de prueba con usuario real del backend
-    _loginEmailController.text = 'juan.salas.nuevo@galloapp.com';
-    _loginPasswordController.text = '123456';
+    // Formulario limpio para producción
+    // _loginEmailController.text = '';
+    // _loginPasswordController.text = '';
   }
 
   @override
@@ -183,10 +185,6 @@ class _LoginScreenState extends State<LoginScreen>
                   // Logo épico con animación
                   _buildAnimatedLogo(),
                   const SizedBox(height: 40),
-                  
-                  // Info de usuario de prueba mejorada
-                  _buildTestUserCard(),
-                  const SizedBox(height: 24),
                   
                   // Formulario de login épico
                   _buildLoginForm(),
@@ -254,50 +252,9 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
   
-  Widget _buildTestUserCard() {
-    return Container(
-      width: 320,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.green.shade50, Colors.blue.shade50],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.green.shade200),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Text('🌐', style: TextStyle(fontSize: 16)),
-              const SizedBox(width: 8),
-              Text(
-                'BACKEND REAL CONECTADO',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Railway PostgreSQL + JWT\njuan.salas.nuevo@galloapp.com\nContraseña: 123456',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 11,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-  
-  // Continuaremos con las demás funciones...
+  // ==========================================
+  // 🚀 MÉTODOS DE NAVEGACIÓN Y LÓGICA
+  // ==========================================
   
   void _navigateToScreen(int screen) {
     setState(() {
@@ -322,7 +279,7 @@ class _LoginScreenState extends State<LoginScreen>
 
         print('🚀 Login con backend real: $email');
 
-        // 🔥 LOGIN REAL CON BACKEND (en lugar del mock)
+        // 🔥 LOGIN REAL CON BACKEND
         final success = await AuthService.instance.login(email, password);
 
         setState(() {
@@ -330,25 +287,28 @@ class _LoginScreenState extends State<LoginScreen>
         });
 
         if (success && mounted) {
-          // Login exitoso - mantener tu mensaje original
+          // Login exitoso
           final user = AuthService.instance.currentUser;
           final profile = AuthService.instance.currentProfile;
+          final isAdmin = AuthService.instance.isAdmin;
           
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('¡Bienvenido, ${profile?.nombreCompleto ?? user?.email}!'),
-              backgroundColor: AppColors.success,
+              content: Text(isAdmin 
+                ? '👑 ¡Bienvenido Administrador!'
+                : '¡Bienvenido, ${profile?.nombreCompleto ?? user?.email}!'),
+              backgroundColor: isAdmin ? Colors.orange : AppColors.success,
             ),
           );
           
-          // Navegar al HomeScreen real (como ya tenías)
+          // Navegar al HomeScreen
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => const HomeScreen(),
             ),
           );
         } else if (mounted) {
-          // Error en login - mantener tu mensaje original
+          // Error en login
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Credenciales incorrectas'),
@@ -380,7 +340,6 @@ class _LoginScreenState extends State<LoginScreen>
         _isRegisterLoading = true;
       });
 
-      // 🔑 GUARDAR NAVIGATOR ANTES DE OPERACIONES (patrón del logout exitoso)
       final navigator = Navigator.of(context, rootNavigator: true);
 
       try {
@@ -392,7 +351,7 @@ class _LoginScreenState extends State<LoginScreen>
 
         print('🚀 Registro con backend real: $email');
 
-        // PASO 1: 🔥 REGISTRO REAL CON BACKEND
+        // REGISTRO REAL CON BACKEND
         final registerResponse = await AuthService.instance.register(
           email: email,
           password: password,
@@ -404,7 +363,7 @@ class _LoginScreenState extends State<LoginScreen>
         if (registerResponse != null) {
           print('✅ Usuario registrado exitosamente');
           
-          // PASO 2: 🎯 AUTO-LOGIN INMEDIATO (la clave del mejor UX)
+          // AUTO-LOGIN INMEDIATO
           print('🔄 Iniciando auto-login...');
           final loginSuccess = await AuthService.instance.login(email, password);
 
@@ -413,7 +372,6 @@ class _LoginScreenState extends State<LoginScreen>
           });
 
           if (loginSuccess) {
-            // PASO 3: 🎉 OBTENER DATOS DEL USUARIO
             final user = AuthService.instance.currentUser;
             final profile = AuthService.instance.currentProfile;
             
@@ -425,7 +383,7 @@ class _LoginScreenState extends State<LoginScreen>
             _regPropietarioController.clear();
             _regTelefonoController.clear();
 
-            // PASO 4: 🚀 NAVEGACIÓN DIRECTA AL HOME (como el logout)
+            // NAVEGACIÓN DIRECTA AL HOME
             navigator.pushAndRemoveUntil(
               MaterialPageRoute(
                 builder: (context) => const HomeScreen(),
@@ -433,10 +391,9 @@ class _LoginScreenState extends State<LoginScreen>
               (route) => false,
             );
 
-            // PASO 5: 📱 MOSTRAR BIENVENIDA ÉPICA CON DELAY
+            // MOSTRAR BIENVENIDA
             await Future.delayed(const Duration(milliseconds: 800));
             
-            // Buscar el context del HomeScreen para mostrar el SnackBar
             final currentContext = navigator.context;
             if (currentContext.mounted) {
               ScaffoldMessenger.of(currentContext).showSnackBar(
@@ -461,11 +418,9 @@ class _LoginScreenState extends State<LoginScreen>
             // Si falla el auto-login, redirigir al login con credenciales
             print('⚠️ Auto-login falló, redirigiendo a login...');
             
-            // Pre-llenar credenciales en login
             _loginEmailController.text = email;
             _loginPasswordController.text = password;
             
-            // Navegar a la pantalla de login
             _navigateToScreen(0);
             
             if (mounted) {
@@ -518,11 +473,7 @@ class _LoginScreenState extends State<LoginScreen>
       }
     }
   }
-  
-  // ==========================================
-  // 🛠️ WIDGETS DE FORMULARIO ÉPICOS
-  // ==========================================
-  
+
   Widget _buildLoginForm() {
     return Container(
       width: 320,

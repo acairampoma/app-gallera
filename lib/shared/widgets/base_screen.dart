@@ -101,6 +101,12 @@ class _BaseScreenState extends State<BaseScreen> {
                     }
                     break;
                   case 3:
+                    // Navegar a pantalla de Planes
+                    if (ModalRoute.of(context)?.settings.name != '/planes') {
+                      Navigator.pushReplacementNamed(context, '/planes');
+                    }
+                    break;
+                  case 4:
                     // Navegar a pantalla de Perfil
                     if (ModalRoute.of(context)?.settings.name != '/perfil') {
                       Navigator.pushReplacementNamed(context, '/perfil');

@@ -11,6 +11,9 @@ import 'edit_gallo_multistep_screen.dart';
 import 'genealogy_tree_screen.dart';
 import '../../../services/connection_service.dart';
 import '../../../services/gallo_service.dart';
+import '../../../services/suscripcion_service.dart'; // ✅ AGREGADO
+import '../../../shared/widgets/limite_interceptor.dart';
+import '../../../models/suscripcion_models.dart';
 
 class PedigriScreen extends StatefulWidget {
   const PedigriScreen({Key? key}) : super(key: key);
@@ -131,7 +134,7 @@ class _PedigriScreenState extends State<PedigriScreen> {
       subtitle: 'Registro genealógico',
       currentIndex: 1,
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToAddGalloMultistep(), // 🚀 NUEVA PANTALLA
+        onPressed: () => _validarYCrearGallo(), // 🚀 NUEVA PANTALLA CON VALIDACIÓN
         backgroundColor: AppColors.primary,
         heroTag: "add_gallo",
         child: const Icon(Icons.add, color: Colors.white),
@@ -769,6 +772,91 @@ class _PedigriScreenState extends State<PedigriScreen> {
         ],
       ),
     );
+  }
+
+  // 🔒 VALIDAR LÍMITES Y CREAR GALLO
+  void _validarYCrearGallo() async {
+    try {
+      print('🔍 [Pedigri] Iniciando validación de límites...');
+      
+      final validacion = await SuscripcionService.validarLimite(
+        recursoTipo: RecursoTipo.gallos.value,
+        galloId: null,
+      );
+      
+      print('🔍 [Pedigri] Resultado: puedeCrear=${validacion.puedeCrear}');
+      
+      if (!validacion.puedeCrear) {
+        print('❌ [Pedigri] Límite alcanzado - Mostrando popup');
+        
+        if (mounted) {
+          await showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: Colors.white,
+              title: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(4),
+                    topRight: Radius.circular(4),
+                  ),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.warning, color: Colors.white, size: 28),
+                    SizedBox(width: 12),
+                    Text('Límite Alcanzado', style: TextStyle(color: Colors.white)),
+                  ],
+                ),
+              ),
+              titlePadding: EdgeInsets.zero,
+              content: Text(
+                '${validacion.mensajeError ?? "Has alcanzado el límite de gallos"}\n\n'
+                '¿Deseas actualizar tu plan para crear más gallos?'
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.pushNamed(context, '/planes');
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                  child: const Text('Actualizar Plan', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
+          );
+        }
+        return;
+      }
+      
+      print('✅ [Pedigri] Límite OK - Navegando a multistep');
+      _navigateToAddGalloMultistep();
+    } catch (e) {
+      print('❌ [Pedigri] Error en validación: $e');
+      
+      // Cerrar loading si está abierto
+      if (mounted) Navigator.of(context).pop();
+      
+      // Mostrar error y permitir continuar sin validación
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al validar límites. Continuando sin validación...'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        
+        // Continuar sin validación (temporal para no bloquear)
+        _navigateToAddGalloMultistep();
+      }
+    }
   }
 
   // 🚀 NAVEGAR A PANTALLA MULTISTEP - VERSIÓN ÉPICA CON REFRESH COMPLETO

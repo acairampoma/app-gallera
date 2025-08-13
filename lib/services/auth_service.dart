@@ -6,6 +6,8 @@ import 'dart:async';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
+import 'admin_notification_service.dart';
+import 'user_notification_service.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -18,17 +20,67 @@ class AuthService {
   UserModel? _currentUser;
   ProfileModel? _currentProfile;
   bool _isAuthenticated = false;
+  bool _isAdmin = false;  // 👑 NUEVO: Estado de admin
 
   // Stream controllers para notificar cambios
   final StreamController<bool> _authStateController = StreamController<bool>.broadcast();
   final StreamController<UserModel?> _userController = StreamController<UserModel?>.broadcast();
+  final StreamController<bool> _adminStateController = StreamController<bool>.broadcast(); // 👑 NUEVO
 
   // Getters
   UserModel? get currentUser => _currentUser;
   ProfileModel? get currentProfile => _currentProfile;
   bool get isAuthenticated => _isAuthenticated;
+  bool get isAdmin => _isAdmin; // 👑 NUEVO
   Stream<bool> get authStateStream => _authStateController.stream;
   Stream<UserModel?> get userStream => _userController.stream;
+  Stream<bool> get adminStateStream => _adminStateController.stream; // 👑 NUEVO
+
+  // 🔑 OBTENER TOKEN GUARDADO (ASÍNCRONO)
+  Future<String?> getTokenAsync() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('access_token');
+  }
+
+  // 🔑 OBTENER TOKEN GUARDADO (SÍNCRONO - SOLO SI YA ESTÁ EN MEMORIA)
+  String? getToken() {
+    // Para compatibilidad con código síncrono, retornamos null por ahora
+    // El código debe usar getTokenAsync() para obtener el token real
+    return null;
+  }
+
+  // 👑 VERIFICAR SI ES ADMINISTRADOR
+  bool _esEmailAdmin(String email) {
+    const emailsAdmin = [
+      'juan.salas.nuevo@galloapp.com',
+      'admin@galloapp.com',
+      'administrador@galloapp.com',
+    ];
+    return emailsAdmin.contains(email.toLowerCase());
+  }
+
+  // 🔔 INICIAR SERVICIOS DE ADMIN
+  Future<void> _iniciarServiciosAdmin() async {
+    print('👑 Iniciando servicios de administrador...');
+    // El contexto se pasará desde el login screen
+    // AdminNotificationService.iniciarPolling(context);
+  }
+
+  // 📧 Obtener email del usuario actual
+  Future<String?> getCurrentUserEmail() async {
+    if (_currentUser != null) {
+      return _currentUser!.email;
+    }
+    
+    // Si no está en memoria, cargar desde token
+    try {
+      await loadCurrentUser();
+      return _currentUser?.email;
+    } catch (e) {
+      print('⚠️ Error obteniendo email del usuario: $e');
+      return null;
+    }
+  }
 
   // 🚀 INICIALIZAR - Verificar si ya está logueado
   Future<void> initialize() async {
@@ -38,6 +90,13 @@ class AuthService {
       print('🔑 Token válido encontrado: $isLoggedIn');
       if (isLoggedIn) {
         await loadCurrentUser();
+        
+        // 👑 DETECTAR SI ES ADMIN TAMBIÉN AL INICIALIZAR
+        if (_currentUser != null) {
+          _isAdmin = _esEmailAdmin(_currentUser!.email);
+          print('👑 Admin detectado en initialize: $_isAdmin');
+          _adminStateController.add(_isAdmin);
+        }
       }
     } catch (e) {
       print('❌ Error inicializando AuthService: $e');
@@ -52,7 +111,7 @@ class AuthService {
     return token != null;
   }
 
-  // 📧 LOGIN con backend real - CON DEBUG COMPLETO
+  // 📧 LOGIN con backend real - CON DETECCIÓN ADMIN AUTOMÁTICA
   Future<bool> login(String email, String password) async {
     print('🔐 === LOGIN INICIADO (MODO REAL) ===');
     print('📧 Email: $email');
@@ -64,6 +123,10 @@ class AuthService {
       
       _currentUser = authResponse.user;
       _isAuthenticated = true;
+      
+      // 👑 DETECTAR SI ES ADMINISTRADOR
+      _isAdmin = _esEmailAdmin(email);
+      print('👑 Es administrador: $_isAdmin');
       
       // Cargar perfil (puede venir en la respuesta o cargar separadamente)
       if (authResponse.profile != null) {
@@ -77,10 +140,17 @@ class AuthService {
       // Notificar cambios
       _authStateController.add(true);
       _userController.add(_currentUser);
+      _adminStateController.add(_isAdmin); // 👑 NUEVO
+      
+      // 👑 INICIAR SERVICIOS DE ADMIN SI ES NECESARIO
+      if (_isAdmin) {
+        await _iniciarServiciosAdmin();
+      }
       
       print('✅ === LOGIN COMPLETADO EXITOSAMENTE ===');
       print('👤 Usuario: ${_currentUser?.email}');
       print('🔑 Autenticado: $_isAuthenticated');
+      print('👑 Admin: $_isAdmin');
       
       return true;
     } catch (e) {
@@ -184,10 +254,17 @@ class AuthService {
     _currentUser = null;
     _currentProfile = null;
     _isAuthenticated = false;
+    _isAdmin = false; // 👑 NUEVO
+    
+    // 🔔 DETENER POLLING DE NOTIFICACIONES
+    AdminNotificationService.detenerPolling();
+    UserNotificationService.detenerPolling();
+    print('🔔 Polling de notificaciones detenido');
     
     // 📡 Notificar inmediatamente el cambio de estado
     _authStateController.add(false);
     _userController.add(null);
+    _adminStateController.add(false); // 👑 NUEVO
     
     print('✅ Estado local limpiado inmediatamente');
     
@@ -257,5 +334,6 @@ class AuthService {
   void dispose() {
     _authStateController.close();
     _userController.close();
+    _adminStateController.close(); // 👑 NUEVO
   }
 }

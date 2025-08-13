@@ -33,6 +33,10 @@ class BottomNavBar extends StatelessWidget {
           label: 'Reportes',
         ),
         BottomNavigationBarItem(
+          icon: Icon(Icons.star),
+          label: 'Planes',
+        ),
+        BottomNavigationBarItem(
           icon: Icon(Icons.person),
           label: 'Perfil',
         ),

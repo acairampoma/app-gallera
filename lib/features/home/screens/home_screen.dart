@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../shared/widgets/base_screen.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../services/auth_service.dart';
-import '../../suscripcion/screens/suscripcion_screen.dart';
+import '../../../services/admin_notification_service.dart';
+import '../../../services/user_notification_service.dart';
+import '../../../features/planes/screens/planes_screen.dart'; // ✅ CAMBIADO A PLANES REAL
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -12,10 +14,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  bool _notificationsInitialized = false;
+  
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _initializeNotifications();
   }
 
   Future<void> _loadUserData() async {
@@ -29,11 +34,48 @@ class _HomeScreenState extends State<HomeScreen> {
       print('💥 Error cargando datos usuario: $e');
     }
   }
+  
+  Future<void> _initializeNotifications() async {
+    if (_notificationsInitialized) return;
+    
+    print('🚀 [HomeScreen] Inicializando notificaciones...');
+    
+    // Esperar un poco a que el HomeScreen se cargue completamente
+    await Future.delayed(const Duration(milliseconds: 1000));
+    
+    if (!mounted) {
+      print('⚠️ [HomeScreen] Widget no montado - cancelando notificaciones');
+      return;
+    }
+    
+    try {
+      final isAdmin = AuthService.instance.isAdmin;
+      print('🚀 [HomeScreen] Usuario admin: $isAdmin');
+      
+      if (isAdmin) {
+        print('👑 [HomeScreen] Iniciando servicios de admin...');
+        await AdminNotificationService.iniciarPolling(context);
+        print('👑 [HomeScreen] Polling iniciado, mostrando popup...');
+        await AdminNotificationService.mostrarPopupInicialAdmin(context);
+        print('👑 [HomeScreen] Proceso admin completado');
+      } else {
+        print('🎉 [HomeScreen] Iniciando servicios de usuario...');
+        await UserNotificationService.iniciarPollingUsuario(context);
+        print('🎉 [HomeScreen] Servicios usuario iniciados');
+      }
+      
+      _notificationsInitialized = true;
+      print('✅ [HomeScreen] Notificaciones inicializadas exitosamente');
+      
+    } catch (e) {
+      print('❌ [HomeScreen] Error inicializando notificaciones: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return BaseScreen(
-      title: 'GallosPro',
+      title: 'Casta de Gallos',
       subtitle: 'Gestión Profesional de Gallos de Pelea',
       currentIndex: 0,
       showQuickNav: true,
@@ -184,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final menuItems = [
       _MenuItem(
         title: 'Pedigrí',
-        icon: Icons.assignment,
+        imagePath: 'assets/images/modulos/PEDIGRI.webp',
         color: Colors.blue,
         subtitle: 'Registro genealógico',
         onTap: () {
@@ -193,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       _MenuItem(
         title: 'Vacunas',
-        icon: Icons.medical_services,
+        imagePath: 'assets/images/modulos/VACUNAS.webp',
         color: Colors.green,
         subtitle: 'Control sanitario',
         onTap: () {
@@ -202,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       _MenuItem(
         title: 'Topes',
-        icon: Icons.fitness_center,
+        imagePath: 'assets/images/modulos/TOPES.webp',
         color: Colors.orange,
         subtitle: 'Entrenamientos',
         onTap: () {
@@ -211,7 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       _MenuItem(
         title: 'Peleas',
-        icon: Icons.sports_mma,
+        imagePath: 'assets/images/modulos/PELEA.webp',
         color: Colors.red,
         subtitle: 'Combates',
         onTap: () {
@@ -220,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       _MenuItem(
         title: 'Reportes',
-        icon: Icons.bar_chart,
+        imagePath: 'assets/images/modulos/REPORTES.webp',
         color: Colors.purple,
         subtitle: 'Estadísticas',
         onTap: () {
@@ -228,17 +270,39 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
       _MenuItem(
+        title: 'Inversiones',
+        imagePath: 'assets/images/modulos/INVERSION.webp',
+        color: Colors.teal,
+        subtitle: 'Gastos mensuales',
+        onTap: () {
+          Navigator.pushNamed(context, '/inversiones');
+        },
+      ),
+      _MenuItem(
         title: 'Suscripciones',
-        icon: Icons.card_membership,
+        imagePath: 'assets/images/modulos/SUSCRIPCION.webp',
         color: Colors.amber,
         subtitle: 'Planes y precios',
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const SuscripcionScreen(),
-            ),
-          );
+        onTap: () async {
+          try {
+            print('[Home] Navegando a SuscripcionScreen...');
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PlanesScreen(), // ✅ CAMBIADO A PLANES REAL
+              ),
+            );
+            print('[Home] Regresó de PlanesScreen (API Railway)');
+          } catch (e) {
+            print('[Home] Error al navegar a SuscripcionScreen: $e');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('No se pudo abrir Suscripciones. Intenta nuevamente.'),
+                ),
+              );
+            }
+          }
         },
       ),
     ];
@@ -274,17 +338,44 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // 🖼️ IMAGEN DEL MÓDULO CON TAMAÑO PERFECTO
               Container(
-                width: 50,
-                height: 50,
+                width: 60,
+                height: 60,
                 decoration: BoxDecoration(
-                  color: item.color.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: item.color.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                child: Icon(
-                  item.icon,
-                  size: 30,
-                  color: item.color,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset(
+                    item.imagePath!,
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      // 🚨 FALLBACK SI NO ENCUENTRA LA IMAGEN
+                      return Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: item.color.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.image_not_supported,
+                          size: 30,
+                          color: item.color,
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -319,14 +410,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _MenuItem {
   final String title;
-  final IconData icon;
+  final String? imagePath; // 🖼️ REEMPLAZAMOS IconData por imagePath
   final Color color;
   final String? subtitle;
   final VoidCallback onTap;
 
   _MenuItem({
     required this.title,
-    required this.icon,
+    this.imagePath, // 🖼️ OPCIONAL para mantener compatibilidad
     required this.color,
     this.subtitle,
     required this.onTap,
