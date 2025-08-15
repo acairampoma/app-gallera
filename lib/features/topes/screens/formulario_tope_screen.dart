@@ -13,11 +13,13 @@ import '../../../models/tope.dart';
 class FormularioTopeScreen extends StatefulWidget {
   final Tope? tope;
   final int? galloPreseleccionado;
+  final bool galloIsBloqueado;
 
   const FormularioTopeScreen({
     Key? key,
     this.tope,
     this.galloPreseleccionado,
+    this.galloIsBloqueado = false,
   }) : super(key: key);
 
   @override
@@ -227,12 +229,17 @@ class _FormularioTopeScreenState extends State<FormularioTopeScreen> {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
               value: galloSeleccionado,
-              hint: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Text('Seleccione un gallo'),
+              hint: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Text(
+                  widget.galloIsBloqueado ? 'Gallo preseleccionado' : 'Seleccione un gallo',
+                  style: TextStyle(
+                    color: widget.galloIsBloqueado ? Colors.grey[600] : null,
+                  ),
+                ),
               ),
               isExpanded: true,
-              onChanged: (int? value) {
+              onChanged: widget.galloIsBloqueado ? null : (int? value) {
                 setState(() {
                   galloSeleccionado = value;
                 });

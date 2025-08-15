@@ -9,6 +9,7 @@ import '../../../shared/widgets/video_player_widget.dart';
 import '../../../services/peleas_service.dart';
 import '../../../models/pelea.dart';
 import 'formulario_pelea_screen.dart';
+import '../../../shared/constants/app_icons.dart';
 
 class HistorialPeleasScreen extends StatefulWidget {
   final int galloId;
@@ -129,8 +130,7 @@ class _HistorialPeleasScreenState extends State<HistorialPeleasScreen> {
       color: AppColors.primary.withOpacity(0.1),
       child: Column(
         children: [
-          const Icon(
-            Icons.pets,
+          AppIcons.gallo(
             size: 40,
             color: AppColors.primary,
           ),
@@ -742,6 +742,7 @@ class _HistorialPeleasScreenState extends State<HistorialPeleasScreen> {
         builder: (context) => FormularioPeleaScreen(
           // Pre-seleccionar el gallo actual
           galloPreseleccionado: widget.galloId,
+          galloIsBloqueado: true,
         ),
       ),
     ).then((result) {

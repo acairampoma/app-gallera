@@ -9,6 +9,7 @@ import '../../../shared/widgets/video_player_widget.dart';
 import '../../../services/topes_service.dart';
 import '../../../models/tope.dart';
 import 'formulario_tope_screen.dart';
+import '../../../shared/constants/app_icons.dart';
 
 class HistorialTopesScreen extends StatefulWidget {
   final int galloId;
@@ -141,8 +142,7 @@ class _HistorialTopesScreenState extends State<HistorialTopesScreen> {
       color: AppColors.primary.withOpacity(0.1),
       child: Column(
         children: [
-          const Icon(
-            Icons.pets,
+          AppIcons.gallo(
             size: 40,
             color: AppColors.primary,
           ),
@@ -638,6 +638,7 @@ class _HistorialTopesScreenState extends State<HistorialTopesScreen> {
       MaterialPageRoute(
         builder: (context) => FormularioTopeScreen(
           galloPreseleccionado: widget.galloId,
+          galloIsBloqueado: true,
         ),
       ),
     ).then((result) {

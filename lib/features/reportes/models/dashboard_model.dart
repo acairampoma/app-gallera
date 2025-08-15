@@ -264,7 +264,7 @@ class DetalleGastos {
     GastoCategoria('Alimento', alimento, const Color(0xFF4CAF50)),
     GastoCategoria('Medicina', medicina, const Color(0xFF2196F3)),
     GastoCategoria('Entrenador', entrenador, const Color(0xFFFF9800)),
-    GastoCategoria('Limpieza', limpieza, const Color(0xFF9C27B0)),
+    GastoCategoria('Galponero', limpieza, const Color(0xFF9C27B0)),
   ].where((cat) => cat.valor > 0).toList();
 }
 

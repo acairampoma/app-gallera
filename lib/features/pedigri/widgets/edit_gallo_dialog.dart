@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../services/gallo_service.dart';
 import '../../../services/connection_service.dart';
+import '../../../shared/constants/app_icons.dart';
 
 class EditGalloDialog extends StatefulWidget {
   final Map<String, dynamic> gallo;
@@ -154,10 +155,10 @@ class _EditGalloDialogState extends State<EditGalloDialog> {
                       // Nombre
                       TextFormField(
                         controller: _nombreController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Nombre del Gallo *',
                           hintText: 'Ej: El Campeón',
-                          prefixIcon: Icon(Icons.pets),
+                          prefixIcon: Icon(AppIcons.galloIconData),
                         ),
                         textCapitalization: TextCapitalization.words,
                         validator: (value) {
@@ -244,9 +245,9 @@ class _EditGalloDialogState extends State<EditGalloDialog> {
                           Expanded(
                             child: DropdownButtonFormField<int>(
                               value: _selectedRazaId,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: 'Raza',
-                                prefixIcon: Icon(Icons.pets),
+                                prefixIcon: Icon(AppIcons.galloIconData),
                               ),
                               items: widget.razas.map<DropdownMenuItem<int>>((raza) {
                                 return DropdownMenuItem<int>(

@@ -25,8 +25,6 @@ class _VacunasScreenState extends State<VacunasScreen> with TickerProviderStateM
   
   // Controladores para modal detallado profesional
   final _galloController = TextEditingController();
-  final _veterinarioController = TextEditingController();
-  final _clinicaController = TextEditingController();
   final _medicamentoController = TextEditingController();
   final _dosisController = TextEditingController();
   final _loteController = TextEditingController();
@@ -119,8 +117,6 @@ class _VacunasScreenState extends State<VacunasScreen> with TickerProviderStateM
   void dispose() {
     _slideController.dispose();
     _galloController.dispose();
-    _veterinarioController.dispose();
-    _clinicaController.dispose();
     _medicamentoController.dispose();
     _dosisController.dispose();
     _loteController.dispose();
@@ -410,12 +406,33 @@ class _VacunasScreenState extends State<VacunasScreen> with TickerProviderStateM
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Historial de Vacunas',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Historial de Vacunas',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            if (vacunas.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${vacunas.length}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 16),
         if (vacunas.isEmpty)
@@ -532,7 +549,7 @@ class _VacunasScreenState extends State<VacunasScreen> with TickerProviderStateM
                   child: _buildInfoItem('Fecha', vacuna['fecha_aplicacion'] ?? 'N/A'),
                 ),
                 Expanded(
-                  child: _buildInfoItem('Veterinario', vacuna['veterinario'] ?? 'N/A'),
+                  child: _buildInfoItem('Método', vacuna['metodo'] ?? 'N/A'),
                 ),
               ],
             ),
@@ -784,50 +801,6 @@ class _VacunasScreenState extends State<VacunasScreen> with TickerProviderStateM
                                     _selectedFechaAplicacion,
                                     (date) => setState(() => _selectedFechaAplicacion = date),
                                     required: true,
-                                  ),
-                                ),
-                              ],
-                            );
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      
-                      // Fila: Veterinario y Clínica
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          if (constraints.maxWidth < 400) {
-                            return Column(
-                              children: [
-                                _buildTextField(
-                                  'Veterinario',
-                                  _veterinarioController,
-                                  icon: Icons.person,
-                                ),
-                                const SizedBox(height: 12),
-                                _buildTextField(
-                                  'Clínica/Consultorio',
-                                  _clinicaController,
-                                  icon: Icons.local_hospital,
-                                ),
-                              ],
-                            );
-                          } else {
-                            return Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    'Veterinario',
-                                    _veterinarioController,
-                                    icon: Icons.person,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildTextField(
-                                    'Clínica/Consultorio',
-                                    _clinicaController,
-                                    icon: Icons.local_hospital,
                                   ),
                                 ),
                               ],
@@ -1223,8 +1196,6 @@ class _VacunasScreenState extends State<VacunasScreen> with TickerProviderStateM
     });
     
     _galloController.clear();
-    _veterinarioController.clear();
-    _clinicaController.clear();
     _medicamentoController.clear();
     _dosisController.clear();
     _loteController.clear();
@@ -1275,13 +1246,11 @@ class _VacunasScreenState extends State<VacunasScreen> with TickerProviderStateM
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('📋 Registro veterinario guardado:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('📋 Registro de vacuna guardado:', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             _buildSummaryItem('Gallo', galloNombre),
             _buildSummaryItem('Vacuna', vacunaNombre),
             _buildSummaryItem('Fecha', _selectedFechaAplicacion?.toString().split(' ')[0] ?? 'N/A'),
-            if (_veterinarioController.text.isNotEmpty)
-              _buildSummaryItem('Veterinario', _veterinarioController.text),
             if (_medicamentoController.text.isNotEmpty)
               _buildSummaryItem('Medicamento', _medicamentoController.text),
             if (_dosisController.text.isNotEmpty)
@@ -1297,7 +1266,7 @@ class _VacunasScreenState extends State<VacunasScreen> with TickerProviderStateM
                 border: Border.all(color: Colors.green.shade200),
               ),
               child: const Text(
-                '✅ Registro profesional añadido al historial médico con todos los detalles veterinarios.',
+                '✅ Registro profesional añadido al historial médico con todos los detalles.',
                 style: TextStyle(fontSize: 12, color: Colors.black87),
               ),
             ),

@@ -12,6 +12,7 @@ import 'historial_topes_screen.dart';
 import 'formulario_tope_screen.dart';
 import '../../../shared/widgets/limite_interceptor.dart';
 import '../../../models/suscripcion_models.dart';
+import '../../../shared/constants/app_icons.dart';
 
 class TopesGallosScreen extends StatefulWidget {
   const TopesGallosScreen({Key? key}) : super(key: key);
@@ -29,6 +30,9 @@ class _TopesGallosScreenState extends State<TopesGallosScreen> {
   bool isLoading = true;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  
+  // 🔥 NUEVO: Control para incluir padres generados en topes
+  bool _soloPrincipales = true; // Por defecto marcado
 
   @override
   void initState() {
@@ -53,10 +57,23 @@ class _TopesGallosScreenState extends State<TopesGallosScreen> {
       // 2. Cargar TODOS los gallos del usuario
       final gallosResult = await GalloService.getGallos();
       
-      // 3. Para cada gallo, obtener resumen de topes
+      // 🔥 FILTRAR GALLOS SEGÚN CHECKBOX PARA TOPES
+      List<Map<String, dynamic>> gallosFiltradosPorTipo = gallosResult.where((gallo) {
+        final tipoRegistro = gallo['tipo_registro']?.toString();
+        if (_soloPrincipales) {
+          // Solo principales
+          return tipoRegistro == 'principal';
+        } else {
+          // Principales + padres generados (NO madres)
+          return tipoRegistro == 'principal' || tipoRegistro == 'padre_generado';
+        }
+      }).toList();
+      print('🎯 Filtrando gallos: ${gallosFiltradosPorTipo.length} de ${gallosResult.length} (solo principales: $_soloPrincipales)');
+      
+      // 3. Para cada gallo filtrado, obtener resumen de topes
       List<TopeResumenGallo> resumenGallos = [];
       
-      for (var gallo in gallosResult) {
+      for (var gallo in gallosFiltradosPorTipo) {
         final galloId = gallo['id'];
         final galloNombre = gallo['nombre'] ?? 'Sin nombre';
         final galloFoto = gallo['foto_principal_url'];
@@ -273,27 +290,49 @@ class _TopesGallosScreenState extends State<TopesGallosScreen> {
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: TextField(
-        controller: _searchController,
-        onChanged: _filterGallos,
-        decoration: InputDecoration(
-          hintText: 'Buscar gallos por nombre...',
-          prefixIcon: const Icon(Icons.search),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                    _filterGallos('');
-                  },
-                )
-              : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+      child: Column(
+        children: [
+          // 🔥 CHECKBOX PARA INCLUIR PADRES GENERADOS EN TOPES
+          CheckboxListTile(
+            title: const Text(
+              'Solo gallos principales',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: const Text('Desmarca para incluir padres generados'),
+            value: _soloPrincipales,
+            activeColor: AppColors.primary,
+            onChanged: (bool? value) {
+              setState(() {
+                _soloPrincipales = value ?? true;
+              });
+              _loadData(); // Recargar datos con el nuevo filtro
+            },
           ),
-          filled: true,
-          fillColor: Colors.grey[50],
-        ),
+          const SizedBox(height: 8),
+          // BARRA DE BÚSQUEDA
+          TextField(
+            controller: _searchController,
+            onChanged: _filterGallos,
+            decoration: InputDecoration(
+              hintText: 'Buscar gallos por nombre...',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        _filterGallos('');
+                      },
+                    )
+                  : null,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              filled: true,
+              fillColor: Colors.grey[50],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -464,11 +503,7 @@ class _TopesGallosScreenState extends State<TopesGallosScreen> {
   Widget _buildDefaultAvatar() {
     return Container(
       color: Colors.grey[200],
-      child: const Icon(
-        Icons.pets,
-        color: Colors.grey,
-        size: 30,
-      ),
+      child: AppIcons.galloPedigriLista(),
     );
   }
 

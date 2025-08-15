@@ -187,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            profile!.nombreGalpon!,
+                            'Galpon ${profile!.nombreGalpon!}',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppColors.primary,

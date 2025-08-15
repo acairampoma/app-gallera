@@ -29,8 +29,6 @@ class _FormularioVacunaScreenState extends State<FormularioVacunaScreen> {
   
   // Controladores
   final _laboratorioController = TextEditingController();
-  final _veterinarioController = TextEditingController();
-  final _clinicaController = TextEditingController();
   final _dosisController = TextEditingController();
   final _notasController = TextEditingController();
 
@@ -52,8 +50,6 @@ class _FormularioVacunaScreenState extends State<FormularioVacunaScreen> {
   @override
   void dispose() {
     _laboratorioController.dispose();
-    _veterinarioController.dispose();
-    _clinicaController.dispose();
     _dosisController.dispose();
     _notasController.dispose();
     super.dispose();
@@ -79,8 +75,6 @@ class _FormularioVacunaScreenState extends State<FormularioVacunaScreen> {
       proximaDosis = vacuna.proximaDosis;
       
       _laboratorioController.text = vacuna.laboratorio ?? '';
-      _veterinarioController.text = vacuna.veterinarioNombre ?? '';
-      _clinicaController.text = vacuna.clinica ?? '';
       _dosisController.text = vacuna.dosis ?? '';
       _notasController.text = vacuna.notas ?? '';
     }
@@ -119,10 +113,6 @@ class _FormularioVacunaScreenState extends State<FormularioVacunaScreen> {
                       _buildFechaAplicacionField(),
                       const SizedBox(height: 20),
                       _buildProximaDosisField(),
-                      const SizedBox(height: 20),
-                      _buildVeterinarioField(),
-                      const SizedBox(height: 20),
-                      _buildClinicaField(),
                       const SizedBox(height: 20),
                       _buildLaboratorioField(),
                       const SizedBox(height: 20),
@@ -318,22 +308,6 @@ class _FormularioVacunaScreenState extends State<FormularioVacunaScreen> {
     );
   }
 
-  Widget _buildVeterinarioField() {
-    return _buildTextField(
-      'Veterinario',
-      _veterinarioController,
-      'Dr. Juan Pérez',
-    );
-  }
-
-  Widget _buildClinicaField() {
-    return _buildTextField(
-      'Clínica',
-      _clinicaController,
-      'Clínica Veterinaria',
-    );
-  }
-
   Widget _buildLaboratorioField() {
     return _buildTextField(
       'Laboratorio',
@@ -448,8 +422,6 @@ class _FormularioVacunaScreenState extends State<FormularioVacunaScreen> {
           fechaAplicacion: fechaAplicacionStr,
           proximaDosis: proximaDosisStr,
           laboratorio: _laboratorioController.text.trim().isEmpty ? null : _laboratorioController.text.trim(),
-          veterinarioNombre: _veterinarioController.text.trim().isEmpty ? null : _veterinarioController.text.trim(),
-          clinica: _clinicaController.text.trim().isEmpty ? null : _clinicaController.text.trim(),
           dosis: _dosisController.text.trim().isEmpty ? null : _dosisController.text.trim(),
           notas: _notasController.text.trim().isEmpty ? null : _notasController.text.trim(),
         );
@@ -460,8 +432,6 @@ class _FormularioVacunaScreenState extends State<FormularioVacunaScreen> {
           fechaAplicacion: fechaAplicacionStr,
           proximaDosis: proximaDosisStr,
           laboratorio: _laboratorioController.text.trim().isEmpty ? null : _laboratorioController.text.trim(),
-          veterinarioNombre: _veterinarioController.text.trim().isEmpty ? null : _veterinarioController.text.trim(),
-          clinica: _clinicaController.text.trim().isEmpty ? null : _clinicaController.text.trim(),
           dosis: _dosisController.text.trim().isEmpty ? null : _dosisController.text.trim(),
           notas: _notasController.text.trim().isEmpty ? null : _notasController.text.trim(),
         );

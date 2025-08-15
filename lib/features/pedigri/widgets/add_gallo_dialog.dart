@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/constants/app_icons.dart';
 
 class AddGalloDialog extends StatefulWidget {
   final List<dynamic> razas;
@@ -124,7 +125,7 @@ class _AddGalloDialogState extends State<AddGalloDialog> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.pets, color: Colors.white, size: 28),
+          AppIcons.gallo(size: 28, color: Colors.white),
           const SizedBox(width: 12),
           const Expanded(
             child: Text(
@@ -186,9 +187,9 @@ class _AddGalloDialogState extends State<AddGalloDialog> {
             // Nombre
             TextFormField(
               controller: _nombreController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Nombre del Gallo *',
-                prefixIcon: Icon(Icons.pets),
+                prefixIcon: Icon(AppIcons.galloIconData),
                 hintText: 'Ej: El Campeón',
               ),
               validator: (value) {
@@ -301,9 +302,9 @@ class _AddGalloDialogState extends State<AddGalloDialog> {
           child: _fotoPath != null
               ? ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: const Icon(Icons.pets, size: 60, color: AppColors.primary),
+                  child: AppIcons.gallo(size: 60, color: AppColors.primary),
                 )
-              : const Icon(Icons.pets, size: 60, color: Colors.grey),
+              : AppIcons.gallo(size: 60, color: Colors.grey),
         ),
         const SizedBox(height: 12),
         ElevatedButton.icon(

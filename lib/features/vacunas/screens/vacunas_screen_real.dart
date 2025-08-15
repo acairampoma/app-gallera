@@ -14,6 +14,7 @@ import 'formulario_vacuna_screen.dart';
 import '../widgets/registro_rapido_dialog.dart';
 import '../../../shared/widgets/limite_interceptor.dart';
 import '../../../models/suscripcion_models.dart';
+import '../../../shared/constants/app_icons.dart';
 
 class VacunasScreenReal extends StatefulWidget {
   const VacunasScreenReal({Key? key}) : super(key: key);
@@ -31,6 +32,9 @@ class _VacunasScreenRealState extends State<VacunasScreenReal> {
   bool isLoading = true;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  
+  // 🔥 NUEVO: Control para filtrar solo gallos principales
+  bool _soloPrincipales = true; // Por defecto marcado
 
   @override
   void initState() {
@@ -55,10 +59,22 @@ class _VacunasScreenRealState extends State<VacunasScreenReal> {
       // 2. Cargar gallos del usuario
       final gallosResult = await GalloService.getGallos();
       
-      // 3. Para cada gallo, obtener resumen de vacunas
+      // 🔥 FILTRAR GALLOS SEGÚN CHECKBOX
+      List<Map<String, dynamic>> gallosFiltradosPorTipo = gallosResult;
+      if (_soloPrincipales) {
+        // Filtrar solo gallos principales (tipo_registro == "principal")
+        gallosFiltradosPorTipo = gallosResult.where((gallo) {
+          final tipoRegistro = gallo['tipo_registro']?.toString();
+          // PRINCIPALES = tipo_registro == "principal"
+          return tipoRegistro == 'principal';
+        }).toList();
+        print('🎯 Filtrando solo principales: ${gallosFiltradosPorTipo.length} de ${gallosResult.length}');
+      }
+      
+      // 3. Para cada gallo filtrado, obtener resumen de vacunas
       List<VacunaResumenGallo> resumenGallos = [];
       
-      for (var gallo in gallosResult) {
+      for (var gallo in gallosFiltradosPorTipo) {
         final galloId = gallo['id'];
         final galloNombre = gallo['nombre'] ?? 'Sin nombre';
         
@@ -236,27 +252,49 @@ class _VacunasScreenRealState extends State<VacunasScreenReal> {
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: TextField(
-        controller: _searchController,
-        onChanged: _filterGallos,
-        decoration: InputDecoration(
-          hintText: 'Buscar gallos por nombre o estado...',
-          prefixIcon: const Icon(Icons.search),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                    _filterGallos('');
-                  },
-                )
-              : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+      child: Column(
+        children: [
+          // 🔥 CHECKBOX PARA FILTRAR SOLO PRINCIPALES
+          CheckboxListTile(
+            title: const Text(
+              'Solo gallos principales',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: const Text('Ocultar padres/madres generados'),
+            value: _soloPrincipales,
+            activeColor: AppColors.primary,
+            onChanged: (bool? value) {
+              setState(() {
+                _soloPrincipales = value ?? true;
+              });
+              _loadData(); // Recargar datos con el nuevo filtro
+            },
           ),
-          filled: true,
-          fillColor: Colors.grey[50],
-        ),
+          const SizedBox(height: 8),
+          // BARRA DE BÚSQUEDA
+          TextField(
+            controller: _searchController,
+            onChanged: _filterGallos,
+            decoration: InputDecoration(
+              hintText: 'Buscar gallos por nombre o estado...',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        _filterGallos('');
+                      },
+                    )
+                  : null,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              filled: true,
+              fillColor: Colors.grey[50],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -405,11 +443,7 @@ class _VacunasScreenRealState extends State<VacunasScreenReal> {
   Widget _buildDefaultAvatar() {
     return Container(
       color: Colors.grey[200],
-      child: const Icon(
-        Icons.pets,
-        color: Colors.grey,
-        size: 30,
-      ),
+      child: AppIcons.galloPedigriLista(),
     );
   }
 

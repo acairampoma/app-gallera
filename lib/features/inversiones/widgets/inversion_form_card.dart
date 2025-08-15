@@ -54,8 +54,7 @@ class InversionFormCard extends StatelessWidget {
     final tipos = [
       {'key': 'alimento', 'nombre': 'Alimento', 'icon': Icons.restaurant, 'color': Colors.green},
       {'key': 'medicina', 'nombre': 'Medicina', 'icon': Icons.medical_services, 'color': Colors.red},
-      {'key': 'limpieza_galpon', 'nombre': 'Limpieza Galpón', 'icon': Icons.cleaning_services, 'color': Colors.blue},
-      {'key': 'entrenador', 'nombre': 'Entrenador', 'icon': Icons.person, 'color': Colors.orange},
+      {'key': 'limpieza_galpon', 'nombre': 'Galponero', 'icon': Icons.cleaning_services, 'color': Colors.blue},
     ];
 
     return tipos.map((tipo) => Column(

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../services/gallo_service.dart';
 import '../../../services/connection_service.dart';
+import '../../../shared/constants/app_icons.dart';
+import 'edit_gallo_multistep_screen.dart';
 
 class GenealogyTreeScreen extends StatefulWidget {
   final Map<String, dynamic> galloSeleccionado;
@@ -225,8 +227,7 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
   // 🖼️ WIDGET PARA MOSTRAR IMAGEN DE CLOUDINARY
   Widget _buildNetworkImage(String? fotoUrl, double iconSize) {
     if (fotoUrl == null || fotoUrl.isEmpty) {
-      return Icon(
-        Icons.pets,
+      return AppIcons.gallo(
         size: iconSize,
         color: AppColors.primary,
       );
@@ -273,8 +274,7 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
       );
     } else {
       // Fallback para rutas desconocidas
-      return Icon(
-        Icons.pets,
+      return AppIcons.gallo(
         size: iconSize,
         color: AppColors.primary,
       );
@@ -729,80 +729,80 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
         GestureDetector(
           onTap: () => _showGalloDetail(gallo),
           child: Container(
-            width: isMainGallo ? 280 : 240,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(
-                color: isMainGallo ? AppColors.primary : Colors.grey[300]!,
-                width: isMainGallo ? 3 : 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: isMainGallo ? 80 : 60,
-                  height: isMainGallo ? 80 : 60,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.primary, width: 2),
+                width: isMainGallo ? 280 : 240,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(
+                    color: isMainGallo ? AppColors.primary : Colors.grey[300]!,
+                    width: isMainGallo ? 3 : 2,
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: _buildNetworkImage(gallo['foto_principal_url'], isMainGallo ? 40 : 30),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  gallo['nombre'] ?? 'Sin nombre',
-                  style: TextStyle(
-                    fontSize: isMainGallo ? 18 : 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    gallo['codigo_identificacion'] ?? 'N/A',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Raza: ${gallo['raza']?['nombre'] ?? gallo['raza_nombre'] ?? 'N/A'}\n'
-                  'Peso: ${gallo['peso'] ?? 0}kg\n'
-                  'Estado: ${gallo['estado'] ?? 'N/A'}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                    height: 1.3,
-                  ),
-                  textAlign: TextAlign.center,
+                child: Column(
+                  children: [
+                    Container(
+                      width: isMainGallo ? 80 : 60,
+                      height: isMainGallo ? 80 : 60,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.primary, width: 2),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: _buildNetworkImage(gallo['foto_principal_url'], isMainGallo ? 40 : 30),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      gallo['nombre'] ?? 'Sin nombre',
+                      style: TextStyle(
+                        fontSize: isMainGallo ? 18 : 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        gallo['codigo_identificacion'] ?? 'N/A',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Raza: ${gallo['raza']?['nombre'] ?? gallo['raza_nombre'] ?? 'N/A'}\n'
+                      'Peso: ${gallo['peso'] ?? 0}kg\n'
+                      'Estado: ${gallo['estado'] ?? 'N/A'}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        height: 1.3,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
       ],
     );
   }
@@ -865,7 +865,153 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
     );
   }
 
-  void _showGalloDetail(Map<String, dynamic> gallo) {
+  // 🗑️ ELIMINAR GALLO
+  void _eliminarGallo(Map<String, dynamic> gallo) {
+    final galloId = gallo['id'];
+    
+    if (galloId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se puede eliminar este gallo (ID no disponible)'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar Gallo'),
+        content: Text('¿Estás seguro de eliminar a ${gallo['nombre']}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              
+              // Llamar al servicio para eliminar
+              final success = await GalloService.deleteGallo(galloId);
+              
+              if (success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Gallo eliminado exitosamente'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                _cargarArbolGenealogico(); // Recargar árbol
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Error al eliminar el gallo'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 🔧 EDITAR GALLO
+  void _editarGallo(Map<String, dynamic> gallo) {
+    final galloId = gallo['id'];
+    
+    if (galloId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se puede editar este gallo (ID no disponible)'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    print('🔧 Editando gallo ID: $galloId - ${gallo['nombre']}');
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditGalloMultistepScreen(
+          gallo: gallo,  // Solo necesita el parámetro gallo
+        ),
+      ),
+    ).then((result) async {
+      // EditGalloMultistepScreen devuelve un Map con el resultado, no un bool
+      if (result != null) {
+        print('✅ Gallo editado, recargando árbol genealógico...');
+        
+        // Limpiar datos anteriores para forzar actualización visual
+        setState(() {
+          _isLoading = true;
+          _arbolCompleto = null;
+          _galloBase = null;
+          _padre = null;
+          _madre = null;
+        });
+        
+        // Pequeño delay para asegurar que el backend ya actualizó
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        // Recargar el árbol con datos frescos
+        await _cargarArbolGenealogico();
+      }
+    });
+  }
+
+  void _showGalloDetail(Map<String, dynamic> gallo) async {
+    // 🔥 SOLUCIÓN SIMPLE: Cargar datos completos del gallo usando su ID
+    print('🔍 === CARGANDO DATOS COMPLETOS DEL GALLO ===');
+    print('📋 Gallo clickeado: ${gallo['nombre']} (ID: ${gallo['id']})');
+    
+    // Mostrar loading mientras carga
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      ),
+    );
+    
+    try {
+      // 🎯 USAR EL MISMO SERVICIO QUE LA LISTA PRINCIPAL
+      final galloCompleto = await GalloService.getGalloById(gallo['id']);
+      
+      // Cerrar loading
+      if (mounted) Navigator.pop(context);
+      
+      if (galloCompleto == null) {
+        // Si no encuentra el gallo, usar los datos que tenemos
+        print('⚠️ No se encontró el gallo, usando datos del árbol');
+        _mostrarModalConDatos(gallo);
+      } else {
+        // 🎉 TENEMOS TODOS LOS DATOS!
+        print('✅ DATOS COMPLETOS OBTENIDOS');
+        print('📊 Campos disponibles: ${galloCompleto.keys.toList()}');
+        print('📝 Peso: ${galloCompleto['peso']}, Altura: ${galloCompleto['altura']}');
+        print('📝 Color placa: ${galloCompleto['color_placa']}, Ubicación: ${galloCompleto['ubicacion_placa']}');
+        _mostrarModalConDatos(galloCompleto);
+      }
+    } catch (e) {
+      // Cerrar loading si hay error
+      if (mounted) Navigator.pop(context);
+      print('❌ Error cargando datos: $e');
+      _mostrarModalConDatos(gallo);
+    }
+  }
+  
+  void _mostrarModalConDatos(Map<String, dynamic> galloActualizado) {
+    print('🎯 Mostrando modal con datos: ${galloActualizado['nombre']}');
+    print('📊 Datos para el modal: peso=${galloActualizado['peso']}, altura=${galloActualizado['altura']}, color_placa=${galloActualizado['color_placa']}');
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -910,7 +1056,7 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
-                                child: _buildNetworkImage(gallo['foto_principal_url'], 40),
+                                child: _buildNetworkImage(galloActualizado['foto_principal_url'], 40),
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -919,14 +1065,14 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    gallo['nombre'] ?? 'Sin nombre',
+                                    galloActualizado['nombre'] ?? 'Sin nombre',
                                     style: const TextStyle(
                                       fontSize: 24,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                   Text(
-                                    'Código: ${gallo['codigo_identificacion'] ?? 'N/A'}',
+                                    'Código: ${galloActualizado['codigo_identificacion'] ?? 'N/A'}',
                                     style: TextStyle(
                                       fontSize: 16,
                                       color: Colors.grey[600],
@@ -940,7 +1086,7 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
-                                      'Generación: ${gallo['generacion'] ?? 0}',
+                                      'Generación: ${galloActualizado['generacion'] ?? 0}',
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 12,
@@ -954,16 +1100,57 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
                           ],
                         ),
                         const SizedBox(height: 24),
-                        _buildDetailRow('Raza', gallo['raza']?['nombre'] ?? gallo['raza_nombre'] ?? 'N/A'),
-                        _buildDetailRow('Peso', '${gallo['peso'] ?? 0} kg'),
-                        _buildDetailRow('Color', gallo['color'] ?? 'N/A'),
-                        _buildDetailRow('Estado', gallo['estado'] ?? 'N/A'),
-                        _buildDetailRow('Fecha Nacimiento', gallo['fecha_nacimiento'] ?? 'N/A'),
-                        if (gallo['procedencia'] != null && gallo['procedencia'].toString().isNotEmpty)
-                          _buildDetailRow('Procedencia', gallo['procedencia']),
-                        if (gallo['notas'] != null && gallo['notas'].toString().isNotEmpty)
-                          _buildDetailRow('Notas', gallo['notas']),
+                        _buildDetailRow('Raza', _getRazaText(galloActualizado)),
+                        _buildDetailRow('Peso', '${galloActualizado['peso'] ?? 0} kg'),
+                        _buildDetailRow('Color', _getColorText(galloActualizado)),
+                        _buildDetailRow('Estado', galloActualizado['estado'] ?? 'N/A'),
+                        _buildDetailRow('Fecha Nacimiento', galloActualizado['fecha_nacimiento'] ?? 'N/A'),
+                        if (galloActualizado['procedencia'] != null && galloActualizado['procedencia'].toString().isNotEmpty)
+                          _buildDetailRow('Procedencia', galloActualizado['procedencia']),
+                        if (galloActualizado['notas'] != null && galloActualizado['notas'].toString().isNotEmpty)
+                          _buildDetailRow('Notas', galloActualizado['notas']),
                         const SizedBox(height: 20),
+                        
+                        // 🔧 BOTONES DE ACCIÓN - Solo mostrar editar/eliminar si NO es el gallo principal
+                        if (galloActualizado['id'] != widget.galloSeleccionado['id']) ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () {
+                                    Navigator.pop(context); // Cerrar modal
+                                    print('🔧 Enviando a editar con datos completos');
+                                    print('📊 Datos enviados: ${galloActualizado.keys.toList()}');
+                                    _editarGallo(galloActualizado); // DATOS COMPLETOS GARANTIZADOS
+                                  },
+                                  icon: const Icon(Icons.edit),
+                                  label: const Text('Editar'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.blue,
+                                    minimumSize: const Size(0, 45),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () {
+                                    Navigator.pop(context); // Cerrar modal
+                                    _eliminarGallo(galloActualizado); // Eliminar con datos actualizados
+                                  },
+                                  icon: const Icon(Icons.delete),
+                                  label: const Text('Eliminar'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                    minimumSize: const Size(0, 45),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        
                         ElevatedButton(
                           onPressed: () => Navigator.pop(context),
                           style: ElevatedButton.styleFrom(
@@ -1016,5 +1203,47 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
         ],
       ),
     );
+  }
+
+  // 🎯 OBTENER TEXTO DE RAZA USANDO LA MISMA LÓGICA QUE LA LISTA PRINCIPAL
+  String _getRazaText(Map<String, dynamic> gallo) {
+    return _mapRazaIdToDisplayName(gallo['raza_id']?.toString()) ?? 
+           gallo['raza']?.toString() ?? 
+           gallo['raza_nombre']?.toString() ??
+           'Sin especificar';
+  }
+
+  // 🎯 OBTENER TEXTO DE COLOR USANDO LA MISMA LÓGICA QUE LA LISTA PRINCIPAL
+  String _getColorText(Map<String, dynamic> gallo) {
+    return gallo['color_placa']?.toString() ?? 
+           gallo['color_plumaje']?.toString() ?? 
+           gallo['color']?.toString() ?? 
+           'Sin especificar';
+  }
+
+  // 🎯 MAPEAR ID DE RAZA A NOMBRE LEGIBLE - IGUAL QUE EN PEDIGRI_SCREEN
+  String? _mapRazaIdToDisplayName(String? razaId) {
+    if (razaId == null || razaId.isEmpty) return null;
+    
+    // Mapear IDs del backend a nombres legibles
+    switch (razaId.toUpperCase()) {
+      case 'KELSO_AMERICANO': return 'Kelso';
+      case 'HATCH_AMERICANO': return 'Hatch';
+      case 'ALBANY_AMERICANO': return 'Albany';
+      case 'SWEATER_AMERICANO': return 'Sweater';
+      case 'RADIO_AMERICANO': return 'Radio';
+      case 'CLARET_AMERICANO': return 'Claret';
+      case 'LAW_AMERICANO': return 'Law';
+      case 'GREY_AMERICANO': return 'Grey';
+      case 'ROUNDHEAD_AMERICANO': return 'Roundhead';
+      case 'BUTCHER_AMERICANO': return 'Butcher';
+      case 'MCLEAN_AMERICANO': return 'McLean';
+      case 'WHITEHACKLE_AMERICANO': return 'Whitehackle';
+      case 'ASIL_PERUANO': return 'Asil';
+      case 'SHAMO_JAPONES': return 'Shamo';
+      case 'NAVAJERO': return 'Thai';
+      default:
+        return razaId; // Si no está mapeado, devolver el ID original
+    }
   }
 }

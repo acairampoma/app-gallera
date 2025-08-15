@@ -19,12 +19,11 @@ class _InversionesScreenState extends State<InversionesScreen> {
   late int _anioSeleccionado;
   late int _mesSeleccionado;
   
-  // 💰 Datos de inversiones (4 tipos)
+  // 💰 Datos de inversiones (3 tipos)
   final Map<String, TextEditingController> _controllers = {
     'alimento': TextEditingController(),
     'medicina': TextEditingController(),
     'limpieza_galpon': TextEditingController(),
-    'entrenador': TextEditingController(),
   };
   
   // 🔄 Estados
@@ -381,7 +380,6 @@ class _InversionesScreenState extends State<InversionesScreen> {
       case 'alimento': return 'Alimento';
       case 'medicina': return 'Medicina';
       case 'limpieza_galpon': return 'Limpieza Galpón';
-      case 'entrenador': return 'Entrenador';
       default: return tipo;
     }
   }

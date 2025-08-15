@@ -461,7 +461,7 @@ class _DocumentosTabState extends State<DocumentosTab>
           ),
           // 🔥 DESCARGA DIRECTA DESDE BASE64
           ElevatedButton.icon(
-            onPressed: () {
+            onPressed: () async {
               print('🔥 Descargando PDF desde Base64...');
               Navigator.of(context).pop();
               
@@ -470,7 +470,7 @@ class _DocumentosTabState extends State<DocumentosTab>
               final fileName = 'ficha_${nombreGallo}_${DateTime.now().millisecondsSinceEpoch}.pdf';
               
               try {
-                PDFDownloadService.downloadPDFFromBase64(pdfBase64, fileName);
+                await PDFDownloadService.downloadPDFFromBase64(pdfBase64, fileName, context: context);
                 
                 // Mostrar éxito
                 ScaffoldMessenger.of(context).showSnackBar(

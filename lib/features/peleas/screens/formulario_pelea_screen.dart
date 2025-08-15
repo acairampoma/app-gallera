@@ -13,11 +13,13 @@ import '../../../models/pelea.dart';
 class FormularioPeleaScreen extends StatefulWidget {
   final Pelea? pelea;
   final int? galloPreseleccionado;
+  final bool galloIsBloqueado;
 
   const FormularioPeleaScreen({
     Key? key,
     this.pelea,
     this.galloPreseleccionado,
+    this.galloIsBloqueado = false,
   }) : super(key: key);
 
   @override
@@ -230,12 +232,17 @@ class _FormularioPeleaScreenState extends State<FormularioPeleaScreen> {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
               value: galloSeleccionado,
-              hint: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Text('Seleccione el gallo que peleó'),
+              hint: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Text(
+                  widget.galloIsBloqueado ? 'Gallo preseleccionado' : 'Seleccione el gallo que peleó',
+                  style: TextStyle(
+                    color: widget.galloIsBloqueado ? Colors.grey[600] : null,
+                  ),
+                ),
               ),
               isExpanded: true,
-              onChanged: (int? value) {
+              onChanged: widget.galloIsBloqueado ? null : (int? value) {
                 setState(() {
                   galloSeleccionado = value;
                   // 🆕 Actualizar valores por defecto cuando cambia el gallo
@@ -549,8 +556,8 @@ class _FormularioPeleaScreenState extends State<FormularioPeleaScreen> {
                 child: TextFormField(
                   controller: _galleraController,
                   decoration: InputDecoration(
-                    labelText: 'Gallera',
-                    hintText: 'Ej: Gallera Real',
+                    labelText: 'Coliseo',
+                    hintText: 'Ej: Coliseo Real',
                     fillColor: Colors.white,
                     filled: true,
                     border: OutlineInputBorder(

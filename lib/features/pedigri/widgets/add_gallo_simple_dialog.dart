@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/constants/app_icons.dart';
 
 // 🔥 WIDGET SIMPLE PARA AGREGAR GALLO RÁPIDO
 class AddGalloSimpleDialog extends StatefulWidget {
@@ -56,8 +57,8 @@ class _AddGalloSimpleDialogState extends State<AddGalloSimpleDialog> {
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
-                    Icons.pets,
+                  child: AppIcons.gallo(
+                    size: 48,
                     color: AppColors.primary,
                     size: 24,
                   ),
@@ -90,7 +91,7 @@ class _AddGalloSimpleDialogState extends State<AddGalloSimpleDialog> {
                       _buildTextField(
                         controller: _nombreController,
                         label: 'Nombre del Gallo',
-                        icon: Icons.pets,
+                        icon: AppIcons.galloIconData,
                         validator: (value) {
                           if (value?.isEmpty ?? true) {
                             return 'El nombre es requerido';

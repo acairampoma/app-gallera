@@ -27,6 +27,7 @@ class _HistorialVacunasScreenState extends State<HistorialVacunasScreen> {
   List<Vacuna> historialVacunas = [];
   List<ProximaVacuna> proximasVacunas = [];
   bool isLoading = true;
+  bool _hasChanges = false; // Flag para indicar si hubo cambios
   final DateFormat _dateFormatter = DateFormat('dd/MM/yyyy');
 
   @override
@@ -37,7 +38,11 @@ class _HistorialVacunasScreenState extends State<HistorialVacunasScreen> {
 
   Future<void> _loadHistorial() async {
     print('📊 Cargando historial del gallo ${widget.galloId}...');
-    setState(() => isLoading = true);
+    
+    // Solo mostrar loading si no hay datos previos
+    if (historialVacunas.isEmpty) {
+      setState(() => isLoading = true);
+    }
     
     try {
       // Cargar historial y próximas vacunas
@@ -53,38 +58,53 @@ class _HistorialVacunasScreenState extends State<HistorialVacunasScreen> {
       // Convertir historial
       final historial = historialData.map((h) => Vacuna.fromJson(h)).toList();
       
-      setState(() {
-        historialVacunas = historial;
-        proximasVacunas = proximasGallo;
-        isLoading = false;
-      });
+      // Forzar actualización completa del widget
+      if (mounted) {
+        setState(() {
+          historialVacunas = historial;
+          proximasVacunas = proximasGallo;
+          isLoading = false;
+        });
+      }
       
-      print('✅ Historial cargado: ${historial.length} registros, ${proximasGallo.length} próximas');
+      print('✅ Historial actualizado: ${historial.length} registros, ${proximasGallo.length} próximas');
       
     } catch (e) {
       print('❌ Error cargando historial: $e');
-      setState(() => isLoading = false);
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BaseScreen(
-      title: '📊 ${widget.galloNombre}',
-      child: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                _buildSummaryCards(),
-                _buildProximasVacunas(),
-                Expanded(child: _buildHistorialList()),
-              ],
-            ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _agregarNuevaVacuna,
-        icon: const Icon(Icons.add),
-        label: const Text('Nueva Vacuna'),
-        backgroundColor: AppColors.primary,
+    return WillPopScope(
+      onWillPop: () async {
+        // Si hubo cambios, retornar true para que la pantalla anterior recargue
+        if (_hasChanges) {
+          Navigator.pop(context, true);
+          return false; // Prevenir el pop por defecto
+        }
+        return true; // Permitir el pop normal
+      },
+      child: BaseScreen(
+        title: '📊 ${widget.galloNombre}',
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                children: [
+                  _buildSummaryCards(),
+                  _buildProximasVacunas(),
+                  Expanded(child: _buildHistorialList()),
+                ],
+              ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _agregarNuevaVacuna,
+          icon: const Icon(Icons.add),
+          label: const Text('Nueva Vacuna'),
+          backgroundColor: AppColors.primary,
+        ),
       ),
     );
   }
@@ -425,6 +445,7 @@ class _HistorialVacunasScreenState extends State<HistorialVacunasScreen> {
       ),
     ).then((result) {
       if (result == true) {
+        _hasChanges = true; // Marcar que hubo cambios
         _loadHistorial(); // Recargar si se agregó una vacuna
       }
     });
@@ -477,13 +498,23 @@ class _HistorialVacunasScreenState extends State<HistorialVacunasScreen> {
     try {
       final success = await VacunasService.eliminarVacuna(vacuna.id!);
       if (success) {
+        // Marcar que hubo cambios
+        _hasChanges = true;
+        
+        // Actualizar la lista localmente primero para respuesta inmediata
+        setState(() {
+          historialVacunas.removeWhere((v) => v.id == vacuna.id);
+        });
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Vacuna eliminada'),
             backgroundColor: Colors.green,
           ),
         );
-        _loadHistorial();
+        
+        // Luego recargar desde el servidor para sincronizar
+        await _loadHistorial();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

@@ -49,11 +49,22 @@ class AuthService {
     return null;
   }
 
-  // 👑 VERIFICAR SI ES ADMINISTRADOR
+  // 👑 VERIFICAR SI ES ADMINISTRADOR (MEJORADO CON BD)
+  bool _esUsuarioAdmin() {
+    // Usar el campo es_admin de la base de datos en lugar de email hardcodeado
+    final esAdmin = _currentUser?.esAdmin ?? false;
+    print('🔍 _esUsuarioAdmin() - currentUser: ${_currentUser?.email}');
+    print('🔍 _esUsuarioAdmin() - esAdmin field: ${_currentUser?.esAdmin}');
+    print('🔍 _esUsuarioAdmin() - resultado: $esAdmin');
+    return esAdmin;
+  }
+  
+  // 👑 MÉTODO LEGACY PARA COMPATIBILIDAD (DEPRECADO)
   bool _esEmailAdmin(String email) {
+    // DEPRECADO: Solo como fallback si no hay campo es_admin
     const emailsAdmin = [
       'juan.salas.nuevo@galloapp.com',
-      'admin@galloapp.com',
+      'admin@galloapp.com', 
       'administrador@galloapp.com',
     ];
     return emailsAdmin.contains(email.toLowerCase());
@@ -93,7 +104,7 @@ class AuthService {
         
         // 👑 DETECTAR SI ES ADMIN TAMBIÉN AL INICIALIZAR
         if (_currentUser != null) {
-          _isAdmin = _esEmailAdmin(_currentUser!.email);
+          _isAdmin = _esUsuarioAdmin();
           print('👑 Admin detectado en initialize: $_isAdmin');
           _adminStateController.add(_isAdmin);
         }
@@ -125,7 +136,7 @@ class AuthService {
       _isAuthenticated = true;
       
       // 👑 DETECTAR SI ES ADMINISTRADOR
-      _isAdmin = _esEmailAdmin(email);
+      _isAdmin = _esUsuarioAdmin();
       print('👑 Es administrador: $_isAdmin');
       
       // Cargar perfil (puede venir en la respuesta o cargar separadamente)
@@ -195,6 +206,11 @@ class AuthService {
     try {
       _currentUser = await ApiService.getCurrentUser();
       _isAuthenticated = true;
+      
+      // 👑 ACTUALIZAR ESTADO DE ADMIN DESPUÉS DE CARGAR USUARIO
+      _isAdmin = _esUsuarioAdmin();
+      print('👑 Admin detectado en loadCurrentUser: $_isAdmin');
+      _adminStateController.add(_isAdmin);
       
       await loadCurrentProfile();
       

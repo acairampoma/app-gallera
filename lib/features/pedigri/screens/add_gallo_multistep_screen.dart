@@ -8,6 +8,7 @@ import '../../../services/gallo_service_v2.dart';
 import '../../../services/suscripcion_service.dart'; // ✅ AGREGADO
 import '../../../shared/widgets/limite_interceptor.dart'; // ✅ AGREGADO
 import '../../../models/suscripcion_models.dart'; // ✅ AGREGADO
+import '../../../shared/constants/app_icons.dart';
 
 class AddGalloMultistepScreen extends StatefulWidget {
   const AddGalloMultistepScreen({Key? key}) : super(key: key);
@@ -66,8 +67,8 @@ class _AddGalloMultistepScreenState extends State<AddGalloMultistepScreen> with 
   final ImagePicker _imagePicker = ImagePicker();
   
   // ===== DATOS DROPDOWN =====
-  final List<String> _coloresPlaca = ['Rojo', 'Azul', 'Verde', 'Amarillo', 'Blanco', 'Negro'];
-  final List<String> _ubicacionesPlaca = ['Pata Derecha', 'Pata Izquierda', 'Ambas Patas'];
+  final List<String> _coloresPlaca = ['Rojo', 'Azul', 'Verde', 'Amarillo', 'Blanco', 'Negro', 'Plateado', 'Dorado'];
+  final List<String> _ubicacionesPlaca = ['Ala Derecha', 'Ala Izquierda','Ambas Alas'];
   final List<String> _razas = ['Kelso', 'Hatch', 'Albany', 'Sweater', 'Radio', 'Claret'];
   final List<String> _coloresPatas = ['Amarillo', 'Blanco', 'Verde', 'Negro', 'Gris'];
   final List<String> _coloresPlumaje = ['Colorado', 'Giro', 'Cenizo', 'Blanco', 'Negro', 'Combinado'];
@@ -257,7 +258,7 @@ class _AddGalloMultistepScreenState extends State<AddGalloMultistepScreen> with 
             controller: _nombreController,
             label: 'Nombre del Gallo',
             hint: 'Ej: El Campeón, Relámpago...',
-            icon: Icons.pets,
+            icon: AppIcons.galloIconData,
             isRequired: true,
           ),
           const SizedBox(height: 16),
@@ -323,7 +324,7 @@ class _AddGalloMultistepScreenState extends State<AddGalloMultistepScreen> with 
             value: _raza,
             items: _razas,
             onChanged: (value) => setState(() => _raza = value),
-            icon: Icons.pets,
+            icon: AppIcons.galloIconData,
           ),
           const SizedBox(height: 16),
           

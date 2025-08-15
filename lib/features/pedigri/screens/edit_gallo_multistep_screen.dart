@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../services/gallo_service_v2.dart';
+import '../../../shared/constants/app_icons.dart';
 
 /// 🔥 FORMULARIO ÉPICO DE EDICIÓN DE GALLOS
 /// Técnica recursiva genealógica + expansión infinita
@@ -126,6 +127,34 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
   @override
   bool get wantKeepAlive => true;
 
+  // 🔥 CONVERTIR RAZA_ID DEL BACKEND AL VALOR DEL DROPDOWN
+  String? _convertRazaIdToDropdownValue(String razaId) {
+    switch (razaId.toUpperCase()) {
+      case 'KELSO_AMERICANO': return 'Kelso';
+      case 'HATCH_AMERICANO': return 'Hatch';
+      case 'ALBANY_AMERICANO': return 'Albany';
+      case 'SWEATER_AMERICANO': return 'Sweater';
+      case 'RADIO_AMERICANO': return 'Radio';
+      case 'CLARET_AMERICANO': return 'Claret';
+      case 'LAW_AMERICANO': return 'Law';
+      case 'GREY_AMERICANO': return 'Grey';
+      case 'ROUNDHEAD_AMERICANO': return 'Roundhead';
+      case 'BUTCHER_AMERICANO': return 'Butcher';
+      case 'MCLEAN_AMERICANO': return 'McLean';
+      case 'WHITEHACKLE_AMERICANO': return 'Whitehackle';
+      case 'ASIL_PERUANO': return 'Asil';
+      case 'SHAMO_JAPONES': return 'Shamo';
+      case 'NAVAJERO': return 'Thai';
+      case 'PERUVIAN': return 'Peruvian';
+      default:
+        // Si no está mapeado, intentar extraer la primera parte
+        if (razaId.contains('_')) {
+          return razaId.split('_')[0];
+        }
+        return razaId;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -133,6 +162,7 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
     _initializeTabController();
     _initializePageController();
     _preloadFormData();
+    // Ya no necesitamos cargar datos extras - vienen completos desde el modal
   }
 
   void _initializeControllers() {
@@ -165,6 +195,156 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
     );
   }
 
+  /// 🔥 CARGAR DATOS COMPLETOS DESDE BACKEND SI ES NECESARIO
+  Future<void> _loadCompleteGalloDataIfNeeded() async {
+    try {
+      final galloId = widget.gallo['id'];
+      final tipoRegistro = widget.gallo['tipo_registro'];
+      
+      // NO cargar datos extras para gallos generados automáticamente
+      if (tipoRegistro == 'padre_generado' || tipoRegistro == 'madre_generada') {
+        debugPrint('⚠️ Gallo tipo "$tipoRegistro" - no requiere datos adicionales');
+        return;
+      }
+      
+      // Solo cargar si tenemos un ID y si parece que faltan datos críticos
+      // Y solo para gallos reales (no generados)
+      if (galloId != null && 
+          widget.gallo['peso'] == null && 
+          widget.gallo['altura'] == null &&
+          widget.gallo['raza'] == null) {
+        
+        debugPrint('🔄 Intentando cargar datos completos del gallo $galloId...');
+        
+        // OPCIÓN 1: Si tenemos los datos en el árbol genealógico, usarlos
+        if (widget.gallo['familia_completa'] != null) {
+          final familiaCompleta = widget.gallo['familia_completa'] as List<dynamic>;
+          for (var g in familiaCompleta) {
+            if (g['id'] == galloId) {
+              debugPrint('✅ Datos encontrados en familia_completa');
+              _updateControllersWithCompleteData(Map<String, dynamic>.from(g));
+              return;
+            }
+          }
+        }
+        
+        // OPCIÓN 2: Obtener desde el endpoint de genealogía (que sí existe)
+        debugPrint('🔄 Cargando desde endpoint genealogía...');
+        
+        setState(() {
+          _isLoading = true;
+          _loadingMessage = 'Cargando información...';
+        });
+        
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString('access_token');
+        
+        // Usar el endpoint de genealogía que sí existe
+        final response = await http.get(
+          Uri.parse('https://gallerappback-production.up.railway.app/api/v1/gallos/$galloId/genealogia'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        );
+        
+        if (response.statusCode == 200) {
+          final responseData = json.decode(response.body);
+          if (responseData['success'] == true && responseData['data'] != null) {
+            final ancestros = responseData['data']['arbol_genealogico']['ancestros'];
+            debugPrint('✅ Datos obtenidos desde genealogía');
+            
+            // El gallo principal está en ancestros
+            if (mounted && ancestros != null) {
+              _updateControllersWithCompleteData(Map<String, dynamic>.from(ancestros));
+            }
+          }
+        } else {
+          debugPrint('⚠️ No se pudieron obtener datos: ${response.statusCode}');
+        }
+        
+        setState(() {
+          _isLoading = false;
+          _loadingMessage = null;
+        });
+      } else {
+        debugPrint('✅ Datos ya completos, no es necesario cargar más');
+      }
+    } catch (e) {
+      debugPrint('❌ Error cargando datos completos: $e');
+      setState(() {
+        _isLoading = false;
+        _loadingMessage = null;
+      });
+    }
+  }
+  
+  /// 🔥 ACTUALIZAR CONTROLADORES CON DATOS COMPLETOS
+  void _updateControllersWithCompleteData(Map<String, dynamic> gallo) {
+    // Solo actualizar campos vacíos para no sobrescribir lo que ya tenemos
+    if (_pesoController.text.isEmpty && gallo['peso'] != null) {
+      _pesoController.text = gallo['peso'].toString();
+    }
+    
+    if (_alturaController.text.isEmpty && gallo['altura'] != null) {
+      _alturaController.text = gallo['altura'].toString();
+    }
+    
+    // Manejar raza si está vacía
+    if (_raza == null && gallo['raza'] != null) {
+      if (gallo['raza'] is Map) {
+        _raza = gallo['raza']['nombre']?.toString();
+      } else {
+        _raza = gallo['raza'].toString();
+      }
+    } else if (_raza == null && gallo['raza_nombre'] != null) {
+      _raza = gallo['raza_nombre'].toString();
+    }
+    
+    if (_colorPatas == null && gallo['color_patas'] != null) {
+      _colorPatas = gallo['color_patas'].toString();
+    }
+    
+    if (_colorPlumaje == null && gallo['color_plumaje'] != null) {
+      _colorPlumaje = gallo['color_plumaje'].toString();
+    } else if (_colorPlumaje == null && gallo['color'] != null) {
+      _colorPlumaje = gallo['color'].toString();
+    }
+    
+    if (_criadorController.text.isEmpty && gallo['criador'] != null) {
+      _criadorController.text = gallo['criador'].toString();
+    }
+    
+    if (_propietarioController.text.isEmpty && gallo['propietario_actual'] != null) {
+      _propietarioController.text = gallo['propietario_actual'].toString();
+    }
+    
+    // Actualizar fecha de nacimiento si no está presente
+    if (_fechaNacimiento == null && gallo['fecha_nacimiento'] != null) {
+      try {
+        _fechaNacimiento = DateTime.parse(gallo['fecha_nacimiento'].toString());
+      } catch (e) {
+        debugPrint('Error parsing fecha_nacimiento: $e');
+      }
+    }
+    
+    // Actualizar nombre y código si están vacíos
+    if (_nombreController.text.isEmpty && gallo['nombre'] != null) {
+      _nombreController.text = gallo['nombre'].toString();
+    }
+    
+    if (_registroController.text.isEmpty && gallo['codigo_identificacion'] != null) {
+      _registroController.text = gallo['codigo_identificacion'].toString();
+    }
+    
+    setState(() {
+      _isInitialized = true;
+    });
+    
+    debugPrint('✅ Controladores actualizados con datos completos');
+  }
+
   /// 🔥 PRE-LLENAR FORMULARIO CON DATOS EXISTENTES
   void _preloadFormData() {
     try {
@@ -173,6 +353,7 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
       // 🔍 DEBUG: Ver qué datos están llegando
       debugPrint('🔥 === DEBUG GALLO DATA ===');
       debugPrint('📊 Campos disponibles: ${gallo.keys.toList()}');
+      debugPrint('📝 Tipo de registro: ${gallo['tipo_registro']}');
       debugPrint('📝 Datos completos: $gallo');
       debugPrint('========================');
       
@@ -193,9 +374,29 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
       _ubicacionPlaca = gallo['ubicacion_placa']?.toString();
 
       // FASE 2: Datos básicos
-      _raza = gallo['raza']?.toString();
+      // 🔥 FIX: Manejar raza como objeto, string o ID del backend
+      if (gallo['raza'] != null) {
+        if (gallo['raza'] is Map) {
+          // Viene desde genealogía: {nombre: 'Kelso', id: 1}
+          _raza = gallo['raza']['nombre']?.toString();
+          debugPrint('✅ Raza desde objeto: $_raza');
+        } else {
+          // Viene desde lista principal: 'Kelso'
+          _raza = gallo['raza'].toString();
+          debugPrint('✅ Raza desde string: $_raza');
+        }
+      } else if (gallo['raza_id'] != null) {
+        // 🔥 NUEVO: Convertir raza_id del backend al nombre para el dropdown
+        _raza = _convertRazaIdToDropdownValue(gallo['raza_id'].toString());
+        debugPrint('✅ Raza desde raza_id: ${gallo['raza_id']} → $_raza');
+      } else if (gallo['raza_nombre'] != null) {
+        // Fallback para formato alternativo
+        _raza = gallo['raza_nombre'].toString();
+        debugPrint('✅ Raza desde raza_nombre: $_raza');
+      }
+      
       _colorPatas = gallo['color_patas']?.toString();
-      _colorPlumaje = gallo['color_plumaje']?.toString();
+      _colorPlumaje = gallo['color_plumaje']?.toString() ?? gallo['color']?.toString();
       _pesoController.text = gallo['peso']?.toString() ?? '';
       _alturaController.text = gallo['altura']?.toString() ?? '';
       _criadorController.text = gallo['criador']?.toString() ?? '';
@@ -1004,7 +1205,7 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
             _buildEpicTextField(
               controller: _nombreController,
               label: 'Nombre del Gallo',
-              icon: Icons.pets,
+              icon: AppIcons.galloIconData,
               isRequired: true,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -1227,7 +1428,7 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
               value: _raza,
               items: _razas,
               onChanged: (value) => setState(() => _raza = value),
-              icon: Icons.pets,
+              icon: AppIcons.galloIconData,
             ),
             const SizedBox(height: 16),
             
@@ -1432,7 +1633,7 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
             _buildEpicTextField(
               controller: _padreNombreController,
               label: 'Nombre del Padre',
-              icon: Icons.pets,
+              icon: AppIcons.galloIconData,
               isRequired: true,
               validator: (value) {
                 if (_crearPadre && (value == null || value.trim().isEmpty)) {
@@ -1556,7 +1757,7 @@ class _EditGalloMultistepScreenState extends State<EditGalloMultistepScreen>
             _buildEpicTextField(
               controller: _madreNombreController,
               label: 'Nombre de la Madre',
-              icon: Icons.pets,
+              icon: AppIcons.galloIconData,
               isRequired: true,
               validator: (value) {
                 if (_crearMadre && (value == null || value.trim().isEmpty)) {

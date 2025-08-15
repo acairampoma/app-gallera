@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../shared/widgets/base_screen.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/constants/app_icons.dart'; // 🐓 ÍCONOS CENTRALIZADOS
 import '../widgets/add_gallo_dialog.dart';
 import '../widgets/edit_gallo_dialog.dart';
 import 'add_gallo_multistep_screen.dart';
@@ -47,16 +48,35 @@ class _PedigriScreenState extends State<PedigriScreen> {
     setState(() => isLoading = true);
     
     try {
-      // 🔥 SOLO BACKEND REAL - NO MÁS MOCK
-      print('🌐 Intentando conectar al backend Railway...');
-      final gallosBackend = await GalloService.getGallos();
+      // 🔥 USAR NUEVO ENDPOINT DE GALLOS PRINCIPALES
+      print('🌐 Intentando conectar al endpoint de gallos principales...');
+      final gallosPrincipalesBackend = await GalloService.getGallosPrincipales();
       
-      print('✅ Gallos recibidos del backend: ${gallosBackend.length}');
+      print('✅ Gallos principales recibidos del backend: ${gallosPrincipalesBackend.length}');
+      
+      // 🔍 DEBUG: Inspeccionar estructura de datos para id_gallo_genealogico
+      if (gallosPrincipalesBackend.isNotEmpty) {
+        final primerGallo = gallosPrincipalesBackend.first;
+        print('🔍 === ESTRUCTURA DEL PRIMER GALLO PRINCIPAL ===');
+        print('📋 Campos disponibles: ${primerGallo.keys.toList()}');
+        print('🔑 id_gallo_genealogico: ${primerGallo['id_gallo_genealogico']}');
+        print('📝 Valor del primer gallo: ${primerGallo.toString().length > 300 ? primerGallo.toString().substring(0, 300) + "..." : primerGallo.toString()}');
+        
+        // Contar cuántos gallos tienen id_gallo_genealogico
+        final conIdGenealogico = gallosPrincipalesBackend.where((g) => g['id_gallo_genealogico'] != null).length;
+        final sinIdGenealogico = gallosPrincipalesBackend.length - conIdGenealogico;
+        print('📊 Gallos CON id_gallo_genealogico: $conIdGenealogico');
+        print('📊 Gallos SIN id_gallo_genealogico: $sinIdGenealogico');
+      }
+      
+      // 🔥 YA NO NECESITAMOS FILTRAR PORQUE EL BACKEND YA LO HIZO
+      print('🌳 Backend ya filtró los gallos principales con DISTINCT');
       
       setState(() {
-        gallos = gallosBackend;
-        gallosFiltrados = List.from(gallos);
-        print('🎯 Gallos cargados en UI: ${gallos.length}');
+        // Obtener todos los gallos para contexto completo (para árboles genealógicos)
+        gallos = gallosPrincipalesBackend; // Para mantener compatibilidad
+        gallosFiltrados = gallosPrincipalesBackend; // Ya vienen filtrados del backend
+        print('🎯 Gallos principales mostrados: ${gallosPrincipalesBackend.length}');
       });
       
       // Cargar razas del JSON (mantener por ahora)
@@ -163,7 +183,7 @@ class _PedigriScreenState extends State<PedigriScreen> {
 
   // 📊 ESTADÍSTICAS CENTRADAS - TODO EL ANCHO - VERSIÓN MEJORADA
   Widget _buildStatsSection() {
-    final totalGallos = gallos.length;
+    final gallosPrincipales = gallos.length; // Ya vienen filtrados del backend
     final gallosMostrados = gallosFiltrados.length;
     final gallosActivos = gallos.where((g) => g['estado'] == 'activo').length;
     
@@ -172,9 +192,9 @@ class _PedigriScreenState extends State<PedigriScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          Expanded(child: _buildMiniStatCard('📱', '$totalGallos', 'Total', Colors.blue)),
+          Expanded(child: _buildMiniStatCard('🌳', '$gallosPrincipales', 'Principales', Colors.green)),
           const SizedBox(width: 8),
-          Expanded(child: _buildMiniStatCard('👁️', '$gallosMostrados', 'Mostrando', Colors.green)),
+          Expanded(child: _buildMiniStatCard('👁️', '$gallosMostrados', 'Mostrados', Colors.blue)),
           const SizedBox(width: 8),
           Expanded(child: _buildMiniStatCard('🏆', '$gallosActivos', 'Activos', Colors.orange)),
         ],
@@ -278,11 +298,13 @@ class _PedigriScreenState extends State<PedigriScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            _searchQuery.isNotEmpty ? Icons.search_off : Icons.pets,
-            size: 80,
-            color: Colors.grey[400],
-          ),
+          _searchQuery.isNotEmpty 
+            ? Icon(
+                Icons.search_off,
+                size: 80,
+                color: Colors.grey[400],
+              )
+            : AppIcons.galloEmpty(), // 🐓 Ícono gallo para estado vacío
           const SizedBox(height: 16),
           Text(
             _searchQuery.isNotEmpty 
@@ -484,11 +506,7 @@ class _PedigriScreenState extends State<PedigriScreen> {
 
   Widget _buildImageWidget(String? fotoPath) {
     if (fotoPath == null || fotoPath.isEmpty) {
-      return const Icon(
-        Icons.pets,
-        size: 40,
-        color: AppColors.primary,
-      );
+      return AppIcons.galloCard(); // 🐓 Ícono del gallo (40px, rojo)
     }
 
     // 🔥 MANEJAR URLs DE CLOUDINARY Y ASSETS
@@ -510,11 +528,7 @@ class _PedigriScreenState extends State<PedigriScreen> {
         },
         errorBuilder: (context, error, stackTrace) {
           print('❌ Error cargando imagen: $fotoPath - $error');
-          return const Icon(
-            Icons.pets,
-            size: 40,
-            color: AppColors.primary,
-          );
+          return AppIcons.galloCard(); // 🐓 Fallback con ícono del gallo
         },
       );
     } else if (fotoPath.startsWith('assets/')) {
@@ -524,27 +538,15 @@ class _PedigriScreenState extends State<PedigriScreen> {
           fotoPath,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
-            return const Icon(
-              Icons.pets,
-              size: 40,
-              color: AppColors.primary,
-            );
+            return AppIcons.galloCard(); // 🐓 Error builder con ícono del gallo
           },
         );
       } catch (e) {
-        return const Icon(
-          Icons.pets,
-          size: 40,
-          color: AppColors.primary,
-        );
+        return AppIcons.galloCard(); // 🐓 Catch con ícono del gallo
       }
     } else {
       // Fallback para rutas desconocidas
-      return const Icon(
-        Icons.pets,
-        size: 40,
-        color: AppColors.primary,
-      );
+      return AppIcons.galloCard(); // 🐓 Fallback con ícono del gallo
     }
   }
 
@@ -1083,8 +1085,8 @@ class _PedigriScreenState extends State<PedigriScreen> {
       // Mostrar indicador de carga sutil
       setState(() => isLoading = true);
       
-      // Obtener datos frescos del backend
-      final gallosFrescos = await GalloService.getGallos();
+      // Obtener datos frescos del backend - SOLO PRINCIPALES
+      final gallosFrescos = await GalloService.getGallosPrincipales();
       
       print('✅ Gallos frescos obtenidos: ${gallosFrescos.length}');
       
@@ -1226,11 +1228,72 @@ class _PedigriScreenState extends State<PedigriScreen> {
     );
   }
 
+  /// 🔑 FILTRO POR ID_GALLO_GENEALOGICO DISTINCT - SOLO GALLOS PRINCIPALES
+  List<dynamic> _identificarCabezasDeArbol(List<dynamic> todosLosGallos) {
+    print('🔑 === FILTRANDO POR ID_GALLO_GENEALOGICO DISTINCT ===');
+    print('📊 Total gallos recibidos para filtrar: ${todosLosGallos.length}');
+    
+    // Map para tracking de IDs genealógicos únicos
+    final Map<dynamic, dynamic> gallosUnicos = {};
+    final List<dynamic> gallosPrincipales = [];
+    
+    // 🔍 DEBUG: Verificar si ALGÚN gallo tiene el campo
+    final gallosConCampo = todosLosGallos.where((g) => g.containsKey('id_gallo_genealogico')).length;
+    final gallosConValor = todosLosGallos.where((g) => g['id_gallo_genealogico'] != null).length;
+    print('📋 Gallos que TIENEN el campo id_gallo_genealogico: $gallosConCampo');
+    print('📋 Gallos con VALOR en id_gallo_genealogico: $gallosConValor');
+    
+    for (var gallo in todosLosGallos) {
+      final idGenealogico = gallo['id_gallo_genealogico'];
+      final nombre = gallo['nombre'] ?? 'Sin nombre';
+      final tipo = gallo['tipo'] ?? 'N/A';
+      final padreId = gallo['padre_id'];
+      final madreId = gallo['madre_id'];
+      
+      print('🐓 Procesando: $nombre (ID: ${gallo['id']}, IdGenealógico: $idGenealogico, Padre: $padreId, Madre: $madreId)');
+      
+      // Si tiene id_gallo_genealogico válido
+      if (idGenealogico != null) {
+        // Si no hemos visto este ID genealógico antes, lo agregamos
+        if (!gallosUnicos.containsKey(idGenealogico)) {
+          gallosUnicos[idGenealogico] = gallo;
+          gallosPrincipales.add(gallo);
+          print('✅ PRINCIPAL AGREGADO: $nombre (IdGenealógico: $idGenealogico)');
+        } else {
+          print('⚠️ DUPLICADO OMITIDO: $nombre (IdGenealógico: $idGenealogico ya existe)');
+        }
+      } else {
+        // 🔍 FALLBACK: Si NO hay id_gallo_genealogico, usar lógica de árbol genealógico
+        // Un gallo es "principal" si no tiene padre ni madre (es raíz del árbol)
+        if (padreId == null && madreId == null) {
+          gallosPrincipales.add(gallo);
+          print('✅ RAÍZ AGREGADA (FALLBACK): $nombre (sin padres)');
+        } else {
+          print('🤖 DESCENDIENTE OMITIDO: $nombre (tiene padre: $padreId, madre: $madreId)');
+        }
+      }
+    }
+    
+    print('🎯 Total gallos principales encontrados: ${gallosPrincipales.length}');
+    
+    // 🔍 Si no encontramos ningún principal, mostrar todos como fallback
+    if (gallosPrincipales.isEmpty && todosLosGallos.isNotEmpty) {
+      print('⚠️ NO SE ENCONTRARON GALLOS PRINCIPALES - MOSTRANDO TODOS COMO FALLBACK');
+      print('🔑 === FILTRADO COMPLETADO (FALLBACK) ===');
+      return todosLosGallos;
+    }
+    
+    print('🔑 === FILTRADO COMPLETADO ===');
+    return gallosPrincipales;
+  }
+
   void _filterGallos(String query) {
     setState(() {
       _searchQuery = query;
+      
+      // 🔥 USAR GALLOS YA FILTRADOS POR EL BACKEND (NO NECESITAMOS FILTRAR AQUÍ)
       if (query.isEmpty) {
-        gallosFiltrados = List.from(gallos);
+        gallosFiltrados = gallos; // Ya vienen filtrados del backend
       } else {
         gallosFiltrados = gallos.where((gallo) {
           final nombre = gallo['nombre']?.toString().toLowerCase() ?? '';
@@ -1245,6 +1308,8 @@ class _PedigriScreenState extends State<PedigriScreen> {
                  color.contains(searchLower);
         }).toList();
       }
+      
+      print('🔍 Búsqueda "$query": ${gallosFiltrados.length} gallos principales encontrados');
     });
   }
 

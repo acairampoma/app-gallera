@@ -20,8 +20,6 @@ class _RegistroRapidoDialogState extends State<RegistroRapidoDialog> {
   final _formKey = GlobalKey<FormState>();
   
   // Controladores
-  final _veterinarioController = TextEditingController();
-  final _clinicaController = TextEditingController();
   final _dosisController = TextEditingController();
   final _notasController = TextEditingController();
 
@@ -43,8 +41,6 @@ class _RegistroRapidoDialogState extends State<RegistroRapidoDialog> {
 
   @override
   void dispose() {
-    _veterinarioController.dispose();
-    _clinicaController.dispose();
     _dosisController.dispose();
     _notasController.dispose();
     super.dispose();
@@ -394,7 +390,7 @@ class _RegistroRapidoDialogState extends State<RegistroRapidoDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          '👨‍⚕️ Información Adicional',
+          '📝 Información Adicional',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -402,37 +398,11 @@ class _RegistroRapidoDialogState extends State<RegistroRapidoDialog> {
           children: [
             Expanded(
               child: TextFormField(
-                controller: _veterinarioController,
-                decoration: const InputDecoration(
-                  labelText: 'Veterinario',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: TextFormField(
                 controller: _dosisController,
                 decoration: const InputDecoration(
                   labelText: 'Dosis',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.medication),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: _clinicaController,
-                decoration: const InputDecoration(
-                  labelText: 'Clínica',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.local_hospital),
                 ),
               ),
             ),
@@ -555,12 +525,6 @@ class _RegistroRapidoDialogState extends State<RegistroRapidoDialog> {
         tipoVacunas: vacunasSeleccionadas.toList(),
         fechaAplicacion: fechaAplicacionStr,
         proximaDosis: proximaDosisStr,
-        veterinarioNombre: _veterinarioController.text.trim().isEmpty 
-            ? null 
-            : _veterinarioController.text.trim(),
-        clinica: _clinicaController.text.trim().isEmpty 
-            ? null 
-            : _clinicaController.text.trim(),
         dosis: _dosisController.text.trim().isEmpty 
             ? null 
             : _dosisController.text.trim(),

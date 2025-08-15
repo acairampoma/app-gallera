@@ -321,10 +321,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
             children: [
               _buildProfileHeader(),
               const SizedBox(height: 24),
-              _buildBackendInfo(),
-              const SizedBox(height: 24),
-              _buildStatsCard(),
-              const SizedBox(height: 24),
               _buildMenuOptions(context),
               const SizedBox(height: 24),
               _buildAdminButton(context),
@@ -697,42 +693,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  Widget _buildBackendInfo() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.cloud_done, color: Colors.green),
-                const SizedBox(width: 8),
-                const Text(
-                  'Conectado al Backend',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildInfoRow('🌐 API:', 'Railway PostgreSQL'),
-            _buildInfoRow('🔐 Auth:', 'JWT Token Activo'),
-            _buildInfoRow('📧 Verificado:', _user?.isVerified == true ? 'Sí' : 'No'),
-            _buildInfoRow('💎 Premium:', _user?.isPremium == true ? 'Sí' : 'No'),
-            _buildInfoRow('📅 Registro:', _formatDate(_user?.createdAt)),
-            _buildInfoRow('🔄 Último Login:', _formatDate(_user?.lastLogin)),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildInfoRow(String label, String? value) {
     return Padding(
@@ -791,51 +752,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  Widget _buildStatsCard() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Estadísticas (Próximamente)',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildQuickStat(
-                    'Gallos',
-                    '0',
-                    Icons.pets,
-                    Colors.orange,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildQuickStat(
-                    'Peleas',
-                    '0',
-                    Icons.sports_mma,
-                    Colors.red,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildQuickStat(String label, String value, IconData icon, Color color) {
     return Container(
@@ -953,9 +870,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
   }
 
   Widget _buildAdminButton(BuildContext context) {
-    // Solo mostrar si es admin real
-    final userEmail = AuthService.instance.currentUser?.email;
-    if (userEmail != 'juan.salas.nuevo@galloapp.com') {
+    // 👑 MEJORADO: Usar campo es_admin de la BD
+    if (!AuthService.instance.isAdmin) {
       return const SizedBox.shrink();
     }
     
@@ -986,7 +902,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   }
                 },
                 icon: const Icon(Icons.admin_panel_settings),
-                label: const Text('👑 Panel de Administración'),
+                label: const Text('👑 Panel Admin'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
                   foregroundColor: Colors.white,
@@ -1234,9 +1150,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
             Text('Aplicación profesional para gestión integral de gallos de pelea con backend real.'),
             SizedBox(height: 16),
             Text('Desarrollado por:'),
-            Text('Alan Cairampoma Carrillo', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text('Juan Manuel Salas Carrillo', style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 8),
-            Text('Contacto: 932259291'),
+            Text('Contacto: 993592328'),
             SizedBox(height: 16),
             Text('© 2025 - Todos los derechos reservados'),
           ],
@@ -1309,28 +1225,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
   // ========================================
 
   Future<bool> _esUsuarioAdmin() async {
-    try {
-      final userEmail = await AuthService.instance.getCurrentUserEmail();
-      print('🔍 EMAIL ACTUAL: $userEmail');
-      print('🔍 COMPARANDO CON: juan.salas.nuevo@galloapp.com');
-      final esAdmin = userEmail == 'juan.salas.nuevo@galloapp.com';
-      print('🔍 ES ADMIN: $esAdmin');
-      return esAdmin;
-    } catch (e) {
-      print('❌ ERROR VERIFICANDO ADMIN: $e');
-      return false;
-    }
+    // 👑 MEJORADO: Usar directamente AuthService que ya maneja es_admin
+    return AuthService.instance.isAdmin;
   }
 
   Future<void> _navegarAPanelAdmin(BuildContext context) async {
     try {
-      print('🚀 INTENTANDO NAVEGAR AL PANEL ADMIN...');
+      print('🚀 NAVEGANDO AL PANEL ADMIN...');
+      print('👑 Admin verificado: ${AuthService.instance.isAdmin}');
       
-      // Verificar email primero
-      final userEmail = await AuthService.instance.getCurrentUserEmail();
-      print('📧 Email del usuario: $userEmail');
-      
-      // Por ahora, navegar directamente para debug
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => const AdminDashboardScreen(),
@@ -1338,12 +1241,14 @@ class _PerfilScreenState extends State<PerfilScreen> {
       );
     } catch (e) {
       print('❌ ERROR NAVEGANDO AL PANEL: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error accediendo al panel: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error accediendo al panel: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }

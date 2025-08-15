@@ -506,6 +506,7 @@ class UserModel {
   final bool isActive;
   final bool isVerified;
   final bool isPremium;
+  final bool esAdmin;  // 👑 NUEVO: Campo de admin desde BD
   final DateTime? lastLogin;
   final DateTime createdAt;
 
@@ -515,6 +516,7 @@ class UserModel {
     required this.isActive,
     required this.isVerified,
     required this.isPremium,
+    required this.esAdmin,  // 👑 NUEVO
     this.lastLogin,
     required this.createdAt,
   });
@@ -526,6 +528,7 @@ class UserModel {
       isActive: json['is_active'],
       isVerified: json['is_verified'],
       isPremium: json['is_premium'],
+      esAdmin: json['es_admin'] ?? false,  // 👑 NUEVO: Con fallback a false
       lastLogin: json['last_login'] != null 
           ? DateTime.parse(json['last_login']) 
           : null,

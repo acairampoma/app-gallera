@@ -22,6 +22,62 @@ class GalloService {
     };
   }
 
+  // 🎯 OBTENER UN GALLO POR ID - DATOS COMPLETOS
+  static Future<Map<String, dynamic>?> getGalloById(int galloId) async {
+    print('🔥 === OBTENIENDO GALLO POR ID: $galloId ===');
+    
+    final endpoint = '$_baseUrl/api/v1/gallos/';
+    final headers = await _getAuthHeaders();
+    
+    try {
+      print('🔍 Llamando: $endpoint');
+      
+      final response = await http.get(
+        Uri.parse(endpoint),
+        headers: headers,
+      ).timeout(const Duration(seconds: 10));
+      
+      print('📡 Status: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        List<Map<String, dynamic>> gallosList = [];
+        
+        // Parsear respuesta según estructura
+        if (data is List) {
+          gallosList = List<Map<String, dynamic>>.from(data);
+        } else if (data is Map) {
+          if (data['data'] != null && data['data']['gallos'] != null) {
+            gallosList = List<Map<String, dynamic>>.from(data['data']['gallos']);
+          } else if (data['gallos'] != null) {
+            gallosList = List<Map<String, dynamic>>.from(data['gallos']);
+          } else if (data['data'] is List) {
+            gallosList = List<Map<String, dynamic>>.from(data['data']);
+          }
+        }
+        
+        // Buscar el gallo específico por ID
+        for (var gallo in gallosList) {
+          if (gallo['id'] == galloId) {
+            print('✅ Gallo encontrado con TODOS los campos');
+            print('📊 Campos disponibles: ${gallo.keys.toList()}');
+            return gallo;
+          }
+        }
+        
+        print('⚠️ Gallo con ID $galloId no encontrado');
+        return null;
+        
+      } else {
+        print('❌ Error ${response.statusCode}: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('❌ Error en getGalloById: $e');
+      return null;
+    }
+  }
+
   // 🐓 LISTAR GALLOS - SOLO BACKEND REAL (SIN FALLBACK)
   static Future<List<Map<String, dynamic>>> getGallos() async {
     print('🔥 === GALLO SERVICE - PROBANDO ENDPOINTS ===');
@@ -89,6 +145,69 @@ class GalloService {
       
     } catch (e) {
       print('❌ Error en getGallos: $e');
+      throw Exception('Error conectando con el servidor: $e');
+    }
+  }
+
+  // 🌳 LISTAR SOLO GALLOS PRINCIPALES (CABEZAS DE ÁRBOL) - NUEVO ENDPOINT ÉPICO
+  static Future<List<Map<String, dynamic>>> getGallosPrincipales() async {
+    print('🔥 === GALLO SERVICE - OBTENIENDO GALLOS PRINCIPALES ===');
+    print('🌐 Conectando a nuevo endpoint /principales...');
+    
+    // 🔍 ENDPOINT NUEVO PARA GALLOS PRINCIPALES
+    final endpoint = '$_baseUrl/api/v1/gallos/principales';
+    
+    final headers = await _getAuthHeaders();
+    final token = headers['Authorization'];
+    
+    print('🔑 Token presente: ${token != null ? "SÍ" : "NO"}');
+    
+    try {
+      print('🔍 Llamando: $endpoint');
+      
+      final response = await http.get(
+        Uri.parse(endpoint),
+        headers: headers,
+      ).timeout(const Duration(seconds: 10));
+      
+      print('📡 Status: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        print('✅ ¡GALLOS PRINCIPALES OBTENIDOS!');
+        print('📝 Body preview: ${response.body.length > 200 ? response.body.substring(0, 200) + "..." : response.body}');
+        
+        final data = json.decode(response.body);
+        
+        List<Map<String, dynamic>> gallosList = [];
+        
+        // Manejar la respuesta del nuevo endpoint
+        if (data is Map && data['success'] == true) {
+          if (data['data'] != null && data['data']['gallos'] != null) {
+            gallosList = List<Map<String, dynamic>>.from(data['data']['gallos']);
+            print('✅ Estructura principales: ${gallosList.length} gallos principales del usuario ${data['data']['user_id']}');
+            print('🌳 Tipo de filtro: ${data['data']['tipo']}');
+          } else {
+            print('❌ Estructura de respuesta no contiene gallos');
+            gallosList = [];
+          }
+        } else {
+          print('❌ Respuesta no exitosa o estructura incorrecta: ${data['success']}');
+          gallosList = [];
+        }
+        
+        print('✅ === ÉXITO PRINCIPALES: ${gallosList.length} GALLOS PRINCIPALES DEL BACKEND ===');
+        return gallosList;
+        
+      } else if (response.statusCode == 401) {
+        print('🚫 ERROR 401: Token inválido');
+        throw Exception('Token de autenticación inválido');
+      } else {
+        print('❌ Error ${response.statusCode}: ${response.body}');
+        throw Exception('Error obteniendo gallos principales: ${response.statusCode}');
+      }
+      
+    } catch (e) {
+      print('❌ Error en getGallosPrincipales: $e');
       throw Exception('Error conectando con el servidor: $e');
     }
   }
@@ -339,11 +458,25 @@ class GalloService {
       print('📝 Response length: ${response.body.length}');
       
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return {
-          'success': true,
-          'data': data,
-        };
+        final responseData = json.decode(response.body);
+        
+        // 🔍 DEBUG: Ver estructura de la respuesta
+        print('🔍 Response keys: ${responseData.keys.toList()}');
+        
+        // ✅ FIX: El backend devuelve {success, data, message}
+        // Necesitamos devolver la estructura correcta
+        if (responseData['success'] == true && responseData['data'] != null) {
+          return {
+            'success': true,
+            'data': responseData['data'],  // ← Aquí estaba el error
+          };
+        } else {
+          // Si no viene en el formato esperado, devolver como estaba
+          return {
+            'success': true,
+            'data': responseData,
+          };
+        }
       } else {
         return {
           'success': false,
