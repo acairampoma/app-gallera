@@ -136,101 +136,38 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
     });
   }
 
-  // 📈 TARJETA DE ESTADÍSTICAS DEL ÁRBOL
-  Widget _buildStatsCard() {
-    final stats = _arbolCompleto?['estadisticas'];
-    if (stats == null) return const SizedBox.shrink();
-    
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.green.shade400, Colors.green.shade600],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.green.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          const Text(
-            '📈 Estadísticas del Árbol',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStatItem(
-                '📄',
-                '${stats['generaciones_hacia_arriba'] ?? 0}',
-                'Generaciones\nRegistradas',
-              ),
-              _buildStatItem(
-                '👨‍👩‍👧‍👦',
-                '${(_padre != null ? 1 : 0) + (_madre != null ? 1 : 0)}',
-                'Padres\nRegistrados',
-              ),
-              _buildStatItem(
-                '👴👵',
-                '${(_abueloPaterno != null ? 1 : 0) + (_abuelaPaterna != null ? 1 : 0) + (_abueloMaterno != null ? 1 : 0) + (_abuelaMaterna != null ? 1 : 0)}',
-                'Abuelos\nRegistrados',
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String emoji, String value, String label) {
-    return Column(
-      children: [
-        Text(
-          emoji,
-          style: const TextStyle(fontSize: 24),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.white70,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
 
   // 🖼️ WIDGET PARA MOSTRAR IMAGEN DE CLOUDINARY
-  Widget _buildNetworkImage(String? fotoUrl, double iconSize) {
+  Widget _buildNetworkImage(String? fotoUrl, double iconSize, {String? nodeType}) {
     if (fotoUrl == null || fotoUrl.isEmpty) {
-      return AppIcons.gallo(
-        size: iconSize,
-        color: AppColors.primary,
-      );
+      // 🐓 Usar iconos personalizados según el tipo de nodo
+      if (nodeType == 'PADRE') {
+        return Image.asset(
+          'assets/images/icono/galloc.webp',
+          width: iconSize,
+          height: iconSize,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return AppIcons.gallo(size: iconSize, color: AppColors.primary);
+          },
+        );
+      } else if (nodeType == 'MADRE') {
+        return Image.asset(
+          'assets/images/icono/gallina.webp',
+          width: iconSize,
+          height: iconSize,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return AppIcons.gallo(size: iconSize, color: AppColors.primary);
+          },
+        );
+      } else {
+        // Default para otros casos
+        return AppIcons.gallo(
+          size: iconSize,
+          color: AppColors.primary,
+        );
+      }
     }
 
     // 🔥 MANEJAR URLs DE CLOUDINARY Y ASSETS
@@ -425,17 +362,25 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
           
           // 2. PADRES (GENERACIÓN -1)
           _buildGenerationSection(
-            '👨‍👩‍👦 PADRES',
+            'PADRES',
             [
               Row(
                 children: [
-                  Expanded(child: _buildGalloCard(_padre, '👨 PADRE')),
+                  Expanded(child: _buildGalloCard(_padre, '🐓 PADRE')),
                   const SizedBox(width: 24),
-                  Expanded(child: _buildGalloCard(_madre, '👩 MADRE')),
+                  Expanded(child: _buildGalloCard(_madre, '🐔 MADRE')),
                 ],
               ),
             ],
             Colors.blue,
+            titleIcon: Image.asset(
+              'assets/images/icono/padres.webp',
+              width: 24,
+              height: 24,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.family_restroom, color: Colors.white, size: 24);
+              },
+            ),
           ),
           
           if (_abueloPaterno != null || _abuelaPaterna != null || 
@@ -481,15 +426,13 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
         ],
         
         const SizedBox(height: 32),
-        _buildStatsCard(),
-        const SizedBox(height: 20),
         _buildBackToListButton(),
         const SizedBox(height: 20),
       ],
     );
   }
 
-  Widget _buildGenerationSection(String title, List<Widget> children, Color color) {
+  Widget _buildGenerationSection(String title, List<Widget> children, Color color, {Widget? titleIcon}) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -512,13 +455,22 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
                 ),
               ],
             ),
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (titleIcon != null) ...[
+                  titleIcon,
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 20),
@@ -713,16 +665,46 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: isMainGallo ? AppColors.primary : Colors.grey[400],
+            color: isMainGallo ? AppColors.primary : 
+                   (label.contains('PADRE') || label.contains('MADRE')) ? Colors.blue : Colors.grey[400],
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Agregar icono personalizado para PADRE y MADRE
+              if (label.contains('PADRE')) ...[
+                Image.asset(
+                  'assets/images/icono/galloc.webp',
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(Icons.male, color: Colors.white, size: 16);
+                  },
+                ),
+                const SizedBox(width: 6),
+              ] else if (label.contains('MADRE')) ...[
+                Image.asset(
+                  'assets/images/icono/gallina.webp',
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(Icons.female, color: Colors.white, size: 16);
+                  },
+                ),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label.replaceAll('🐓 ', '').replaceAll('🐔 ', ''), // Quitar emojis del texto
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 8),
@@ -758,7 +740,12 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: _buildNetworkImage(gallo['foto_principal_url'], isMainGallo ? 40 : 30),
+                        child: _buildNetworkImage(
+                          gallo['foto_principal_url'], 
+                          isMainGallo ? 40 : 30,
+                          nodeType: label.contains('PADRE') ? 'PADRE' : 
+                                   label.contains('MADRE') ? 'MADRE' : null,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -813,16 +800,45 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.grey[400],
+            color: (label.contains('PADRE') || label.contains('MADRE')) ? Colors.blue : Colors.grey[400],
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Agregar icono personalizado para PADRE y MADRE vacíos
+              if (label.contains('PADRE')) ...[
+                Image.asset(
+                  'assets/images/icono/galloc.webp',
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(Icons.male, color: Colors.white, size: 16);
+                  },
+                ),
+                const SizedBox(width: 6),
+              ] else if (label.contains('MADRE')) ...[
+                Image.asset(
+                  'assets/images/icono/gallina.webp',
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(Icons.female, color: Colors.white, size: 16);
+                  },
+                ),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label.replaceAll('🐓 ', '').replaceAll('🐔 ', ''),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 8),

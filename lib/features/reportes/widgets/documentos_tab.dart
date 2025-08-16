@@ -8,6 +8,7 @@ import '../../../services/gallo_service.dart';
 import '../services/reportes_service.dart';
 import '../models/documentos_model.dart';
 import '../../../services/pdf_download_service.dart';
+import '../../../shared/constants/app_icons.dart';
 
 class DocumentosTab extends StatefulWidget {
   const DocumentosTab({super.key});
@@ -698,7 +699,7 @@ class _DocumentosTabState extends State<DocumentosTab>
                         'Total Gallos',
                         '$_totalGallos',
                         AppColors.primary,
-                        Icons.pets,
+                        AppIcons.galloIconData,
                       ),
                     ),
                     Expanded(
@@ -728,7 +729,9 @@ class _DocumentosTabState extends State<DocumentosTab>
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 20),
+          label == 'Total Gallos'
+              ? AppIcons.gallo(size: 20, color: color)
+              : Icon(icon, color: color, size: 20),
           const SizedBox(height: 8),
           Text(
             value,
@@ -867,7 +870,7 @@ class _DocumentosTabState extends State<DocumentosTab>
                     : null,
               ),
               child: gallo.fotoUrl == null
-                  ? const Icon(Icons.pets, color: Colors.grey, size: 30)
+                  ? AppIcons.galloPedigriLista()
                   : null,
             ),
             

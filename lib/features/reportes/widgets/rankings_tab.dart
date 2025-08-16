@@ -6,6 +6,7 @@ import '../../../shared/widgets/loading_widget.dart';
 import '../../../shared/widgets/error_widget.dart' as custom_error;
 import '../services/reportes_service.dart';
 import '../models/rankings_model.dart';
+import '../../../shared/constants/app_icons.dart';
 
 class RankingsTab extends StatefulWidget {
   final int? anoSeleccionado;
@@ -147,7 +148,7 @@ class _RankingsTabState extends State<RankingsTab>
       ),
       child: Row(
         children: [
-          _buildTipoButton('gallos', 'Gallos', Icons.pets),
+          _buildTipoButton('gallos', 'Gallos', AppIcons.galloIconData),
           _buildTipoButton('padrillos', 'Padrillos', Icons.male),
           _buildTipoButton('madres', 'Madres', Icons.female),
         ],
@@ -614,7 +615,7 @@ class _RankingsTabState extends State<RankingsTab>
   
   IconData _getTipoIcon(String tipo) {
     switch (tipo) {
-      case 'gallos': return Icons.pets;
+      case 'gallos': return AppIcons.galloIconData;
       case 'padrillos': return Icons.male;
       case 'madres': return Icons.female;
       default: return Icons.leaderboard;

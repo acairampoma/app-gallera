@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/custom_widgets.dart';
 import '../models/dashboard_model.dart';
+import '../../../shared/constants/app_icons.dart';
 
 class DashboardTab extends StatefulWidget {
   final DashboardModel dashboardData;
@@ -210,7 +211,7 @@ class _DashboardTabState extends State<DashboardTab>
               title: 'Total Gallos',
               value: '${resumen.totalGallos}',
               subtitle: '${resumen.gallosActivos} activos',
-              icon: Icons.pets,
+              icon: AppIcons.galloIconData,
               color: AppColors.primary,
               progress: resumen.gallosActivos / (resumen.totalGallos > 0 ? resumen.totalGallos : 1),
             ),
@@ -266,7 +267,9 @@ class _DashboardTabState extends State<DashboardTab>
                   color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: color, size: 20),
+                child: title == 'Total Gallos' 
+                    ? AppIcons.gallo(size: 20, color: color)
+                    : Icon(icon, color: color, size: 20),
               ),
               Text(
                 '${(progress * 100).toInt()}%',
@@ -662,10 +665,9 @@ class _DashboardTabState extends State<DashboardTab>
               color: gallo.colorEfectividad.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              Icons.pets,
-              color: gallo.colorEfectividad,
+            child: AppIcons.gallo(
               size: 20,
+              color: gallo.colorEfectividad,
             ),
           ),
           const SizedBox(width: 12),
