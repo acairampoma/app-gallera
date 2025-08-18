@@ -52,17 +52,10 @@ class _HomeScreenState extends State<HomeScreen> {
       final isAdmin = AuthService.instance.isAdmin;
       print('🚀 [HomeScreen] Usuario admin: $isAdmin');
       
-      if (isAdmin) {
-        print('👑 [HomeScreen] Iniciando servicios de admin...');
-        await AdminNotificationService.iniciarPolling(context);
-        print('👑 [HomeScreen] Polling iniciado, mostrando popup...');
-        await AdminNotificationService.mostrarPopupInicialAdmin(context);
-        print('👑 [HomeScreen] Proceso admin completado');
-      } else {
-        print('🎉 [HomeScreen] Iniciando servicios de usuario...');
-        await UserNotificationService.iniciarPollingUsuario(context);
-        print('🎉 [HomeScreen] Servicios usuario iniciados');
-      }
+      // 🔔 FIREBASE NOTIFICACIONES YA INICIALIZADAS EN LOGIN
+      print('🔥 [HomeScreen] Usando Firebase para notificaciones - polling deshabilitado');
+      
+      // Ya no necesitamos polling - Firebase maneja todo automáticamente
       
       _notificationsInitialized = true;
       print('✅ [HomeScreen] Notificaciones inicializadas exitosamente');
