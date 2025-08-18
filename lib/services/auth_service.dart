@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 import 'admin_notification_service.dart';
 import 'user_notification_service.dart';
+import 'firebase_notification_service.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -152,6 +153,15 @@ class AuthService {
       _authStateController.add(true);
       _userController.add(_currentUser);
       _adminStateController.add(_isAdmin); // 👑 NUEVO
+      
+      // 🔔 INICIALIZAR FIREBASE NOTIFICATIONS Y REGISTRAR TOKEN
+      try {
+        print('🔔 Inicializando Firebase notifications...');
+        await FirebaseNotificationService.initialize();
+        print('✅ Firebase notifications inicializado');
+      } catch (e) {
+        print('⚠️ Error inicializando Firebase notifications: $e');
+      }
       
       // 👑 INICIAR SERVICIOS DE ADMIN SI ES NECESARIO
       if (_isAdmin) {
@@ -344,6 +354,93 @@ class AuthService {
   // 🔄 REFRESH TOKEN
   Future<bool> refreshToken() async {
     return await ApiService.refreshToken();
+  }
+
+  // 🔐 PASSWORD RECOVERY METHODS
+  
+  // Solicitar código de recuperación de contraseña
+  Future<Map<String, dynamic>> forgotPassword(String email) async {
+    try {
+      print('🚀 Solicitando código de recuperación para: $email');
+      
+      final response = await ApiService.forgotPassword(email);
+      
+      if (response['success'] == true) {
+        print('✅ Código enviado exitosamente');
+        return response;
+      } else {
+        print('❌ Error enviando código: ${response['message']}');
+        return response;
+      }
+    } catch (e) {
+      print('💥 Error en forgotPassword: $e');
+      return {
+        'success': false,
+        'message': 'Error de conexión: $e',
+      };
+    }
+  }
+  
+  // Verificar código de recuperación
+  Future<Map<String, dynamic>> verifyResetCode(String email, String code) async {
+    try {
+      print('🔍 Verificando código para: $email, código: $code');
+      
+      final response = await ApiService.verifyResetCode(email, code);
+      
+      if (response['success'] == true) {
+        print('✅ Código verificado correctamente');
+        return response;
+      } else {
+        print('❌ Código inválido: ${response['message']}');
+        return response;
+      }
+    } catch (e) {
+      print('💥 Error en verifyResetCode: $e');
+      return {
+        'success': false,
+        'message': 'Error de conexión: $e',
+      };
+    }
+  }
+  
+  // Resetear contraseña con código
+  Future<Map<String, dynamic>> resetPassword(String email, String code, String newPassword) async {
+    try {
+      print('🔐 Reseteando contraseña para: $email');
+      
+      final response = await ApiService.resetPassword(email, code, newPassword);
+      
+      if (response['success'] == true) {
+        print('✅ Contraseña cambiada exitosamente');
+        
+        // Limpiar tokens de sesión actual si los hay
+        await _clearStoredTokens();
+        
+        return response;
+      } else {
+        print('❌ Error cambiando contraseña: ${response['message']}');
+        return response;
+      }
+    } catch (e) {
+      print('💥 Error en resetPassword: $e');
+      return {
+        'success': false,
+        'message': 'Error de conexión: $e',
+      };
+    }
+  }
+  
+  // Limpiar tokens almacenados
+  Future<void> _clearStoredTokens() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('access_token');
+      await prefs.remove('refresh_token');
+      print('🗑️ Tokens limpiados de SharedPreferences');
+    } catch (e) {
+      print('⚠️ Error limpiando tokens: $e');
+    }
   }
 
   // 🗑️ LIMPIAR RECURSOS

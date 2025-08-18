@@ -450,6 +450,126 @@ class ApiService {
     final token = prefs.getString('access_token');
     return token != null;
   }
+
+  // 🔐 PASSWORD RECOVERY METHODS
+  
+  // Solicitar código de recuperación de contraseña
+  static Future<Map<String, dynamic>> forgotPassword(String email) async {
+    try {
+      print('🚀 API: Enviando forgot-password para $email');
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/forgot-password'),
+        headers: headers,
+        body: jsonEncode({'email': email}),
+      );
+
+      print('📡 Status: ${response.statusCode}');
+      print('📄 Response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Código enviado exitosamente',
+          'next_step': data['next_step'] ?? 'verify_code',
+        };
+      } else {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Error enviando código',
+        };
+      }
+    } catch (e) {
+      print('💥 Error en forgotPassword: $e');
+      return {
+        'success': false,
+        'message': 'Error de conexión: $e',
+      };
+    }
+  }
+  
+  // Verificar código de recuperación
+  static Future<Map<String, dynamic>> verifyResetCode(String email, String code) async {
+    try {
+      print('🔍 API: Verificando código $code para $email');
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/verify-reset-code'),
+        headers: headers,
+        body: jsonEncode({
+          'email': email,
+          'code': code,
+        }),
+      );
+
+      print('📡 Status: ${response.statusCode}');
+      print('📄 Response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Código verificado correctamente',
+          'next_step': data['next_step'] ?? 'reset_password',
+        };
+      } else {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Código inválido o expirado',
+        };
+      }
+    } catch (e) {
+      print('💥 Error en verifyResetCode: $e');
+      return {
+        'success': false,
+        'message': 'Error de conexión: $e',
+      };
+    }
+  }
+  
+  // Resetear contraseña con código
+  static Future<Map<String, dynamic>> resetPassword(String email, String code, String newPassword) async {
+    try {
+      print('🔐 API: Reseteando contraseña para $email');
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/reset-password'),
+        headers: headers,
+        body: jsonEncode({
+          'email': email,
+          'code': code,
+          'new_password': newPassword,
+        }),
+      );
+
+      print('📡 Status: ${response.statusCode}');
+      print('📄 Response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Contraseña cambiada exitosamente',
+          'next_step': data['next_step'] ?? 'login',
+        };
+      } else {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Error cambiando contraseña',
+        };
+      }
+    } catch (e) {
+      print('💥 Error en resetPassword: $e');
+      return {
+        'success': false,
+        'message': 'Error de conexión: $e',
+      };
+    }
+  }
 }
 
 // 🔥 MODELOS DE DATOS

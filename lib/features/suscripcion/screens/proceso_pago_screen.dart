@@ -10,6 +10,8 @@ import '../../../shared/theme/app_colors.dart';
 import '../../../models/suscripcion_models.dart';
 import '../../../models/pago_models.dart';
 import '../../../services/pago_service.dart';
+import '../../../services/firebase_notification_service.dart';
+import '../../../services/auth_service.dart';
 import '../../planes/screens/planes_screen.dart';
 
 class ProcesoPagoScreen extends StatefulWidget {
@@ -1013,6 +1015,25 @@ class _ProcesoPagoScreenState extends State<ProcesoPagoScreen>
       }
 
       HapticFeedback.mediumImpact();
+      
+      // 🔔 ENVIAR NOTIFICACIÓN PUSH AL ADMIN
+      try {
+        final currentUser = AuthService.instance.currentUser;
+        final currentProfile = AuthService.instance.currentProfile;
+        
+        if (currentUser != null) {
+          await FirebaseNotificationService.notificarSuscripcionAAdmin(
+            nombreUsuario: currentProfile?.nombreCompleto ?? currentUser.email,
+            emailUsuario: currentUser.email,
+            planElegido: widget.plan.nombre,
+            monto: widget.plan.precio,
+          );
+          print('✅ Notificación enviada al admin');
+        }
+      } catch (e) {
+        print('⚠️ Error enviando notificación al admin: $e');
+        // No falla el proceso si la notificación falla
+      }
       
       // 🚀 REDIRECCIÓN DIRECTA A MI SUSCRIPCIÓN
       if (mounted) {

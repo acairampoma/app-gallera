@@ -8,6 +8,7 @@ import '../../../services/gallo_service.dart';
 import '../services/reportes_service.dart';
 import '../models/documentos_model.dart';
 import '../../../services/pdf_download_service.dart';
+import '../../../services/pdf_viewer_service.dart';
 import '../../../shared/constants/app_icons.dart';
 
 class DocumentosTab extends StatefulWidget {
@@ -460,35 +461,26 @@ class _DocumentosTabState extends State<DocumentosTab>
             },
             child: const Text('Ver Datos'),
           ),
-          // 🔥 DESCARGA DIRECTA DESDE BASE64
+          // 🔥 VER/COMPARTIR PDF MEJORADO
           ElevatedButton.icon(
             onPressed: () async {
-              print('🔥 Descargando PDF desde Base64...');
+              print('🔥 Abriendo opciones de PDF...');
               Navigator.of(context).pop();
               
-              // Descargar usando el base64 que ya tenemos
+              // Usar el nuevo servicio mejorado con preview
               final pdfBase64 = response['pdf_base64'] as String;
               final fileName = 'ficha_${nombreGallo}_${DateTime.now().millisecondsSinceEpoch}.pdf';
               
               try {
-                await PDFDownloadService.downloadPDFFromBase64(pdfBase64, fileName, context: context);
-                
-                // Mostrar éxito
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        const Icon(Icons.check_circle, color: Colors.white),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text('🔥 Descargando PDF de "$nombreGallo"...'),
-                        ),
-                      ],
-                    ),
-                    backgroundColor: AppColors.success,
-                    duration: const Duration(seconds: 3),
-                  ),
+                // Usar el nuevo servicio con opciones mejoradas
+                await PDFViewerService.showPDFOptions(
+                  context: context,
+                  pdfBase64: pdfBase64,
+                  fileName: fileName,
+                  title: 'Ficha de $nombreGallo',
                 );
+                
+                print('✅ PDF procesado exitosamente');
                 
               } catch (e) {
                 print('❌ Error descargando: $e');
@@ -500,10 +492,10 @@ class _DocumentosTabState extends State<DocumentosTab>
                 );
               }
             },
-            icon: const Icon(Icons.download, size: 18),
-            label: const Text('📥 Descargar'),
+            icon: const Icon(Icons.picture_as_pdf, size: 18),
+            label: const Text('📄 Ver PDF'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.success,
+              backgroundColor: Colors.red.shade600,
               foregroundColor: Colors.white,
             ),
           ),

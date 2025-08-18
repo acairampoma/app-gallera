@@ -7,6 +7,7 @@ import '../../../services/admin_notification_service.dart';
 import '../../../services/user_notification_service.dart';
 import '../../../utils/password_validator.dart';
 import '../../home/screens/home_screen.dart';
+import 'forgot_password_screen.dart';
 
 // ==========================================
 // 🏆 MÓDULO DE USUARIOS ÉPICO Y COMPLETO
@@ -192,6 +193,10 @@ class _LoginScreenState extends State<LoginScreen>
                   
                   // Botón de login épico
                   _buildLoginButton(),
+                  const SizedBox(height: 16),
+                  
+                  // Link de contraseña olvidada
+                  _buildForgotPasswordLink(),
                   const SizedBox(height: 20),
                   
                   // Link de registro mejorado
@@ -618,6 +623,30 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
   
+  Widget _buildForgotPasswordLink() {
+    return Center(
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ForgotPasswordScreen(),
+            ),
+          );
+        },
+        child: Text(
+          '¿Olvidaste tu contraseña?',
+          style: TextStyle(
+            color: Colors.orange.shade700,
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+            decoration: TextDecoration.underline,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildRegisterLink() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
