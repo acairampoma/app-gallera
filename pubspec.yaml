@@ -67,6 +67,9 @@ dev_dependencies:
   flutter_lints: ^3.0.0  # ✅ CAMBIO: Versión más estable
   flutter_launcher_icons: ^0.13.1  # 🐓 PARA ICONOS DE LA APP
 
+dependency_overrides:
+  intl: any  # Resolver conflicto entre versiones de Flutter SDK
+
 flutter:
   uses-material-design: true
   
