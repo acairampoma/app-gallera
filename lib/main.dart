@@ -101,12 +101,13 @@ class CastaDeGallosApp extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-        cardTheme: const CardTheme(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(15)),
-          ),
-        ),
+        // cardTheme: Temporalmente deshabilitado por breaking change Flutter 3.27
+        // cardTheme: const CardThemeData(
+        //   elevation: 2,
+        //   shape: RoundedRectangleBorder(
+        //     borderRadius: BorderRadius.all(Radius.circular(15)),
+        //   ),
+        // ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
