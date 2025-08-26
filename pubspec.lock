@@ -939,7 +939,7 @@ packages:
     source: hosted
     version: "0.9.4"
   typed_data:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: typed_data
       sha256: facc8d6582f16042dd49f2463ff1bd6e2c9ef9f3d5da3d9b087e244a7b564b3c
@@ -1094,10 +1094,10 @@ packages:
     dependency: "direct overridden"
     description:
       name: win32
-      sha256: "5a751eddf9db89b3e5f9d50c20ab8612296e4e8db69009788d6c8b060a84191c"
+      sha256: a6f0236dbda0f63aa9a25ad1ff9a9d8a4eaaa5012da0dc59d21afdb1dc361ca4
       url: "https://pub.dev"
     source: hosted
-    version: "4.1.4"
+    version: "3.1.4"
   win32_registry:
     dependency: transitive
     description:
