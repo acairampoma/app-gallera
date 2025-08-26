@@ -36,10 +36,24 @@ class FirebaseNotificationService {
     try {
       print('🔥 === INICIALIZANDO FIREBASE NOTIFICATIONS ===');
 
-      // 1. Inicializar Firebase Core si no está inicializado
-      if (!Firebase.apps.isNotEmpty) {
+      // 🌐 DETECTAR PLATAFORMA
+      print('📱 Plataforma detectada: ${kIsWeb ? "WEB" : "MOBILE"}');
+      
+      if (kIsWeb) {
+        print('⚠️ Firebase notifications no disponible en WEB - Saltando inicialización');
+        return;
+      }
+
+      // 1. Inicializar Firebase Core si no está inicializado  
+      print('🔄 Verificando apps Firebase existentes...');
+      print('🔄 Firebase.apps.length: ${Firebase.apps.length}');
+      
+      if (Firebase.apps.isEmpty) {
+        print('🔄 No hay apps Firebase, inicializando...');
         await Firebase.initializeApp();
-        print('✅ Firebase Core inicializado');
+        print('✅ Firebase Core inicializado desde FirebaseNotificationService');
+      } else {
+        print('✅ Firebase Core ya estaba inicializado (app: ${Firebase.apps.first.name})');
       }
 
       // 2. Inicializar Firebase Messaging
@@ -47,19 +61,37 @@ class FirebaseNotificationService {
       print('✅ Firebase Messaging obtenido');
 
       // 3. Solicitar permisos para notificaciones
-      await _requestPermissions();
+      try {
+        await _requestPermissions();
+      } catch (e) {
+        print('⚠️ Error en permisos, continuando: $e');
+      }
 
       // 4. Inicializar notificaciones locales
-      await _initializeLocalNotifications();
+      try {
+        await _initializeLocalNotifications();
+      } catch (e) {
+        print('⚠️ Error en notificaciones locales, continuando: $e');
+      }
 
-      // 5. Obtener FCM token
+      // 5. Obtener FCM token - ESTE ES CRÍTICO
+      print('🔄 PASO 5: Obteniendo FCM token...');
       await _getFCMToken();
+      print('🔄 PASO 5 COMPLETADO. Token: ${_fcmToken != null ? "✅ EXISTE" : "❌ NULL"}');
 
       // 6. Configurar listeners
-      _configurarListeners();
+      print('🔄 PASO 6: Configurando listeners...');
+      try {
+        _configurarListeners();
+        print('🔄 PASO 6 COMPLETADO');
+      } catch (e) {
+        print('⚠️ Error en listeners, continuando: $e');
+      }
 
-      // 7. Registrar token en el backend
+      // 7. Registrar token en el backend - ESTE ES CRÍTICO
+      print('🔄 PASO 7: Registrando token en backend...');
       await _registrarTokenEnBackend();
+      print('🔄 PASO 7 COMPLETADO');
 
       _isInitialized = true;
       print('🎉 === FIREBASE NOTIFICATIONS INICIALIZADO EXITOSAMENTE ===');
@@ -230,38 +262,62 @@ class FirebaseNotificationService {
     }
   }
 
-  /// 📤 REGISTRAR TOKEN EN EL BACKEND
+  /// 🔐 Headers con token JWT - IGUAL QUE OTROS SERVICIOS
+  static Future<Map<String, String>> _getAuthHeaders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token');
+    
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+    };
+  }
+
+  /// 📤 REGISTRAR TOKEN EN EL BACKEND - USANDO PATRÓN CORRECTO
   static Future<void> _registrarTokenEnBackend() async {
-    if (_fcmToken == null) return;
+    print('🔄 === _registrarTokenEnBackend INICIADO ===');
+    
+    if (_fcmToken == null) {
+      print('❌ _fcmToken es null, no se puede registrar');
+      return;
+    }
+
+    print('🔑 FCM Token disponible: ${_fcmToken!.substring(0, 20)}...');
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final accessToken = prefs.getString('access_token');
+      // USAR EL PATRÓN CORRECTO COMO OTROS SERVICIOS
+      final headers = await _getAuthHeaders();
       
-      if (accessToken == null) {
-        print('⚠️ No hay token de acceso, no se puede registrar FCM token');
+      print('🔐 Headers preparados: $headers');
+      
+      if (!headers.containsKey('Authorization')) {
+        print('⚠️ No hay Authorization header, no se puede registrar FCM token');
         return;
       }
 
+      print('📡 Enviando request al backend: $baseUrl/auth/register-fcm-token');
+      
       final response = await http.post(
-        Uri.parse('$baseUrl/api/v1/notifications/register-fcm-token'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $accessToken',
-        },
+        Uri.parse('$baseUrl/auth/register-fcm-token'),
+        headers: headers,
         body: jsonEncode({
           'fcm_token': _fcmToken,
           'platform': defaultTargetPlatform.name,
+          'device_info': 'Flutter App ${defaultTargetPlatform.name}',
         }),
       );
 
+      print('📥 Response status: ${response.statusCode}');
+      print('📥 Response body: ${response.body}');
+
       if (response.statusCode == 200) {
-        print('✅ FCM token registrado en el backend');
+        print('✅ FCM token registrado en el backend EXITOSAMENTE');
       } else {
-        print('⚠️ Error registrando FCM token: ${response.statusCode}');
+        print('⚠️ Error registrando FCM token: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
-      print('❌ Error registrando token en backend: $e');
+      print('❌ EXCEPCIÓN registrando token en backend: $e');
     }
   }
 
@@ -329,6 +385,67 @@ class FirebaseNotificationService {
 
   /// ✅ VERIFICAR SI ESTÁ INICIALIZADO
   static bool get isInitialized => _isInitialized;
+
+  /// 🔧 DEBUG COMPLETO - FORZAR REGISTRO MANUAL
+  static Future<Map<String, dynamic>> debugCompleto() async {
+    final result = <String, dynamic>{};
+    
+    try {
+      // 1. Verificar plataforma
+      result['platform'] = kIsWeb ? 'WEB' : 'MOBILE';
+      
+      // 2. Verificar SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final accessToken = prefs.getString('access_token');
+      result['has_access_token'] = accessToken != null;
+      result['access_token_preview'] = accessToken?.substring(0, 20);
+      
+      // 3. Verificar Firebase token
+      result['fcm_token'] = _fcmToken;
+      result['has_fcm_token'] = _fcmToken != null;
+      
+      // 4. Si no hay Firebase, intentar inicializar SOLO Firebase Core
+      if (_fcmToken == null && !kIsWeb) {
+        try {
+          await Firebase.initializeApp();
+          _firebaseMessaging = FirebaseMessaging.instance;
+          _fcmToken = await _firebaseMessaging!.getToken();
+          result['firebase_retry'] = 'SUCCESS';
+          result['new_fcm_token'] = _fcmToken?.substring(0, 20);
+        } catch (e) {
+          result['firebase_retry'] = 'ERROR: $e';
+        }
+      }
+      
+      // 5. FORZAR registro si tenemos todo
+      if (accessToken != null && _fcmToken != null) {
+        try {
+          final response = await http.post(
+            Uri.parse('$baseUrl/auth/register-fcm-token'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $accessToken',
+            },
+            body: jsonEncode({
+              'fcm_token': _fcmToken,
+              'platform': 'android',
+              'device_info': 'DEBUG MANUAL',
+            }),
+          );
+          result['api_call'] = 'SUCCESS';
+          result['api_response'] = response.body;
+          result['api_status'] = response.statusCode;
+        } catch (e) {
+          result['api_call'] = 'ERROR: $e';
+        }
+      }
+      
+    } catch (e) {
+      result['debug_error'] = e.toString();
+    }
+    
+    return result;
+  }
 
   /// 🛑 LIMPIAR RECURSOS
   static Future<void> dispose() async {

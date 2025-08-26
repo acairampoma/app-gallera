@@ -10,6 +10,7 @@ import '../../../services/gallo_service.dart';
 import '../../../models/tope.dart';
 import 'formulario_tope_screen.dart';
 import 'package:intl/intl.dart';
+import '../../../shared/widgets/limite_interceptor.dart'; // 🛡️ VALIDACIÓN DE LÍMITES
 
 class TopesScreenReal extends StatefulWidget {
   const TopesScreenReal({Key? key}) : super(key: key);
@@ -553,17 +554,35 @@ class _TopesScreenRealState extends State<TopesScreenReal> {
     }
   }
 
-  void _crearNuevoTope() {
-    Navigator.push(
+  Future<void> _crearNuevoTope() async {
+    // 🛡️ VALIDAR LÍMITES ANTES DE ABRIR FORMULARIO
+    if (gallos.isEmpty) {
+      _showError('Necesitas tener al menos un gallo registrado para crear topes');
+      return;
+    }
+
+    // Usar el primer gallo como referencia para validación
+    final galloReferencia = gallos.first['id'] as int;
+    
+    // Validar límite de topes por gallo
+    final puedeCrear = await validarLimiteManual(
       context,
-      MaterialPageRoute(
-        builder: (context) => const FormularioTopeScreen(),
-      ),
-    ).then((result) {
-      if (result == true) {
-        _loadData(); // Recargar datos
-      }
-    });
+      recursoTipo: RecursoTipo.topes,
+      galloId: galloReferencia,
+    );
+
+    if (puedeCrear) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const FormularioTopeScreen(),
+        ),
+      ).then((result) {
+        if (result == true) {
+          _loadData(); // Recargar datos
+        }
+      });
+    }
   }
 
   void _editarTope(Tope tope) {

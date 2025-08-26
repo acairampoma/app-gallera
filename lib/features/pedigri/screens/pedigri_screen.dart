@@ -15,6 +15,7 @@ import '../../../services/gallo_service.dart';
 import '../../../services/suscripcion_service.dart'; // ✅ AGREGADO
 import '../../../shared/widgets/limite_interceptor.dart';
 import '../../../models/suscripcion_models.dart';
+import '../../../config/adaptive_ui_config.dart'; // 🎨 SISTEMA ADAPTATIVO PARA DISPOSITIVOS CHINOS
 
 class PedigriScreen extends StatefulWidget {
   const PedigriScreen({Key? key}) : super(key: key);

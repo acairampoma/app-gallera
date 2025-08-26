@@ -8,6 +8,8 @@ import '../../../shared/theme/app_colors.dart';
 import '../../../services/vacunas_service.dart';
 import '../../../models/vacuna.dart';
 import 'formulario_vacuna_screen.dart';
+import '../../../shared/widgets/limite_interceptor.dart'; // 🛡️ VALIDACIÓN DE LÍMITES
+import '../../../models/suscripcion_models.dart'; // 🔄 ENUM RecursoTipo
 
 class HistorialVacunasScreen extends StatefulWidget {
   final int galloId;
@@ -434,21 +436,30 @@ class _HistorialVacunasScreenState extends State<HistorialVacunasScreen> {
     }
   }
 
-  void _agregarNuevaVacuna() {
-    Navigator.push(
+  void _agregarNuevaVacuna() async {
+    // 🛡️ VALIDAR LÍMITES ANTES DE ABRIR FORMULARIO
+    final puedeCrear = await validarLimiteManual(
       context,
-      MaterialPageRoute(
-        builder: (context) => FormularioVacunaScreen(
-          galloId: widget.galloId,
-          galloNombre: widget.galloNombre,
+      recursoTipo: RecursoTipo.vacunas,
+      galloId: widget.galloId,
+    );
+
+    if (puedeCrear) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FormularioVacunaScreen(
+            galloId: widget.galloId,
+            galloNombre: widget.galloNombre,
+          ),
         ),
-      ),
-    ).then((result) {
-      if (result == true) {
-        _hasChanges = true; // Marcar que hubo cambios
-        _loadHistorial(); // Recargar si se agregó una vacuna
-      }
-    });
+      ).then((result) {
+        if (result == true) {
+          _hasChanges = true; // Marcar que hubo cambios
+          _loadHistorial(); // Recargar si se agregó una vacuna
+        }
+      });
+    }
   }
 
   void _editarVacuna(Vacuna vacuna) {

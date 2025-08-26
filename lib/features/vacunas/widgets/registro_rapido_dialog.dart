@@ -7,6 +7,8 @@ import '../../../shared/theme/app_colors.dart';
 import '../../../services/vacunas_service.dart';
 import '../../../services/gallo_service.dart';
 import '../../../models/vacuna.dart';
+import '../../../shared/widgets/limite_interceptor.dart'; // 🛡️ VALIDACIÓN DE LÍMITES
+import '../../../models/suscripcion_models.dart'; // 🔄 ENUM RecursoTipo
 
 class RegistroRapidoDialog extends StatefulWidget {
   const RegistroRapidoDialog({Key? key}) : super(key: key);
@@ -517,6 +519,78 @@ class _RegistroRapidoDialogState extends State<RegistroRapidoDialog> {
     setState(() => isLoading = true);
 
     try {
+      // 🛡️ VALIDAR LÍMITES PARA CADA GALLO SELECCIONADO
+      print('🔍 [RegistroRápido] Validando límites para ${gallosSeleccionados.length} gallos');
+      
+      List<int> gallosRechazados = [];
+      for (int galloId in gallosSeleccionados) {
+        final puedeCrear = await validarLimiteManual(
+          context,
+          recursoTipo: RecursoTipo.vacunas,
+          galloId: galloId,
+          mostrarError: false, // No mostrar error individual
+        );
+        
+        if (!puedeCrear) {
+          gallosRechazados.add(galloId);
+        }
+      }
+      
+      // Si hay gallos que no pueden crear vacunas, mostrar error y cancelar
+      if (gallosRechazados.isNotEmpty) {
+        setState(() => isLoading = false);
+        
+        final gallosNames = gallosRechazados.map((id) {
+          final gallo = gallos.firstWhere((g) => g['id'] == id, orElse: () => {'nombre': 'ID $id'});
+          return gallo['nombre'];
+        }).join(', ');
+        
+        if (mounted) {
+          // 🎯 MOSTRAR DIÁLOGO DENTRO DEL REGISTRO RÁPIDO
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Row(
+                children: [
+                  Icon(Icons.error, color: Colors.red),
+                  SizedBox(width: 8),
+                  Text('Límite Alcanzado'),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Los siguientes gallos ya alcanzaron su límite de vacunas:',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '• $gallosNames',
+                    style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Deselecciona estos gallos o actualiza tu plan para continuar.',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Entendido'),
+                ),
+              ],
+            ),
+          );
+        }
+        return; // Cancelar registro
+      }
+      
+      print('✅ [RegistroRápido] Todos los gallos pueden crear vacunas - procediendo');
+      
       final fechaAplicacionStr = fechaAplicacion.toIso8601String().split('T')[0];
       final proximaDosisStr = proximaDosis?.toIso8601String().split('T')[0];
 

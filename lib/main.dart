@@ -17,28 +17,38 @@ import 'features/admin/screens/admin_dashboard_screen.dart';
 import 'services/auth_service.dart';
 import 'services/connection_service.dart';
 import 'services/firebase_notification_service.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 🔥 Configurar handler para notificaciones en background
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  // 🔥 INICIALIZAR FIREBASE Y OBTENER TOKEN REAL
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('✅ Firebase Core inicializado CON OPCIONES CORRECTAS');
+    
+    // Obtener token FCM real
+    String? token = await FirebaseMessaging.instance.getToken();
+    if (token != null) {
+      print('🎯 TOKEN FCM REAL GENERADO:');
+      print(token);
+      print('📋 COPIA ESTE TOKEN PARA FIREBASE CONSOLE');
+    } else {
+      print('❌ No se pudo generar token FCM');
+    }
+  } catch (e) {
+    print('⚠️ Error con Firebase: $e');
+  }
   
   // 🚀 Inicializar AuthService REAL
   await AuthService.instance.initialize();
   
   // 🌐 Inicializar ConnectionService
   await ConnectionService().initialize();
-  
-  // 🔔 Inicializar Firebase Notifications
-  try {
-    await FirebaseNotificationService.initialize();
-    print('✅ Firebase Notifications inicializado en main');
-  } catch (e) {
-    print('⚠️ Error inicializando Firebase Notifications: $e');
-    // Continuar sin Firebase si hay error
-  }
   
   runApp(const CastaDeGallosApp());
 }

@@ -9,14 +9,15 @@ import '../models/pago_models.dart';
 class AdminService {
   static const String baseUrl = 'https://gallerappback-production.up.railway.app';
   
-  // 🔑 Headers con JWT token
+  // 🔑 Headers con JWT token y UTF-8 (IGUAL QUE SUSCRIPCIONES)
   static Future<Map<String, String>> _getAuthHeaders() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('access_token');
     
     return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      'Content-Type': 'application/json; charset=utf-8',
+      'Accept': 'application/json; charset=utf-8',
+      'Accept-Charset': 'utf-8',
       if (token != null) 'Authorization': 'Bearer $token',
     };
   }
@@ -188,12 +189,12 @@ class AdminService {
       
       final headers = await _getAuthHeaders();
       final body = jsonEncode({
-        'pago_id': pagoId,
         'accion': 'aprobar',
+        'notas': 'Pago aprobado desde panel admin Flutter',
       });
 
       final response = await http.post(
-        Uri.parse('$baseUrl/api/v1/admin/procesar-pago'),
+        Uri.parse('$baseUrl/api/v1/admin/pagos/$pagoId/aprobar'),
         headers: headers,
         body: body,
       );
@@ -201,10 +202,12 @@ class AdminService {
       print('📡 Status Code: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
+        // Decodificar con UTF-8 explícito (IGUAL QUE SUSCRIPCIONES)
+        final responseBody = utf8.decode(response.bodyBytes);
+        final jsonData = jsonDecode(responseBody);
         
         print('✅ Pago aprobado exitosamente');
-        print('📝 Mensaje: ${jsonData['mensaje']}');
+        print('📝 Respuesta: ${jsonData}');
         
         return jsonData;
       } else if (response.statusCode == 403) {
@@ -228,13 +231,12 @@ class AdminService {
       
       final headers = await _getAuthHeaders();
       final body = jsonEncode({
-        'pago_id': pagoId,
         'accion': 'rechazar',
-        'observaciones': motivo,
+        'notas': motivo,
       });
 
       final response = await http.post(
-        Uri.parse('$baseUrl/api/v1/admin/procesar-pago'),
+        Uri.parse('$baseUrl/api/v1/admin/pagos/$pagoId/rechazar'),
         headers: headers,
         body: body,
       );
@@ -245,7 +247,7 @@ class AdminService {
         final jsonData = jsonDecode(response.body);
         
         print('❌ Pago rechazado exitosamente');
-        print('📝 Mensaje: ${jsonData['mensaje']}');
+        print('📝 Respuesta: ${jsonData}');
         
         return jsonData;
       } else if (response.statusCode == 403) {

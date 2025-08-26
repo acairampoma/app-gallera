@@ -10,6 +10,8 @@ import '../../../services/topes_service.dart';
 import '../../../models/tope.dart';
 import 'formulario_tope_screen.dart';
 import '../../../shared/constants/app_icons.dart';
+import '../../../shared/widgets/limite_interceptor.dart'; // 🛡️ VALIDACIÓN DE LÍMITES
+import '../../../models/suscripcion_models.dart'; // 🔄 ENUM RecursoTipo
 
 class HistorialTopesScreen extends StatefulWidget {
   final int galloId;
@@ -632,20 +634,29 @@ class _HistorialTopesScreenState extends State<HistorialTopesScreen> {
     }
   }
 
-  void _agregarNuevoTope() {
-    Navigator.push(
+  void _agregarNuevoTope() async {
+    // 🛡️ VALIDAR LÍMITES ANTES DE ABRIR FORMULARIO
+    final puedeCrear = await validarLimiteManual(
       context,
-      MaterialPageRoute(
-        builder: (context) => FormularioTopeScreen(
-          galloPreseleccionado: widget.galloId,
-          galloIsBloqueado: true,
+      recursoTipo: RecursoTipo.topes,
+      galloId: widget.galloId,
+    );
+
+    if (puedeCrear) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FormularioTopeScreen(
+            galloPreseleccionado: widget.galloId,
+            galloIsBloqueado: true,
+          ),
         ),
-      ),
-    ).then((result) {
-      if (result == true) {
-        _loadTopes();
-      }
-    });
+      ).then((result) {
+        if (result == true) {
+          _loadTopes();
+        }
+      });
+    }
   }
 
   void _editarTope(Tope tope) {

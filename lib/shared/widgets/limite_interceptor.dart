@@ -278,7 +278,18 @@ Future<bool> validarLimiteManual(
     return validacion.puedeCrear;
   } catch (e) {
     print('❌ Error en validación manual: $e');
-    return false;
+    
+    if (mostrarError && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error de conexión: ${e.toString()}'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
+    
+    // En caso de error de conexión, permitir acceso (fail-open)
+    return true;
   }
 }
 

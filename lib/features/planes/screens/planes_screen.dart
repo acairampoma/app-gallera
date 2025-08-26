@@ -11,6 +11,7 @@ import '../../../services/pago_service.dart';
 import '../widgets/plan_card.dart';
 import '../widgets/limite_progress_widget.dart';
 import '../../suscripcion/screens/proceso_pago_screen.dart';
+import '../../../config/adaptive_ui_config.dart'; // 🎨 SISTEMA ADAPTATIVO PARA DISPOSITIVOS CHINOS
 
 class PlanesScreen extends StatefulWidget {
   final String? planRecomendado;
@@ -164,9 +165,9 @@ class _PlanesScreenState extends State<PlanesScreen>
       print('✅ Suscripción cargada: ${_suscripcionActual?.planName}');
     } catch (e) {
       print('⚠️ Error cargando suscripción: $e');
-      // FORZAR suscripción por defecto en lugar de dejar null
-      _suscripcionActual = _getSuscripcionDefault();
-      _suscripcionLoaded = false; // Marcar como fallida
+      // 🔥 MOSTRAR ERROR EN LUGAR DE PLAN FALSO - MEJOR UX
+      _suscripcionActual = null; // No mostrar plan falso
+      _suscripcionLoaded = false; // Marcar como fallida para mostrar banner de error
     }
 
     // 3. CARGAR LÍMITES (NO CRÍTICO)
@@ -390,14 +391,23 @@ class _PlanesScreenState extends State<PlanesScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header con botón de retroceso
+              // Header con botón de retroceso Material Design
               Row(
                 children: [
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(24),
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        child: const Icon(
+                          Icons.arrow_back, 
+                          color: Colors.white, 
+                          size: 24,
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   const Expanded(
@@ -633,11 +643,13 @@ class _PlanesScreenState extends State<PlanesScreen>
           // Estado de conexión si hay problemas
           if (!_suscripcionLoaded) _buildSuscripcionErrorBanner(),
           
-          // 🔄 NUEVO: Verificar pago pendiente PRIMERO
+          // 🔄 MANEJO MEJORADO DE ESTADOS
           if (_suscripcionActual?.pagoPendiente != null)
             _buildPagoPendienteCard(_suscripcionActual!.pagoPendiente!)
-          else if (_suscripcionActual == null) 
-            _buildVerificarPagosPendientes()
+          else if (_suscripcionActual == null && !_suscripcionLoaded)
+            _buildErrorCargandoSuscripcion() // Error de conexión
+          else if (_suscripcionActual == null && _suscripcionLoaded) 
+            _buildVerificarPagosPendientes() // Sin suscripción activa
           else ..._buildSuscripcionNormalCards(),
         ],
       ),
@@ -654,6 +666,56 @@ class _PlanesScreenState extends State<PlanesScreen>
       const SizedBox(height: 16),
       _buildEstadisticasCard(),
     ];
+  }
+
+  /// ❌ Error crítico cargando suscripción
+  Widget _buildErrorCargandoSuscripcion() {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: [Colors.red.shade50, Colors.orange.shade50],
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.error_outline, color: Colors.red.shade600, size: 48),
+            const SizedBox(height: 16),
+            Text(
+              'Error cargando suscripción',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.red.shade700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'No se pudo conectar con el servidor. Verifica tu conexión e intenta nuevamente.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.red.shade600,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _cargarDatosRobusto,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Reintentar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red.shade600,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildSuscripcionErrorBanner() {

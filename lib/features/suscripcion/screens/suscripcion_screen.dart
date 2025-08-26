@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../config/adaptive_ui_config.dart'; // 🎨 SISTEMA ADAPTATIVO PARA DISPOSITIVOS CHINOS
 
 class SuscripcionScreen extends StatefulWidget {
   const SuscripcionScreen({Key? key}) : super(key: key);

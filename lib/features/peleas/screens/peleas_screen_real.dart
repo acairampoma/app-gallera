@@ -10,6 +10,7 @@ import '../../../services/gallo_service.dart';
 import '../../../models/pelea.dart';
 import 'formulario_pelea_screen.dart';
 import 'package:intl/intl.dart';
+import '../../../shared/widgets/limite_interceptor.dart'; // 🛡️ VALIDACIÓN DE LÍMITES
 
 class PeleasScreenReal extends StatefulWidget {
   const PeleasScreenReal({Key? key}) : super(key: key);
@@ -623,17 +624,35 @@ class _PeleasScreenRealState extends State<PeleasScreenReal> {
     }
   }
 
-  void _crearNuevaPelea() {
-    Navigator.push(
+  Future<void> _crearNuevaPelea() async {
+    // 🛡️ VALIDAR LÍMITES ANTES DE ABRIR FORMULARIO
+    if (gallos.isEmpty) {
+      _showError('Necesitas tener al menos un gallo registrado para crear peleas');
+      return;
+    }
+
+    // Usar el primer gallo como referencia para validación
+    final galloReferencia = gallos.first['id'] as int;
+    
+    // Validar límite de peleas por gallo
+    final puedeCrear = await validarLimiteManual(
       context,
-      MaterialPageRoute(
-        builder: (context) => const FormularioPeleaScreen(),
-      ),
-    ).then((result) {
-      if (result == true) {
-        _loadData(); // Recargar datos
-      }
-    });
+      recursoTipo: RecursoTipo.peleas,
+      galloId: galloReferencia,
+    );
+
+    if (puedeCrear) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const FormularioPeleaScreen(),
+        ),
+      ).then((result) {
+        if (result == true) {
+          _loadData(); // Recargar datos
+        }
+      });
+    }
   }
 
   void _editarPelea(Pelea pelea) {

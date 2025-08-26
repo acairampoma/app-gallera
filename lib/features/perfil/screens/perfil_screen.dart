@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import '../../../shared/widgets/base_screen.dart';
+import '../../../shared/widgets/adaptive_layout_builder.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/api_service.dart';
-import '../../../services/admin_service.dart';
 import '../../../services/admin_notification_service.dart';
 import '../../../utils/password_validator.dart';
 import '../../auth/screens/login_screen.dart';
@@ -238,40 +239,47 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
   // 📱 CONTACTAR WHATSAPP
   void _contactWhatsApp() async {
-    const phoneNumber = '932259291';
-    const message = '¡Hola! Necesito ayuda con la app Casta de Gallos';
-    final whatsappUrl = 'https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}';
+    const phoneNumber = '51993592328'; // Número con código de país
+    const message = '¡Hola! Necesito ayuda con la app Casta de Gallos 🐓';
+    
+    // URLs para diferentes plataformas
+    final whatsappAppUrl = 'whatsapp://send?phone=$phoneNumber&text=${Uri.encodeComponent(message)}';
+    final whatsappWebUrl = 'https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}';
     
     try {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('📱 Contactar por WhatsApp:'),
-              Text('Teléfono: $phoneNumber'),
-              Text('Mensaje: $message'),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 5),
-          action: SnackBarAction(
-            label: 'Abrir',
-            textColor: Colors.white,
-            onPressed: () {
-              print('Abriendo WhatsApp: $whatsappUrl');
-            },
-          ),
-        ),
-      );
+      // Intentar abrir la APP de WhatsApp primero
+      final appUri = Uri.parse(whatsappAppUrl);
+      bool launched = await launchUrl(appUri, mode: LaunchMode.externalApplication);
+      
+      if (!launched) {
+        // Si no se puede abrir la app, intentar WhatsApp Web
+        final webUri = Uri.parse(whatsappWebUrl);
+        launched = await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      }
+      
+      if (!launched) {
+        throw Exception('No se pudo abrir WhatsApp');
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error abriendo WhatsApp: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      // Si falla, mostrar información de contacto
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('📱 No se pudo abrir WhatsApp'),
+                const Text('Contacta manualmente:'),
+                Text('Teléfono: +$phoneNumber'),
+                Text('Mensaje: $message'),
+              ],
+            ),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     }
   }
 
@@ -312,22 +320,70 @@ class _PerfilScreenState extends State<PerfilScreen> {
       title: 'Mi Perfil',
       subtitle: 'Conectado al Backend Railway',
       currentIndex: 3, // Perfil section
-      child: RefreshIndicator(
-        onRefresh: _loadUserData,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              _buildProfileHeader(),
-              const SizedBox(height: 24),
-              _buildMenuOptions(context),
-              const SizedBox(height: 24),
-              _buildAdminButton(context),
-              const SizedBox(height: 16),
-              _buildLogoutButton(context),
-            ],
-          ),
+      child: AdaptiveLayoutBuilder(
+        mobile: _buildMobileProfile(),
+        tablet: _buildTabletProfile(),
+      ),
+    );
+  }
+  
+  Widget _buildMobileProfile() {
+    return RefreshIndicator(
+      onRefresh: _loadUserData,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            _buildProfileHeader(),
+            const SizedBox(height: 24),
+            _buildMenuOptions(context),
+            const SizedBox(height: 24),
+            _buildAdminButton(context),
+            const SizedBox(height: 16),
+            _buildLogoutButton(context),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildTabletProfile() {
+    return RefreshIndicator(
+      onRefresh: _loadUserData,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(32.0),
+        child: ResponsiveRowColumn(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Panel izquierdo: Información del perfil
+            Expanded(
+              flex: 1,
+              child: Column(
+                children: [
+                  _buildTabletProfileHeader(),
+                  const SizedBox(height: 32),
+                  _buildTabletProfileStats(),
+                ],
+              ),
+            ),
+            const SizedBox(width: 32),
+            
+            // Panel derecho: Opciones y configuraciones
+            Expanded(
+              flex: 1,
+              child: Column(
+                children: [
+                  _buildTabletMenuOptions(context),
+                  const SizedBox(height: 32),
+                  _buildTabletAdminSection(context),
+                  const SizedBox(height: 24),
+                  _buildTabletLogoutButton(context),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -796,19 +852,13 @@ class _PerfilScreenState extends State<PerfilScreen> {
         color: Colors.blue,
         onTap: () => _showEditProfileDialog(),
       ),
+      ..._getMenuOptions(),
       _MenuOption(
-        icon: Icons.lock,
-        title: 'Cambiar Contraseña',
-        subtitle: 'Actualizar clave de acceso',
-        color: Colors.orange,
-        onTap: () => _showChangePasswordDialog(),
-      ),
-      _MenuOption(
-        icon: Icons.support_agent,
-        title: 'Ayuda y Soporte',
-        subtitle: 'Contactar vía WhatsApp',
-        color: Colors.green,
-        onTap: () => _contactWhatsApp(),
+        icon: Icons.delete_forever,
+        title: 'Eliminar Cuenta',
+        subtitle: 'Eliminación permanente (Apple requerido)',
+        color: Colors.red,
+        onTap: () => _showDeleteAccountDialog(),
       ),
       _MenuOption(
         icon: Icons.info,
@@ -1170,6 +1220,230 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
+  // 🗑️ ELIMINAR CUENTA - DIÁLOGO COMPLETO CON VALIDACIONES
+  void _showDeleteAccountDialog() {
+    final passwordController = TextEditingController();
+    final confirmationController = TextEditingController();
+    bool _obscurePassword = true;
+    bool _isDeleting = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // No permitir cerrar tocando fuera
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Row(
+            children: [
+              Icon(Icons.warning, color: Colors.red, size: 28),
+              SizedBox(width: 12),
+              Text(
+                'Eliminar Cuenta',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '⚠️ ADVERTENCIA IMPORTANTE',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                          fontSize: 14,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        '• Esta acción es IRREVERSIBLE\n'
+                        '• Se eliminarán TODOS tus datos\n'
+                        '• Perfil, gallos, peleas, etc.\n'
+                        '• No hay forma de recuperar la información',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.red,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Para confirmar, ingresa:',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 16),
+                
+                // Contraseña
+                TextField(
+                  controller: passwordController,
+                  obscureText: _obscurePassword,
+                  enabled: !_isDeleting,
+                  decoration: InputDecoration(
+                    labelText: 'Tu contraseña actual',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.lock),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Texto de confirmación
+                TextField(
+                  controller: confirmationController,
+                  enabled: !_isDeleting,
+                  decoration: const InputDecoration(
+                    labelText: 'Escribe: ELIMINAR MI CUENTA',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.edit),
+                    helperText: 'Debes escribir exactamente: ELIMINAR MI CUENTA',
+                    helperMaxLines: 2,
+                  ),
+                ),
+                
+                if (_isDeleting)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 16),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 12),
+                        Text('Eliminando cuenta...'),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: _isDeleting ? null : () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: _isDeleting ? null : () async {
+                // Validaciones
+                if (passwordController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('❌ Ingresa tu contraseña'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+                
+                if (confirmationController.text != 'ELIMINAR MI CUENTA') {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('❌ Debes escribir exactamente: ELIMINAR MI CUENTA'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+                
+                // Ejecutar eliminación
+                setState(() {
+                  _isDeleting = true;
+                });
+                
+                try {
+                  final response = await AuthService.instance.deleteAccount(
+                    password: passwordController.text,
+                    confirmationText: confirmationController.text,
+                  );
+                  
+                  setState(() {
+                    _isDeleting = false;
+                  });
+                  
+                  Navigator.pop(context); // Cerrar diálogo
+                  
+                  if (response['success'] == true) {
+                    // Mostrar mensaje de despedida
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(response['message'] ?? 'Cuenta eliminada exitosamente'),
+                        backgroundColor: Colors.green,
+                        duration: const Duration(seconds: 5),
+                      ),
+                    );
+                    
+                    // Navegar al login después de un delay
+                    await Future.delayed(const Duration(seconds: 2));
+                    
+                    if (mounted) {
+                      final navigator = Navigator.of(context, rootNavigator: true);
+                      navigator.pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (context) => const LoginScreen()),
+                        (route) => false,
+                      );
+                    }
+                  } else {
+                    // Error del servidor
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('❌ ${response['message'] ?? 'Error eliminando cuenta'}'),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 5),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  setState(() {
+                    _isDeleting = false;
+                  });
+                  
+                  print('💥 Error eliminando cuenta: $e');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('❌ Error de conexión: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('ELIMINAR PERMANENTEMENTE'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -1250,6 +1524,542 @@ class _PerfilScreenState extends State<PerfilScreen> {
         );
       }
     }
+  }
+  
+  // ==========================================
+  // 📟 MÉTODOS PARA TABLET
+  // ==========================================
+  
+  Widget _buildTabletProfileHeader() {
+    return ResponsiveCard(
+      child: Column(
+        children: [
+          // Avatar más grande para tablet
+          Stack(
+            children: [
+              GestureDetector(
+                onTap: () => _showAvatarOptions(),
+                child: Container(
+                  width: 140,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.primary,
+                      width: 4,
+                    ),
+                  ),
+                  child: _profile?.avatarUrl != null
+                      ? ClipOval(
+                          child: Image.network(
+                            _profile!.avatarUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(
+                                Icons.person,
+                                size: 80,
+                                color: AppColors.primary,
+                              );
+                            },
+                          ),
+                        )
+                      : const Icon(
+                          Icons.person,
+                          size: 80,
+                          color: AppColors.primary,
+                        ),
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: _user?.isPremium == true ? Colors.amber : Colors.green,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
+                  ),
+                  padding: const EdgeInsets.all(8),
+                  child: Icon(
+                    _user?.isPremium == true ? Icons.star : Icons.verified,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                child: GestureDetector(
+                  onTap: () => _showAvatarOptions(),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 3),
+                    ),
+                    padding: const EdgeInsets.all(8),
+                    child: const Icon(
+                      Icons.camera_alt,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          
+          // Nombre más grande para tablet
+          ResponsiveText(
+            _profile?.nombreCompleto ?? 'Usuario',
+            baseFontSize: 28,
+            fontWeight: FontWeight.bold,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          
+          // Email
+          ResponsiveText(
+            _user?.email ?? 'email@ejemplo.com',
+            baseFontSize: 16,
+            color: Colors.grey.shade600,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          
+          // Galpón
+          if (_profile?.nombreGalpon != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(25),
+                border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.home,
+                    size: 20,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  ResponsiveText(
+                    _profile!.nombreGalpon!,
+                    baseFontSize: 16,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildTabletProfileStats() {
+    return ResponsiveCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ResponsiveText(
+            'Información del Perfil',
+            baseFontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          const SizedBox(height: 20),
+          
+          _buildTabletInfoRow('ID Usuario', '${_user?.id ?? 0}', Icons.person),
+          const SizedBox(height: 16),
+          _buildTabletInfoRow('Ciudad', _profile?.ciudad ?? 'Lima', Icons.location_on),
+          const SizedBox(height: 16),
+          _buildTabletInfoRow('Estado', _user?.isActive == true ? 'Activo' : 'Inactivo', Icons.check_circle),
+          const SizedBox(height: 16),
+          _buildTabletInfoRow('Teléfono', _profile?.telefono ?? 'No registrado', Icons.phone),
+          const SizedBox(height: 16),
+          _buildTabletInfoRow('Membresía', _user?.isPremium == true ? 'Premium' : 'Básica', Icons.star),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildTabletInfoRow(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: AppColors.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ResponsiveText(
+                label,
+                baseFontSize: 12,
+                color: Colors.grey.shade600,
+              ),
+              const SizedBox(height: 4),
+              ResponsiveText(
+                value,
+                baseFontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildTabletMenuOptions(BuildContext context) {
+    final menuOptions = _getMenuOptions();
+    
+    return ResponsiveCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ResponsiveText(
+            'Configuración de Cuenta',
+            baseFontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          const SizedBox(height: 20),
+          
+          ...menuOptions.map((option) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _buildTabletMenuOptionCard(option),
+          )),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildTabletMenuOptionCard(_MenuOption option) {
+    return InkWell(
+      onTap: option.onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade200),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: option.color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                option.icon,
+                color: option.color,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ResponsiveText(
+                    option.title,
+                    baseFontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  const SizedBox(height: 4),
+                  ResponsiveText(
+                    option.subtitle,
+                    baseFontSize: 14,
+                    color: Colors.grey.shade600,
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey.shade400,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildTabletAdminSection(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _esUsuarioAdmin(),
+      builder: (context, snapshot) {
+        if (snapshot.data == true) {
+          return ResponsiveCard(
+            child: Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.orange.shade400, Colors.orange.shade600],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(
+                        Icons.admin_panel_settings,
+                        color: Colors.white,
+                        size: 48,
+                      ),
+                      const SizedBox(height: 12),
+                      ResponsiveText(
+                        'Panel de Administrador',
+                        baseFontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      ResponsiveText(
+                        'Gestiona usuarios, notificaciones y configuraciones del sistema',
+                        baseFontSize: 14,
+                        color: Colors.white.withOpacity(0.9),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => _navegarAPanelAdmin(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.orange.shade600,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: ResponsiveText(
+                            'Acceder al Panel',
+                            baseFontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+  
+  Widget _buildTabletLogoutButton(BuildContext context) {
+    return ResponsiveCard(
+      child: Column(
+        children: [
+          ResponsiveText(
+            'Sesión y Cuenta',
+            baseFontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+          const SizedBox(height: 20),
+          
+          // Botón de eliminar cuenta
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => _showDeleteAccountDialog(),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.red,
+                side: const BorderSide(color: Colors.red),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.delete_forever, size: 20),
+                  const SizedBox(width: 8),
+                  ResponsiveText(
+                    'Eliminar Cuenta',
+                    baseFontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          
+          // Botón de cerrar sesión
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => _showLogoutDialog(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.logout, size: 20),
+                  const SizedBox(width: 8),
+                  ResponsiveText(
+                    'Cerrar Sesión',
+                    baseFontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  List<_MenuOption> _getMenuOptions() {
+    return [
+      _MenuOption(
+        icon: Icons.lock,
+        title: 'Cambiar Contraseña',
+        subtitle: 'Actualiza tu contraseña de acceso',
+        color: Colors.blue,
+        onTap: () => _showChangePasswordDialog(),
+      ),
+      _MenuOption(
+        icon: Icons.support_agent,
+        title: 'Contactar Soporte',
+        subtitle: 'Envía un mensaje por WhatsApp',
+        color: Colors.green,
+        onTap: () => _contactWhatsApp(),
+      ),
+      _MenuOption(
+        icon: Icons.info_outline,
+        title: 'Información de la App',
+        subtitle: 'Versión y detalles técnicos',
+        color: Colors.purple,
+        onTap: () => _showAppInfo(),
+      ),
+      _MenuOption(
+        icon: Icons.feedback,
+        title: 'Enviar Feedback',
+        subtitle: 'Ayúdanos a mejorar la app',
+        color: Colors.orange,
+        onTap: () => _showFeedbackDialog(),
+      ),
+    ];
+  }
+  
+  // Método para mostrar información de la app
+  void _showAppInfo() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Información de la App'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('📱 Casta de Gallos'),
+            Text('Versión: 1.0.0'),
+            Text('🚀 Backend: Railway PostgreSQL'),
+            Text('☁️ Storage: Cloudinary'),
+            Text('🔔 Notificaciones: Firebase'),
+            Text('🛡️ Auth: JWT + Sessions'),
+            SizedBox(height: 16),
+            Text('Gestión profesional de gallos de pelea con funcionalidades completas.'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // Método para mostrar diálogo de feedback
+  void _showFeedbackDialog() {
+    final feedbackController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Enviar Feedback'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Ayúdanos a mejorar la app con tu feedback:'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: feedbackController,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: 'Escribe tu comentario, sugerencia o reporte de error...',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              if (feedbackController.text.isNotEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('✅ Gracias por tu feedback. Lo revisaremos pronto.'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            },
+            child: const Text('Enviar'),
+          ),
+        ],
+      ),
+    );
   }
 }
 

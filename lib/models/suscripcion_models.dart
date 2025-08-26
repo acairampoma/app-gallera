@@ -59,7 +59,7 @@ class Suscripcion {
       userId: json['user_id'] ?? 0,
       planType: json['plan_type'] ?? 'gratuito',
       planName: json['plan_name'] ?? 'Plan Gratuito',
-      precio: (json['precio'] ?? 0.0).toDouble(),
+      precio: _parseDouble(json['precio']),
       status: json['status'] ?? 'active',
       fechaInicio: json['fecha_inicio'] != null 
           ? DateTime.parse(json['fecha_inicio']) 
@@ -99,6 +99,17 @@ class Suscripcion {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
+  }
+
+  // 🔧 Helper para parsear precio que puede venir como string o double
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value) ?? 0.0;
+    }
+    return 0.0;
   }
 
   /// Indica si es plan premium
@@ -175,7 +186,7 @@ class PlanCatalogo {
       codigo: json['codigo'] ?? '',
       nombre: json['nombre'] ?? '',
       descripcion: json['descripcion'],
-      precio: (json['precio'] ?? 0.0).toDouble(),
+      precio: PlanCatalogo._parseDouble(json['precio']),
       duracionDias: json['duracion_dias'] ?? 30,
       gallosMaximo: json['gallos_maximo'] ?? 5,
       topesPorGallo: json['topes_por_gallo'] ?? 2,
@@ -195,6 +206,17 @@ class PlanCatalogo {
   String get precioFormateado {
     if (precio == 0) return 'Gratis';
     return 'S/. ${precio.toStringAsFixed(2)}';
+  }
+
+  // 🔧 Helper para parsear precio que puede venir como string o double
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value) ?? 0.0;
+    }
+    return 0.0;
   }
 
   /// Es el plan más caro
@@ -436,7 +458,7 @@ class UpgradeResponse {
       success: json['success'] ?? false,
       mensaje: json['mensaje'] ?? '',
       planCodigo: json['plan_codigo'],
-      precioTotal: json['precio_total']?.toDouble(),
+      precioTotal: UpgradeResponse._parseDouble(json['precio_total']),
       beneficios: json['beneficios'] != null
           ? List<String>.from(json['beneficios'])
           : [],
@@ -463,6 +485,17 @@ class UpgradeResponse {
   String get precioFormateado {
     if (precioTotal == null || precioTotal == 0) return 'Gratis';
     return 'S/. ${precioTotal!.toStringAsFixed(2)}';
+  }
+
+  // 🔧 Helper para parsear precio que puede venir como string o double
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value) ?? 0.0;
+    }
+    return 0.0;
   }
 }
 
@@ -491,7 +524,7 @@ class PagoPendienteInfo {
     return PagoPendienteInfo(
       id: json['id'] ?? 0,
       planCodigo: json['plan_codigo'] ?? '',
-      monto: (json['monto'] ?? 0.0).toDouble(),
+      monto: PagoPendienteInfo._parseDouble(json['monto']),
       estado: json['estado'] ?? 'pendiente',
       fechaPago: json['fecha_pago'] != null
           ? DateTime.parse(json['fecha_pago'])
@@ -551,5 +584,16 @@ class PagoPendienteInfo {
   /// Precio formateado
   String get montoFormateado {
     return 'S/. ${monto.toStringAsFixed(2)}';
+  }
+
+  // 🔧 Helper para parsear precio que puede venir como string o double
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value) ?? 0.0;
+    }
+    return 0.0;
   }
 }

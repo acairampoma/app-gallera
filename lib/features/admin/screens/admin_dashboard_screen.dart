@@ -9,6 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../shared/widgets/base_screen.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../services/admin_notification_service.dart';
+import '../../../services/admin_service.dart';
+import '../../../config/adaptive_ui_config.dart'; // 🎨 SISTEMA ADAPTATIVO PARA DISPOSITIVOS CHINOS
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({Key? key}) : super(key: key);
@@ -381,10 +383,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           children: [
             const Icon(Icons.error, size: 64, color: Colors.red),
             const SizedBox(height: 16),
-            Text('Error: $_errorDashboard'),
-            ElevatedButton(
-              onPressed: _cargarDashboard,
-              child: const Text('Reintentar'),
+            AdaptiveText('Error: $_errorDashboard'),
+            const SizedBox(height: 16),
+            FutureBuilder<AdaptiveUIConfig>(
+              future: AdaptiveUIManager.getOptimalConfig(),
+              builder: (context, snapshot) {
+                final config = snapshot.data ?? AdaptiveUIConfig.standard();
+                
+                return ElevatedButton(
+                  onPressed: _cargarDashboard,
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: config.borderRadius,
+                    ),
+                    minimumSize: Size(0, config.buttonHeight),
+                  ),
+                  child: Text(
+                    'Reintentar',
+                    style: TextStyle(
+                      fontSize: config.fontSize,
+                      fontWeight: config.fontWeight,
+                      letterSpacing: config.letterSpacing,
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -1034,35 +1057,65 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         
         // Botones de acción según estado
         if (esPendiente) ...[
-          // Botón aprobar (solo para pendientes)
+          // Botón aprobar (solo para pendientes) - ADAPTATIVO
           Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => _aprobarPago(pago),
-              icon: const Icon(Icons.check, size: 18),
-              label: const Text('APROBAR'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
+            child: FutureBuilder<AdaptiveUIConfig>(
+              future: AdaptiveUIManager.getOptimalConfig(),
+              builder: (context, snapshot) {
+                final config = snapshot.data ?? AdaptiveUIConfig.standard();
+                
+                return ElevatedButton.icon(
+                  onPressed: () => _aprobarPago(pago),
+                  icon: Icon(Icons.check, size: config.iconSize * 0.75),
+                  label: Text(
+                    'APROBAR',
+                    style: TextStyle(
+                      fontSize: config.fontSize * 0.85,
+                      fontWeight: config.fontWeight,
+                      letterSpacing: config.letterSpacing,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: config.borderRadius * 0.6,
+                    ),
+                    minimumSize: Size(0, config.buttonHeight * 0.8),
+                  ),
+                );
+              },
             ),
           ),
           const SizedBox(width: 8),
-          // Botón rechazar (solo para pendientes)
+          // Botón rechazar (solo para pendientes) - ADAPTATIVO
           Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () => _rechazarPago(pago),
-              icon: const Icon(Icons.close, size: 18),
-              label: const Text('Rechazar'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red,
-                side: const BorderSide(color: Colors.red),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
+            child: FutureBuilder<AdaptiveUIConfig>(
+              future: AdaptiveUIManager.getOptimalConfig(),
+              builder: (context, snapshot) {
+                final config = snapshot.data ?? AdaptiveUIConfig.standard();
+                
+                return OutlinedButton.icon(
+                  onPressed: () => _rechazarPago(pago),
+                  icon: Icon(Icons.close, size: config.iconSize * 0.75),
+                  label: Text(
+                    'Rechazar',
+                    style: TextStyle(
+                      fontSize: config.fontSize * 0.85,
+                      fontWeight: config.fontWeight,
+                      letterSpacing: config.letterSpacing,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    side: const BorderSide(color: Colors.red),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: config.borderRadius * 0.6,
+                    ),
+                    minimumSize: Size(0, config.buttonHeight * 0.8),
+                  ),
+                );
+              },
             ),
           ),
         ] else ...[
@@ -1578,33 +1631,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
     if (confirmar == true) {
       try {
-        final prefs = await SharedPreferences.getInstance();
-        final token = prefs.getString('access_token');
+        print('🚀 [FLUTTER-ADMIN] === USANDO ADMIN SERVICE ===');
+        print('🚀 [FLUTTER-ADMIN] Pago ID: ${pago['id']}');
         
-        final response = await http.post(
-          Uri.parse('https://gallerappback-production.up.railway.app/api/v1/admin/pagos/${pago['id']}/aprobar'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json; charset=utf-8',
-          },
-          body: json.encode({
-            'accion': 'aprobar',
-            'notas': 'Pago verificado correctamente via panel admin épico'
-          }),
+        // USAR EL AdminService que tiene los mismos headers que suscripciones
+        final result = await AdminService.aprobarPago(pago['id']);
+        
+        print('✅ [FLUTTER-ADMIN] ¡APROBACIÓN EXITOSA!');
+        print('✅ [FLUTTER-ADMIN] Resultado: $result');
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Pago aprobado exitosamente'),
+            backgroundColor: Colors.green,
+          ),
         );
-
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✅ Pago aprobado exitosamente'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          _cargarPagosPendientes();
-        } else {
-          throw Exception('Error: ${response.statusCode}');
-        }
+        _cargarPagosPendientes();
       } catch (e) {
+        print('💥 [FLUTTER-ADMIN] Exception: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
@@ -1642,7 +1686,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         final token = prefs.getString('access_token');
         
         final response = await http.post(
-          Uri.parse('https://gallerappback-production.up.railway.app/api/v1/admin/pagos/${pago['id']}/aprobar'),
+          Uri.parse('https://gallerappback-production.up.railway.app/api/v1/admin/pagos/${pago['id']}/rechazar'),
           headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json; charset=utf-8',

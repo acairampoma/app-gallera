@@ -295,18 +295,6 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
             backgroundColor: AppColors.primary,
             child: const Icon(Icons.zoom_out, color: Colors.white),
           ),
-          const SizedBox(height: 8),
-          FloatingActionButton(
-            heroTag: "reset_zoom",
-            mini: true,
-            onPressed: () {
-              setState(() {
-                _scale = 1.0;
-              });
-            },
-            backgroundColor: Colors.grey[600],
-            child: const Icon(Icons.home, color: Colors.white),
-          ),
         ],
       ),
     );
@@ -335,7 +323,7 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Línea de sangre: ${widget.galloSeleccionado['raza']?['nombre'] ?? 'N/A'}',
+            'Línea de sangre: ${_getRazaText(widget.galloSeleccionado)}',
             style: const TextStyle(
               fontSize: 16,
               color: Colors.white70,
@@ -776,7 +764,7 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Raza: ${gallo['raza']?['nombre'] ?? gallo['raza_nombre'] ?? 'N/A'}\n'
+                      'Raza: ${_getRazaText(gallo)}\n'
                       'Peso: ${gallo['peso'] ?? 0}kg\n'
                       'Estado: ${gallo['estado'] ?? 'N/A'}',
                       style: TextStyle(
@@ -1258,8 +1246,10 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
       case 'ASIL_PERUANO': return 'Asil';
       case 'SHAMO_JAPONES': return 'Shamo';
       case 'NAVAJERO': return 'Thai';
-      default:
-        return razaId; // Si no está mapeado, devolver el ID original
+      default: 
+        // Si no coincide con ningún mapeo conocido, formatear el ID para que sea legible
+        return razaId.replaceAll('_', ' ').toLowerCase().split(' ').map((word) => 
+            word.isEmpty ? word : word[0].toUpperCase() + word.substring(1)).join(' ');
     }
   }
 }

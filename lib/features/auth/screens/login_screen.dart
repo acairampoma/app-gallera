@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/app_logo.dart';
+import '../../../shared/widgets/adaptive_layout_builder.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/admin_notification_service.dart';
 import '../../../services/user_notification_service.dart';
 import '../../../utils/password_validator.dart';
+import '../../../utils/device_utils.dart';
 import '../../home/screens/home_screen.dart';
 import 'forgot_password_screen.dart';
 
@@ -175,37 +177,368 @@ class _LoginScreenState extends State<LoginScreen>
       opacity: _fadeAnimation,
       child: SlideTransition(
         position: _slideAnimation,
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _loginFormKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo épico con animación
-                  _buildAnimatedLogo(),
-                  const SizedBox(height: 40),
-                  
-                  // Formulario de login épico
-                  _buildLoginForm(),
-                  const SizedBox(height: 24),
-                  
-                  // Botón de login épico
-                  _buildLoginButton(),
-                  const SizedBox(height: 16),
-                  
-                  // Link de contraseña olvidada
-                  _buildForgotPasswordLink(),
-                  const SizedBox(height: 20),
-                  
-                  // Link de registro mejorado
-                  _buildRegisterLink(),
-                ],
-              ),
-            ),
+        child: AdaptiveLayoutBuilder(
+          mobile: _buildMobileLogin(),
+          tablet: _buildTabletLogin(),
+        ),
+      ),
+    );
+  }
+  
+  // 📱 DISEÑO MÓVIL (ACTUAL)
+  Widget _buildMobileLogin() {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Form(
+          key: _loginFormKey,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Logo épico con animación
+              _buildAnimatedLogo(),
+              const SizedBox(height: 40),
+              
+              // Formulario de login épico
+              _buildLoginForm(),
+              const SizedBox(height: 24),
+              
+              // Botón de login épico
+              _buildLoginButton(),
+              const SizedBox(height: 16),
+              
+              // Link de contraseña olvidada
+              _buildForgotPasswordLink(),
+              const SizedBox(height: 20),
+              
+              // Link de registro mejorado
+              _buildRegisterLink(),
+            ],
           ),
         ),
+      ),
+    );
+  }
+  
+  // 📟 DISEÑO IPAD/TABLET 
+  Widget _buildTabletLogin() {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(40.0),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 1000),
+          child: Row(
+            children: [
+              // 🎨 PANEL IZQUIERDO: Bienvenida e información
+              Expanded(
+                flex: 1,
+                child: Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.primary,
+                        AppColors.primaryDark,
+                      ],
+                    ),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      bottomLeft: Radius.circular(20),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Logo para iPad
+                      Container(
+                        width: 120,
+                        height: 120,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(15),
+                          child: Image.asset(
+                            'assets/images/logo/logo2.webp',
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text('🐓', style: TextStyle(fontSize: 40, color: Colors.white)),
+                                  Text('🎆', style: TextStyle(fontSize: 30, color: Colors.white)),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      
+                      // Título principal
+                      ResponsiveText(
+                        '¡Bienvenido a\nCasta de Gallos!',
+                        baseFontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Subtítulo
+                      ResponsiveText(
+                        'La aplicación profesional para gestión integral de gallos de pelea con backend real.',
+                        baseFontSize: 16,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // Características destacadas
+                      ..._buildFeaturesList(),
+                    ],
+                  ),
+                ),
+              ),
+              
+              // 📱 PANEL DERECHO: Formulario de login
+              Expanded(
+                flex: 1,
+                child: Container(
+                  padding: const EdgeInsets.all(40),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topRight: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 20,
+                        offset: Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Form(
+                    key: _loginFormKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Título del formulario
+                        ResponsiveText(
+                          'Iniciar Sesión',
+                          baseFontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                        const SizedBox(height: 8),
+                        ResponsiveText(
+                          'Accede a tu cuenta y gestiona tu galón',
+                          baseFontSize: 16,
+                          color: Colors.grey.shade600,
+                        ),
+                        const SizedBox(height: 32),
+                        
+                        // Formulario más ancho para tablet
+                        _buildTabletLoginForm(),
+                        const SizedBox(height: 32),
+                        
+                        // Botón más ancho para tablet
+                        _buildTabletLoginButton(),
+                        const SizedBox(height: 24),
+                        
+                        // Enlaces adaptados para tablet
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildForgotPasswordLink(),
+                            _buildTabletRegisterLink(),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  List<Widget> _buildFeaturesList() {
+    final features = [
+      '✅ Backend PostgreSQL + JWT',
+      '☁️ Storage en Cloudinary',
+      '🔔 Notificaciones Firebase',
+      '👑 Panel de administrador',
+      '📊 Estadísticas completas',
+    ];
+    
+    return features.map((feature) => Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: ResponsiveText(
+        feature,
+        baseFontSize: 14,
+        color: Colors.white.withOpacity(0.8),
+      ),
+    )).toList();
+  }
+  
+  Widget _buildTabletLoginForm() {
+    return Column(
+      children: [
+        // Email épico para tablet
+        _buildTabletTextField(
+          controller: _loginEmailController,
+          label: 'Email o Usuario',
+          hint: 'juan@gallos.com',
+          icon: Icons.email_outlined,
+          keyboardType: TextInputType.emailAddress,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Por favor ingresa tu email o usuario';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 20),
+        
+        // Contraseña épica para tablet
+        _buildTabletTextField(
+          controller: _loginPasswordController,
+          label: 'Contraseña',
+          hint: '••••••••',
+          icon: Icons.lock_outlined,
+          isPassword: true,
+          obscureText: _obscureLoginPassword,
+          onTogglePassword: () {
+            setState(() {
+              _obscureLoginPassword = !_obscureLoginPassword;
+            });
+          },
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Por favor ingresa tu contraseña';
+            }
+            if (value.length < 6) {
+              return 'La contraseña debe tener al menos 6 caracteres';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildTabletTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType? keyboardType,
+    bool isPassword = false,
+    bool obscureText = false,
+    VoidCallback? onTogglePassword,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ResponsiveText(
+          label,
+          baseFontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: Colors.black87,
+        ),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          obscureText: obscureText,
+          validator: validator,
+          decoration: InputDecoration(
+            hintText: hint,
+            prefixIcon: Icon(icon, color: AppColors.primary, size: 24),
+            suffixIcon: isPassword
+                ? IconButton(
+                    icon: Icon(
+                      obscureText ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey.shade600,
+                      size: 24,
+                    ),
+                    onPressed: onTogglePassword,
+                  )
+                : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide(color: AppColors.primary, width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 20,
+            ),
+          ),
+          style: const TextStyle(fontSize: 16),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildTabletLoginButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 60,
+      child: ElevatedButton(
+        onPressed: _isLoginLoading ? null : _handleLogin,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          elevation: 6,
+          shadowColor: AppColors.primary.withOpacity(0.4),
+        ),
+        child: _isLoginLoading
+            ? const SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 3,
+                ),
+              )
+            : ResponsiveText(
+                'Iniciar Sesión',
+                baseFontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+      ),
+    );
+  }
+  
+  Widget _buildTabletRegisterLink() {
+    return GestureDetector(
+      onTap: () => _navigateToScreen(1),
+      child: ResponsiveText(
+        '¿No tienes cuenta? Regístrate',
+        baseFontSize: 14,
+        color: AppColors.primary,
+        fontWeight: FontWeight.w600,
       ),
     );
   }

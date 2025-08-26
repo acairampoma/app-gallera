@@ -451,6 +451,74 @@ class ApiService {
     return token != null;
   }
 
+  // 🗑️ DELETE ACCOUNT - ELIMINACIÓN PERMANENTE DE CUENTA
+  static Future<Map<String, dynamic>> deleteAccount({
+    required String password,
+    required String confirmationText,
+  }) async {
+    try {
+      print('🗑️ API: Eliminando cuenta de usuario');
+      print('🔑 Password: ${password.replaceAll(RegExp(r'.'), '*')}');
+      print('✅ Confirmation: $confirmationText');
+      
+      final authHeaders = await _getAuthHeaders();
+      final response = await http.delete(
+        Uri.parse('$baseUrl/auth/delete-account'),
+        headers: authHeaders,
+        body: jsonEncode({
+          'password': password,
+          'confirmation_text': confirmationText,
+        }),
+      );
+
+      print('📡 Status: ${response.statusCode}');
+      print('📄 Response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        
+        // Limpiar tokens locales después de eliminación exitosa
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+        
+        print('✅ Cuenta eliminada exitosamente');
+        return {
+          'success': true,
+          'account_deleted': data['account_deleted'] ?? true,
+          'message': data['message'] ?? 'Cuenta eliminada exitosamente',
+          'redirect_to': data['redirect_to'] ?? 'login',
+        };
+      } else if (response.statusCode == 400) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': data['detail']['message'] ?? 'Error en los datos proporcionados',
+          'error_code': data['detail']['error_code'] ?? 'AUTH_ERROR',
+        };
+      } else if (response.statusCode == 500) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': data['detail']['message'] ?? 'Error interno del servidor',
+          'error_code': data['detail']['error_code'] ?? 'INTERNAL_ERROR',
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Error eliminando cuenta (${response.statusCode})',
+          'error_code': 'HTTP_ERROR',
+        };
+      }
+    } catch (e) {
+      print('💥 Error en deleteAccount: $e');
+      return {
+        'success': false,
+        'message': 'Error de conexión: $e',
+        'error_code': 'CONNECTION_ERROR',
+      };
+    }
+  }
+
   // 🔐 PASSWORD RECOVERY METHODS
   
   // Solicitar código de recuperación de contraseña

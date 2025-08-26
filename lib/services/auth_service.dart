@@ -4,7 +4,10 @@
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'api_service.dart';
 import 'admin_notification_service.dart';
 import 'user_notification_service.dart';
@@ -41,6 +44,83 @@ class AuthService {
   Future<String?> getTokenAsync() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('access_token');
+  }
+
+  // 🔥 TÉCNICA ÉPICA DE ALAN: REGISTRAR TOKEN FCM CON CAPTURA DE ERRORES
+  Future<void> _registrarTokenFCMConCapturError() async {
+    print('🔥 === INICIANDO REGISTRO TOKEN FCM (CON CAPTURA ERROR) ===');
+    
+    String tokenToSave;
+    String deviceInfo = 'Flutter App - Token Real';
+    
+    try {
+      // INTENTAR GENERAR TOKEN REAL
+      print('📱 Intentando generar token FCM...');
+      String? realToken = await FirebaseMessaging.instance.getToken();
+      
+      if (realToken != null && realToken.isNotEmpty) {
+        tokenToSave = realToken;
+        deviceInfo = 'Flutter App - Token Real Generado';
+        print('✅ TOKEN FCM REAL GENERADO:');
+        print(realToken);
+        print('📋 COPIA ESTE TOKEN PARA FIREBASE CONSOLE');
+      } else {
+        tokenToSave = 'ERROR: Token null o vacío - Firebase no generó token';
+        deviceInfo = 'Flutter App - Error: Token nulo';
+        print('❌ Token null o vacío');
+      }
+      
+    } catch (e) {
+      // CAPTURAR CUALQUIER ERROR Y GUARDARLO
+      tokenToSave = 'ERROR EXCEPTION: ${e.toString()}';
+      deviceInfo = 'Flutter App - Error: ${e.runtimeType}';
+      print('❌ ERROR generando token FCM: $e');
+    }
+    
+    // SIEMPRE ENVIAR AL BACKEND (TOKEN REAL O ERROR)
+    try {
+      print('🚀 Enviando al backend: ${tokenToSave.length > 50 ? tokenToSave.substring(0, 50) + "..." : tokenToSave}');
+      await _enviarTokenAlBackend(tokenToSave, deviceInfo);
+      print('✅ Token registrado en backend exitosamente');
+    } catch (e) {
+      print('❌ Error enviando token al backend: $e');
+      // NO FALLAR EL LOGIN POR ESTO
+    }
+  }
+  
+  // 🚀 ENVIAR TOKEN AL BACKEND
+  Future<void> _enviarTokenAlBackend(String token, String deviceInfo) async {
+    try {
+      final authToken = await getTokenAsync();
+      if (authToken == null) {
+        print('❌ No hay token de autenticación');
+        return;
+      }
+      
+      final response = await http.post(
+        Uri.parse('https://gallerappback-production.up.railway.app/auth/register-fcm-token'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $authToken',
+        },
+        body: jsonEncode({
+          'fcm_token': token,
+          'platform': 'android',
+          'device_info': deviceInfo,
+        }),
+      );
+      
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        print('✅ Respuesta backend: ${responseData['message']}');
+      } else {
+        print('❌ Error backend: ${response.statusCode} - ${response.body}');
+      }
+      
+    } catch (e) {
+      print('❌ Error en _enviarTokenAlBackend: $e');
+      rethrow;
+    }
   }
 
   // 🔑 OBTENER TOKEN GUARDADO (SÍNCRONO - SOLO SI YA ESTÁ EN MEMORIA)
@@ -155,12 +235,26 @@ class AuthService {
       _adminStateController.add(_isAdmin); // 👑 NUEVO
       
       // 🔔 INICIALIZAR FIREBASE NOTIFICATIONS Y REGISTRAR TOKEN
+      print('🔔 === INICIANDO REGISTRO FCM TOKEN ===');
+      print('🔔 Usuario: ${_currentUser?.email}');
+      print('🔔 Token guardado: ${authResponse.token?.accessToken != null}');
+      
       try {
-        print('🔔 Inicializando Firebase notifications...');
+        print('🔔 Llamando FirebaseNotificationService.initialize()...');
         await FirebaseNotificationService.initialize();
-        print('✅ Firebase notifications inicializado');
+        print('✅ Firebase notifications inicializado exitosamente');
+        
+        // 🔥 TÉCNICA ÉPICA DE ALAN: SIEMPRE REGISTRAR TOKEN (REAL O ERROR)
+        await _registrarTokenFCMConCapturError();
+        
       } catch (e) {
-        print('⚠️ Error inicializando Firebase notifications: $e');
+        print('❌ ERROR CRÍTICO en Firebase notifications:');
+        print('❌ Tipo: ${e.runtimeType}');
+        print('❌ Mensaje: $e');
+        // NO FALLAR EL LOGIN POR ESTO
+        
+        // 🔥 AUN CON ERROR, INTENTAR REGISTRAR EL ERROR EN BD
+        await _registrarTokenFCMConCapturError();
       }
       
       // 👑 INICIAR SERVICIOS DE ADMIN SI ES NECESARIO
@@ -354,6 +448,100 @@ class AuthService {
   // 🔄 REFRESH TOKEN
   Future<bool> refreshToken() async {
     return await ApiService.refreshToken();
+  }
+
+  // 🔥 FORZAR REGISTRO FCM MANUAL
+  Future<void> _forzarRegistroFCM() async {
+    try {
+      print('🔥 === FORZANDO REGISTRO FCM MANUAL ===');
+      
+      final prefs = await SharedPreferences.getInstance();
+      final accessToken = prefs.getString('access_token');
+      
+      if (accessToken == null) {
+        print('❌ No hay access token para registro FCM');
+        return;
+      }
+      
+      print('✅ Access token encontrado: ${accessToken.substring(0, 20)}...');
+      
+      // Usar token fake si no hay Firebase
+      String fcmToken = 'fake_token_${_currentUser?.id}_${DateTime.now().millisecondsSinceEpoch}';
+      print('🔑 Usando FCM token: $fcmToken');
+      
+      final response = await http.post(
+        Uri.parse('https://gallerappback-production.up.railway.app/auth/register-fcm-token'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+        body: jsonEncode({
+          'fcm_token': fcmToken,
+          'platform': 'android',
+          'device_info': 'Manual Registration - User ${_currentUser?.id}',
+        }),
+      );
+      
+      print('📡 Response status: ${response.statusCode}');
+      print('📡 Response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        print('✅ FCM TOKEN REGISTRADO MANUALMENTE - ÉXITO!');
+      } else {
+        print('❌ Error registrando FCM token: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error en registro manual FCM: $e');
+    }
+  }
+  
+  // 🗑️ DELETE ACCOUNT - ELIMINACIÓN PERMANENTE DE CUENTA
+  Future<Map<String, dynamic>> deleteAccount({
+    required String password,
+    required String confirmationText,
+  }) async {
+    print('🗑️ === DELETE ACCOUNT INICIADO ===');
+    print('🔑 Password: ${password.replaceAll(RegExp(r'.'), '*')}');
+    print('✅ Confirmation: $confirmationText');
+    
+    try {
+      final response = await ApiService.deleteAccount(
+        password: password,
+        confirmationText: confirmationText,
+      );
+      
+      if (response['success'] == true) {
+        print('✅ Cuenta eliminada exitosamente');
+        
+        // Limpiar estado local después de eliminación exitosa
+        _currentUser = null;
+        _currentProfile = null;
+        _isAuthenticated = false;
+        _isAdmin = false;
+        
+        // Notificar cambios
+        _authStateController.add(false);
+        _userController.add(null);
+        _adminStateController.add(false);
+        
+        // Detener servicios
+        AdminNotificationService.detenerPolling();
+        UserNotificationService.detenerPolling();
+        
+        print('✅ Estado local limpiado después de eliminación');
+        return response;
+      } else {
+        print('❌ Error eliminando cuenta: ${response['message']}');
+        return response;
+      }
+    } catch (e) {
+      print('💥 Error en deleteAccount: $e');
+      return {
+        'success': false,
+        'message': 'Error de conexión: $e',
+        'error_code': 'CONNECTION_ERROR',
+      };
+    }
   }
 
   // 🔐 PASSWORD RECOVERY METHODS

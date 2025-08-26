@@ -10,6 +10,8 @@ import '../../../services/peleas_service.dart';
 import '../../../models/pelea.dart';
 import 'formulario_pelea_screen.dart';
 import '../../../shared/constants/app_icons.dart';
+import '../../../shared/widgets/limite_interceptor.dart'; // 🛡️ VALIDACIÓN DE LÍMITES
+import '../../../models/suscripcion_models.dart'; // 🔄 ENUM RecursoTipo
 
 class HistorialPeleasScreen extends StatefulWidget {
   final int galloId;
@@ -735,21 +737,30 @@ class _HistorialPeleasScreenState extends State<HistorialPeleasScreen> {
     }
   }
 
-  void _agregarNuevaPelea() {
-    Navigator.push(
+  void _agregarNuevaPelea() async {
+    // 🛡️ VALIDAR LÍMITES ANTES DE ABRIR FORMULARIO
+    final puedeCrear = await validarLimiteManual(
       context,
-      MaterialPageRoute(
-        builder: (context) => FormularioPeleaScreen(
-          // Pre-seleccionar el gallo actual
-          galloPreseleccionado: widget.galloId,
-          galloIsBloqueado: true,
+      recursoTipo: RecursoTipo.peleas,
+      galloId: widget.galloId,
+    );
+
+    if (puedeCrear) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FormularioPeleaScreen(
+            // Pre-seleccionar el gallo actual
+            galloPreseleccionado: widget.galloId,
+            galloIsBloqueado: true,
+          ),
         ),
-      ),
-    ).then((result) {
-      if (result == true) {
-        _loadPeleas();
-      }
-    });
+      ).then((result) {
+        if (result == true) {
+          _loadPeleas();
+        }
+      });
+    }
   }
 
   void _editarPelea(Pelea pelea) {
