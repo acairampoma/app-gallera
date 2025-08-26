@@ -56,5 +56,7 @@ post_install do |installer|
   # Fix para recursos .xcprivacy de Firebase
   installer.pods_project.build_configurations.each do |config|
     config.build_settings['EXCLUDED_SOURCE_FILE_NAMES'] = ['**/PrivacyInfo.xcprivacy']
+    # Fix para build en Xcode 16
+    config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
   end
 end
