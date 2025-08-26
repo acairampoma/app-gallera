@@ -71,6 +71,8 @@ dependency_overrides:
   intl: 0.18.1  # Versión compatible con Dart 3.2.0
   url_launcher_ios: ^6.3.0  # Fix Swift compiler error
   fl_chart: 0.66.2  # Versión compatible con Flutter actual
+  win32: ^4.1.4  # Fix UnmodifiableUint8ListView error
+  pdf_widget_wrapper: ^1.0.3  # Fix size parameter error
 
 flutter:
   uses-material-design: true
