@@ -133,11 +133,11 @@ class CastaDeGallosApp extends StatelessWidget {
           filled: true,
           fillColor: AppColors.surface,
         ),
-        // ✅ CardTheme compatible con Flutter 3.16
-        cardTheme: const CardTheme(
-          elevation: 4,
-          margin: EdgeInsets.all(8),
-        ),
+        // ✅ CardTheme temporalmente comentado para compatibilidad
+        // cardTheme: CardTheme(
+        //   elevation: 4,
+        //   margin: EdgeInsets.all(8),
+        // ),
       ),
       
       // 🔐 NAVEGACIÓN SIMPLE Y DIRECTA

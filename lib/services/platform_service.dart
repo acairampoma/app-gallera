@@ -10,5 +10,5 @@
 // - Si ninguno: Usa stub
 
 export 'platform_implementations/platform_service_stub.dart'
-    if (dart.library.io) 'platform_implementations/platform_service_mobile.dart'
-    if (dart.library.html) 'platform_implementations/platform_service_web.dart';
+    if (dart.library.html) 'platform_implementations/platform_service_web.dart'
+    if (dart.library.io) 'platform_implementations/platform_service_ios.dart';

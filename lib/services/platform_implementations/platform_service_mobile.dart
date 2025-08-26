@@ -229,7 +229,7 @@ class PlatformServiceImpl implements PlatformServiceBase {
     if (Platform.isAndroid) {
       await notifications.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>()
-          ?.requestNotificationsPermission();
+          ?.requestPermission();
     }
     
     if (Platform.isIOS) {
