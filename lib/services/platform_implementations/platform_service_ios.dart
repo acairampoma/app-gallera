@@ -114,4 +114,3 @@ class PlatformServiceImpl implements PlatformServiceBase {
   @override
   bool get isAndroid => Platform.isAndroid;
 }
-}

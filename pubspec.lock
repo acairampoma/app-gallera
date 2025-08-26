@@ -657,10 +657,10 @@ packages:
     dependency: "direct overridden"
     description:
       name: pdf_widget_wrapper
-      sha256: "9dd21bfeeb366613c12ce1c4da5a40e43d8309e463b9609c9b532e002bc47704"
+      sha256: e9d31fd7782ce28ae346b127ea7d1cd748d799bddee379f31191693610e23749
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.2"
+    version: "1.0.1"
   permission_handler:
     dependency: "direct main"
     description:
@@ -1094,10 +1094,10 @@ packages:
     dependency: "direct overridden"
     description:
       name: win32
-      sha256: b0f37db61ba2f2e9b7a78a1caece0052564d1bc70668156cf3a29d676fe4e574
+      sha256: "5a751eddf9db89b3e5f9d50c20ab8612296e4e8db69009788d6c8b060a84191c"
       url: "https://pub.dev"
     source: hosted
-    version: "5.1.1"
+    version: "4.1.4"
   win32_registry:
     dependency: transitive
     description:

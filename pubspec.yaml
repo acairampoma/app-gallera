@@ -66,8 +66,8 @@ dependency_overrides:
   # FIX iOS: Usar versión compatible
   url_launcher_ios: 6.1.5
   # FIX: Eliminar dependencias problemáticas para iOS
-  win32: 5.1.1  # Versión anterior sin UnmodifiableUint8ListView
-  pdf_widget_wrapper: 1.0.2  # Versión compatible
+  win32: 4.1.4  # Versión mucho más antigua sin UnmodifiableUint8ListView
+  pdf_widget_wrapper: 1.0.1  # Versión base
 
 flutter:
   uses-material-design: true
