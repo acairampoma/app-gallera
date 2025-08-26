@@ -1,4 +1,4 @@
-// 🍎 iOS/ANDROID SAFE IMPLEMENTATION - Sin dependencias problemáticas
+// 🍎 iOS CLEAN IMPLEMENTATION - COMPLETAMENTE SIN DEPENDENCIAS PROBLEMÁTICAS
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
