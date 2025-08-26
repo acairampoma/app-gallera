@@ -78,6 +78,8 @@ dependency_overrides:
   pdf: 3.10.7
   # URL launcher - versión compatible
   url_launcher_web: 2.0.20
+  # FIX DEFINITIVO iOS: Esta versión específica funciona con iOS 13.0
+  url_launcher_ios: 6.1.5
 
 flutter:
   uses-material-design: true
