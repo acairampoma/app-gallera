@@ -6,7 +6,7 @@ import 'features/auth/screens/login_screen.dart';
 import 'features/home/screens/home_screen.dart';
 import 'features/perfil/screens/perfil_screen.dart';
 import 'features/pedigri/screens/pedigri_screen.dart';
-import 'features/pedigri/screens/add_gallo_multistep_screen.dart'; // 🆕 NUEVA PANTALLA
+import 'features/pedigri/screens/add_gallo_multistep_screen.dart';
 import 'features/vacunas/screens/vacunas_screen_real.dart';
 import 'features/topes/screens/topes_gallos_screen.dart';
 import 'features/peleas/screens/peleas_gallos_screen.dart';
@@ -24,7 +24,7 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 🔥 INICIALIZAR FIREBASE CON VERSIONES COMPATIBLES
+  // 🔥 FIREBASE COMPLETO PARA ANDROID (funciona mejor que en iOS)
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -47,7 +47,7 @@ void main() async {
   // 🚀 Inicializar AuthService REAL
   await AuthService.instance.initialize();
   
-  // 🌐 Inicializar ConnectionService
+  // 🌐 Inicializar ConnectionService (Android maneja mejor la conectividad)
   await ConnectionService().initialize();
   
   runApp(const CastaDeGallosApp());
@@ -101,6 +101,13 @@ class CastaDeGallosApp extends StatelessWidget {
             color: Colors.white,
           ),
         ),
+        // cardTheme: Temporalmente deshabilitado por breaking change Flutter 3.27
+        // cardTheme: const CardThemeData(
+        //   elevation: 2,
+        //   shape: RoundedRectangleBorder(
+        //     borderRadius: BorderRadius.all(Radius.circular(15)),
+        //   ),
+        // ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
@@ -147,7 +154,6 @@ class CastaDeGallosApp extends StatelessWidget {
         '/peleas': (context) => const PeleasGallosScreen(),
         '/planes': (context) => const PlanesScreen(),
         '/admin-dashboard': (context) => const AdminDashboardScreen(),
-        // Suscripciones se navega directamente con MaterialPageRoute
       },
     );
   }

@@ -15,40 +15,34 @@ import 'features/inversiones/screens/inversiones_screen.dart';
 import 'features/planes/screens/planes_screen.dart';
 import 'features/admin/screens/admin_dashboard_screen.dart';
 import 'services/auth_service.dart';
-import 'services/connection_service.dart';
-import 'services/firebase_notification_service.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'firebase_options.dart';
+// COMENTADO TEMPORALMENTE PARA iOS:
+// import 'services/connection_service.dart';
+// import 'services/firebase_notification_service.dart';
+// import 'package:firebase_core/firebase_core.dart';
+// import 'package:firebase_messaging/firebase_messaging.dart';
+// import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 🔥 INICIALIZAR FIREBASE CON VERSIONES COMPATIBLES
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    print('✅ Firebase Core inicializado CON OPCIONES CORRECTAS');
-    
-    // Obtener token FCM real
-    String? token = await FirebaseMessaging.instance.getToken();
-    if (token != null) {
-      print('🎯 TOKEN FCM REAL GENERADO:');
-      print(token);
-      print('📋 COPIA ESTE TOKEN PARA FIREBASE CONSOLE');
-    } else {
-      print('❌ No se pudo generar token FCM');
-    }
-  } catch (e) {
-    print('⚠️ Error con Firebase: $e');
-  }
+  // FIREBASE COMENTADO PARA iOS - EVITAR PROBLEMAS CON PRIVACY MANIFEST
+  // try {
+  //   await Firebase.initializeApp(
+  //     options: DefaultFirebaseOptions.currentPlatform,
+  //   );
+  //   String? token = await FirebaseMessaging.instance.getToken();
+  //   if (token != null) {
+  //     print('🎯 TOKEN FCM REAL: $token');
+  //   }
+  // } catch (e) {
+  //   print('⚠️ Error con Firebase: $e');
+  // }
   
   // 🚀 Inicializar AuthService REAL
   await AuthService.instance.initialize();
   
-  // 🌐 Inicializar ConnectionService
-  await ConnectionService().initialize();
+  // CONNECTION SERVICE COMENTADO PARA iOS:
+  // await ConnectionService().initialize();
   
   runApp(const CastaDeGallosApp());
 }

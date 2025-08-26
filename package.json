@@ -1,0 +1,14 @@
+{
+  "name": "gallos-deployment",
+  "version": "1.0.0",
+  "description": "Scripts para deployment multiplataforma",
+  "scripts": {
+    "ios-mode": "npm run copy-ios-config && echo ✅ Configuración iOS activada",
+    "android-mode": "npm run copy-android-config && echo 🤖 Configuración Android activada",
+    "copy-ios-config": "copy pubspec_ios.yaml pubspec.yaml && copy main_ios.dart lib\\main.dart",
+    "copy-android-config": "copy pubspec_android.yaml pubspec.yaml && copy main_android.dart lib\\main.dart",
+    "build-ios": "npm run ios-mode && flutter clean && flutter pub get && flutter build ios --release",
+    "build-android": "npm run android-mode && flutter clean && flutter pub get && flutter build apk --release",
+    "clean-all": "flutter clean && rmdir /s .dart_tool && del pubspec.lock"
+  }
+}

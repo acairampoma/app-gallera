@@ -1,0 +1,60 @@
+name: gallos_app_new
+description: "Casta de Gallos - Aplicación profesional para criadores de gallos de pelea"
+publish_to: 'none'
+
+version: 1.1.3+803  # Nueva versión para iOS
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  
+  # NÚCLEO BÁSICO SOLAMENTE - PROBADO QUE FUNCIONA EN iOS
+  provider: ^6.1.1
+  go_router: ^14.2.3
+  http: ^1.1.2
+  image_picker: ^1.0.7
+  shared_preferences: ^2.2.2
+  intl: ^0.18.1
+  cupertino_icons: ^1.0.2
+  crypto: ^3.0.3
+  fl_chart: ^0.66.2
+
+  # ❌ COMENTAMOS TODO LO QUE PUEDE DAR PROBLEMAS EN iOS:
+  # cached_network_image: ^3.3.1  # Puede dar problemas
+  # video_player: ^2.8.1  # Complejo para iOS
+  # firebase_core: ^2.24.2  # Problemas con privacy manifests
+  # firebase_messaging: ^14.7.10  # Requiere configuración compleja
+  # flutter_local_notifications: ^18.0.1  # Permisos iOS
+  # device_info_plus: ^9.1.2  # Puede dar problemas
+  # printing: ^5.11.0  # PDF problemático
+  # pdf: ^3.10.4  # PDF problemático
+  # permission_handler: ^11.3.1  # Permisos complejos
+  # share_plus: ^7.2.2  # Complejo
+  # path_provider: ^2.1.1  # No esencial
+  # url_launcher: ^6.2.5  # Puede dar problemas
+  # universal_html: ^2.2.4  # Solo web
+  # uuid: ^4.2.1  # No esencial para primera versión
+  # http_parser: ^4.0.2  # Redundante con http
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+dependency_overrides:
+  intl: 0.18.1
+  fl_chart: 0.66.2
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - lib/data/mock/
+    - assets/images/
+    - assets/images/gallos/
+    - assets/images/logo/

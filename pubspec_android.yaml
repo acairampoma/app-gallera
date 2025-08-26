@@ -1,0 +1,83 @@
+name: gallos_app_new
+description: "Casta de Gallos - Aplicación profesional para criadores de gallos de pelea"
+publish_to: 'none'
+
+version: 1.1.3+803  # Misma versión para ambas plataformas
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  
+  # NÚCLEO BÁSICO - COMPATIBLE CON AMBAS PLATAFORMAS
+  provider: ^6.1.1
+  go_router: ^14.2.3
+  http: ^1.1.2
+  image_picker: ^1.0.7
+  shared_preferences: ^2.2.2
+  intl: ^0.18.1
+  cupertino_icons: ^1.0.2
+  crypto: ^3.0.3
+  fl_chart: ^0.66.2
+  
+  # 🤖 ANDROID EXTRA FEATURES (funcionan bien en Android)
+  cached_network_image: ^3.3.1  # Para cache de imágenes
+  video_player: ^2.8.1          # Videos funcionan bien en Android
+  uuid: ^4.2.1                  # UUIDs
+  http_parser: ^4.0.2          # Parser HTTP extra
+  
+  # 📱 MULTIMEDIA Y ARCHIVOS (Android maneja mejor)
+  path_provider: ^2.1.1        # Acceso a directorios
+  url_launcher: ^6.2.5         # Abrir URLs y apps
+  permission_handler: ^11.3.1  # Permisos (Android es más flexible)
+  
+  # 📊 PDF Y REPORTES (Android más estable)
+  printing: ^5.11.0            # Para generar PDFs
+  pdf: ^3.10.4                 # Generación PDF
+  share_plus: ^7.2.2           # Compartir archivos
+  universal_html: ^2.2.4       # Para web también
+  
+  # 🔔 FIREBASE COMPLETO (Android más estable para notificaciones)
+  firebase_core: ^2.24.2
+  firebase_messaging: ^14.7.10
+  flutter_local_notifications: ^18.0.1
+  
+  # 📱 DEVICE INFO (Android necesita para compatibilidad)
+  device_info_plus: ^9.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.13.1
+
+dependency_overrides:
+  intl: 0.18.1
+  fl_chart: 0.66.2
+  # Android no necesita url_launcher_ios override
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - lib/data/mock/
+    - assets/images/
+    - assets/images/gallos/
+    - assets/images/logo/
+    - assets/images/icono/
+    - assets/images/yape/
+    - assets/images/modulos/
+
+# 🐓 ICONOS PARA AMBAS PLATAFORMAS
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true  # Se aplicará solo si compilas para iOS
+  image_path: "assets/images/icono/logoapp.webp"
+  min_sdk_android: 21
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/icono/logoapp.webp"
+  remove_alpha_ios: true
