@@ -1,0 +1,61 @@
+name: gallos_app_new
+description: "Casta de Gallos - iOS Build LIMPIO"
+publish_to: 'none'
+version: 1.1.5+805
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  
+  # ✅ SOLO DEPENDENCIAS 100% COMPATIBLES CON iOS:
+  provider: ^6.1.1
+  go_router: ^14.2.3
+  http: ^1.1.2
+  image_picker: ^1.0.7
+  cached_network_image: ^3.3.1
+  shared_preferences: ^2.2.2
+  intl: ^0.18.1
+  uuid: ^4.2.1
+  cupertino_icons: ^1.0.2
+  crypto: ^3.0.3
+  fl_chart: ^0.66.2
+  
+  # ❌ REMOVIDAS PARA iOS (CAUSAN ERRORES):
+  # printing: ^5.11.0          → CAUSA: size parameter error + arrastra win32
+  # pdf: ^3.10.7               → CAUSA: arrastra printing + win32
+  # permission_handler: ^11.3.1 → CAUSA: errores App Store + arrastra win32
+  # share_plus: ^7.2.2         → CAUSA: warnings prototypes 
+  # video_player: ^2.8.1       → NO esencial para MVP
+  # firebase_core: ^2.17.0     → CAUSA: deprecated trackingID warnings
+  # firebase_messaging: ^14.6.9 → CAUSA: deprecated warnings
+  # flutter_local_notifications: ^15.1.3 → CAUSA: errores implementación
+  # universal_html: ^2.2.4     → Solo necesario para web
+  # path_provider: ^2.1.1      → Causa conflictos con win32
+  # url_launcher: ^6.1.12      → Causa el Swift Launcher error
+  # device_info_plus: ^9.1.2   → NO esencial para MVP
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+dependency_overrides:
+  intl: 0.18.1
+  fl_chart: 0.66.2
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - lib/data/mock/
+    - assets/images/
+    - assets/images/gallos/
+    - assets/images/logo/
+    - assets/images/icono/
+    - assets/images/yape/
+    - assets/images/modulos/

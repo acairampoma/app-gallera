@@ -10,52 +10,29 @@ import 'features/pedigri/screens/add_gallo_multistep_screen.dart';
 import 'features/reportes/screens/reportes_screen.dart';
 import 'features/inversiones/screens/inversiones_screen.dart';
 import 'features/planes/screens/planes_screen.dart';
-import 'features/vacunas/screens/vacunas_screen_real.dart';
-import 'features/topes/screens/topes_gallos_screen.dart';
-import 'features/peleas/screens/peleas_gallos_screen.dart';
-import 'features/admin/screens/admin_dashboard_screen.dart';
 import 'services/auth_service.dart';
 import 'services/connection_service.dart';
-import 'services/platform_factory.dart';
-import 'services/platform_implementations/platform_service_base.dart';
 
-// 🚀 CONFIGURACIÓN MULTIPLATAFORMA CON CONDITIONAL IMPORTS
-// ✅ iOS: Funcionalidades básicas (sin PDF, Firebase limitado)
-// ✅ Android: Todas las funcionalidades (PDF, Firebase, etc)  
-// ✅ Web: Funcionalidades web nativas
+// 🍎 CONFIGURACIÓN LIMPIA PARA iOS
+// ❌ REMOVIDOS PARA COMPILACIÓN EXITOSA:
+// - Firebase (firebase_core, firebase_messaging)  
+// - PDF (printing, pdf)
+// - Share (share_plus)
+// - Notifications (flutter_local_notifications)
+// - Permissions (permission_handler)
+// - Video (video_player)
+// - File operations (path_provider, url_launcher)
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  print('🚀 === INICIANDO CASTA DE GALLOS - MULTIPLATAFORMA ===');
+  print('🍎 === INICIANDO CASTA DE GALLOS - iOS CLEAN ===');
   
-  // 🌐 Crear platform service usando factory
-  final platformService = PlatformFactory.createPlatformService();
-  print('📱 Plataforma detectada: ${_getPlatformName(platformService)}');
-  
-  // 🔔 Inicializar Firebase si es soportado
-  try {
-    await platformService.initializeFirebase();
-    final token = await platformService.getFirebaseToken();
-    if (token != null) {
-      print('🎯 TOKEN FCM: ${token.substring(0, 20)}...');
-    }
-  } catch (e) {
-    print('⚠️ Firebase no disponible en esta plataforma: $e');
-  }
-  
-  // 🚀 Inicializar servicios básicos
+  // 🚀 Inicializar servicios básicos SOLAMENTE
   await AuthService.instance.initialize();
   await ConnectionService().initialize();
   
   runApp(const CastaDeGallosApp());
-}
-
-String _getPlatformName(PlatformServiceBase platform) {
-  if (platform.isWeb) return 'Web 🌐';
-  if (platform.isIOS) return 'iOS 🍎';
-  if (platform.isAndroid) return 'Android 🤖';
-  return 'Desconocido ❓';
 }
 
 class CastaDeGallosApp extends StatelessWidget {
@@ -153,11 +130,11 @@ class CastaDeGallosApp extends StatelessWidget {
         '/inversiones': (context) => const InversionesScreen(),
         '/perfil': (context) => const PerfilScreen(),
         '/planes': (context) => const PlanesScreen(),
-        // ✅ RESTAURADAS - AHORA CON PLATFORM SERVICE
-        '/vacunas': (context) => const VacunasScreenReal(),
-        '/topes': (context) => const TopesGallosScreen(),
-        '/peleas': (context) => const PeleasGallosScreen(),
-        '/admin-dashboard': (context) => const AdminDashboardScreen(),
+        // ❌ REMOVIDAS RUTAS QUE CAUSAN PROBLEMAS:
+        // '/vacunas': VacunasScreenReal (usa PDF)
+        // '/topes': TopesGallosScreen (usa PDF)  
+        // '/peleas': PeleasGallosScreen (usa PDF)
+        // '/admin-dashboard': AdminDashboardScreen (usa notifications)
       },
     );
   }
