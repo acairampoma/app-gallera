@@ -897,24 +897,35 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
             onPressed: () async {
               Navigator.pop(context);
               
-              // Llamar al servicio para eliminar
-              final success = await GalloService.deleteGallo(galloId);
-              
-              if (success) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Gallo eliminado exitosamente'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-                _cargarArbolGenealogico(); // Recargar árbol
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Error al eliminar el gallo'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
+              try {
+                // Llamar al servicio para eliminar
+                final success = await GalloService.deleteGallo(galloId);
+                
+                if (mounted && success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Gallo eliminado exitosamente'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  _cargarArbolGenealogico(); // Recargar árbol
+                } else if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Error al eliminar el gallo'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),

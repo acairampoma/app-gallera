@@ -1152,20 +1152,39 @@ class _PedigriScreenState extends State<PedigriScreen> {
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context);
+              final contextCopy = context; // Capturar contexto antes del async
+              Navigator.pop(contextCopy);
               
-              // Mostrar loading
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) => const Center(
-                  child: CircularProgressIndicator(),
-                ),
-              );
+              // Crear variables para capturar el contexto de manera segura
+              bool loadingShown = false;
               
               try {
+                // Mostrar loading solo si el widget sigue montado
+                if (mounted) {
+                  showDialog(
+                    context: contextCopy,
+                    barrierDismissible: false,
+                    builder: (context) => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                  loadingShown = true;
+                }
+                
                 // Intentar eliminar en el backend
                 final success = await GalloService.deleteGallo(gallo['id']);
+                
+                // Cerrar loading si se mostró
+                if (loadingShown && mounted) {
+                  try {
+                    Navigator.pop(contextCopy);
+                    loadingShown = false;
+                  } catch (e) {
+                    print('Error cerrando loading: $e');
+                  }
+                }
+                
+                if (!mounted) return; // Salir si el widget ya no está montado
                 
                 if (success) {
                   setState(() {
@@ -1176,13 +1195,11 @@ class _PedigriScreenState extends State<PedigriScreen> {
                   // Guardar cambios localmente también
                   await _saveGallos();
                   
+                  final connectionService = ConnectionService();
+                  final isOffline = connectionService.isOffline;
+                  
                   if (mounted) {
-                    Navigator.pop(context); // Cerrar loading
-                    
-                    final connectionService = ConnectionService();
-                    final isOffline = connectionService.isOffline;
-                    
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    ScaffoldMessenger.of(contextCopy).showSnackBar(
                       SnackBar(
                         content: Text(
                           isOffline 
@@ -1198,10 +1215,17 @@ class _PedigriScreenState extends State<PedigriScreen> {
                   throw Exception('No se pudo eliminar el gallo');
                 }
               } catch (e) {
+                // Cerrar loading si aún se está mostrando
+                if (loadingShown && mounted) {
+                  try {
+                    Navigator.pop(contextCopy);
+                  } catch (navError) {
+                    print('Error cerrando loading en catch: $navError');
+                  }
+                }
+                
                 if (mounted) {
-                  Navigator.pop(context); // Cerrar loading
-                  
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  ScaffoldMessenger.of(contextCopy).showSnackBar(
                     SnackBar(
                       content: Text('❌ Error al eliminar: ${e.toString()}'),
                       backgroundColor: Colors.red,
