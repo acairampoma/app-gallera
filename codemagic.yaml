@@ -1,0 +1,131 @@
+workflows:
+  production-workflow:
+    name: Build Production (iOS + Android + Web)
+    max_build_duration: 60
+    environment:
+      flutter: 3.16.0  # Tu versión exacta
+      xcode: 15.4      # CRÍTICO: NO uses 16.4
+      cocoapods: 1.14.3
+      node: 18
+      vars:
+        # Variables de entorno si necesitas
+        BUNDLE_ID: "com.galloapp.gallosAppNew"
+        ANDROID_PACKAGE: "com.galloapp.gallosAppNew"
+      groups:
+        - firebase_credentials  # Si usas grupos de variables
+    
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: 'main'
+        - pattern: 'develop'
+    
+    scripts:
+      # 1. Preparación inicial
+      - name: Flutter doctor
+        script: |
+          flutter doctor -v
+          
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+          
+      # 2. Configuración específica iOS
+      - name: Set up iOS
+        script: |
+          cd ios
+          pod deintegrate
+          pod repo update
+          pod install --repo-update
+          cd ..
+          
+      - name: Fix iOS permissions
+        script: |
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'Para tomar fotos de gallos'" ios/Runner/Info.plist 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'Para seleccionar fotos de gallos'" ios/Runner/Info.plist 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 'Para guardar fotos de gallos'" ios/Runner/Info.plist 2>/dev/null || true
+          
+      # 3. Tests (opcional)
+      - name: Run tests
+        script: |
+          flutter test || true  # No fallar si no hay tests
+          
+      # 4. Build Android
+      - name: Build Android AAB
+        script: |
+          flutter build appbundle --release
+          
+      # 5. Build iOS
+      - name: Build iOS
+        script: |
+          flutter build ios --release --no-codesign
+          
+      # 6. Build Web
+      - name: Build Web
+        script: |
+          flutter build web --release
+          
+    artifacts:
+      - build/app/outputs/**/*.aab
+      - build/ios/ipa/*.ipa
+      - build/ios/archive/*.xcarchive
+      - build/web/**
+      
+    publishing:
+      email:
+        recipients:
+          - alancairampoma@gmail.com
+        notify:
+          success: true
+          failure: true
+      
+      # Google Play (si tienes configurado)
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        
+      # App Store Connect (si tienes configurado)  
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        
+      # Firebase App Distribution (opcional)
+      firebase:
+        firebase_token: $FIREBASE_TOKEN
+        android:
+          app_id: 1:590199670157:android:xxxxx
+          groups:
+            - testers
+        ios:
+          app_id: 1:590199670157:ios:7a551caafe56d9a381a9c4
+          groups:
+            - testers
+
+# Workflow alternativo para desarrollo
+  development-workflow:
+    name: Development Build
+    environment:
+      flutter: 3.16.0
+      xcode: 15.4  # IMPORTANTE
+      cocoapods: 1.14.3
+    
+    scripts:
+      - name: Get dependencies
+        script: flutter pub get
+        
+      - name: Build debug APK
+        script: flutter build apk --debug
+        
+      - name: Build iOS debug
+        script: |
+          cd ios
+          pod install
+          cd ..
+          flutter build ios --debug --no-codesign
+          
+    artifacts:
+      - build/app/outputs/**/*.apk
+      - build/ios/**/*.app

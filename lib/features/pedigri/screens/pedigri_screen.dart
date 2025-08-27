@@ -1140,6 +1140,8 @@ class _PedigriScreenState extends State<PedigriScreen> {
   }
 
   void _deleteGallo(Map<String, dynamic> gallo) {
+    // Capturamos el contexto del StatefulWidget antes de abrir el diálogo
+    final parentContext = context;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1152,82 +1154,24 @@ class _PedigriScreenState extends State<PedigriScreen> {
           ),
           TextButton(
             onPressed: () async {
-              final contextCopy = context; // Capturar contexto antes del async
-              Navigator.pop(contextCopy);
-              
-              // Crear variables para capturar el contexto de manera segura
-              bool loadingShown = false;
+              Navigator.pop(context); // Cerrar diálogo
               
               try {
-                // Mostrar loading solo si el widget sigue montado
+                await GalloService.deleteGallo(gallo['id']);
                 if (mounted) {
-                  showDialog(
-                    context: contextCopy,
-                    barrierDismissible: false,
-                    builder: (context) => const Center(
-                      child: CircularProgressIndicator(),
-                    ),
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
+                  SnackBar(
+                    content: Text('🗑️ Gallo "${gallo['nombre']}" eliminado exitosamente'),
+                    backgroundColor: Colors.red,
+                  ),
                   );
-                  loadingShown = true;
                 }
-                
-                // Intentar eliminar en el backend
-                final success = await GalloService.deleteGallo(gallo['id']);
-                
-                // Cerrar loading si se mostró
-                if (loadingShown && mounted) {
-                  try {
-                    Navigator.pop(contextCopy);
-                    loadingShown = false;
-                  } catch (e) {
-                    print('Error cerrando loading: $e');
-                  }
-                }
-                
-                if (!mounted) return; // Salir si el widget ya no está montado
-                
-                if (success) {
-                  setState(() {
-                    gallos.removeWhere((g) => g['id'] == gallo['id']);
-                    _filterGallos(_searchQuery);
-                  });
-                  
-                  // Guardar cambios localmente también
-                  await _saveGallos();
-                  
-                  final connectionService = ConnectionService();
-                  final isOffline = connectionService.isOffline;
-                  
-                  if (mounted) {
-                    ScaffoldMessenger.of(contextCopy).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          isOffline 
-                            ? '🗑️ Gallo \"${gallo['nombre']}\" eliminado localmente. Se sincronizará cuando haya conexión.'
-                            : '🗑️ Gallo \"${gallo['nombre']}\" eliminado exitosamente'
-                        ),
-                        backgroundColor: isOffline ? Colors.orange : Colors.red,
-                        duration: Duration(seconds: isOffline ? 4 : 2),
-                      ),
-                    );
-                  }
-                } else {
-                  throw Exception('No se pudo eliminar el gallo');
-                }
+                _loadData(); // ← Re-cargar datos
               } catch (e) {
-                // Cerrar loading si aún se está mostrando
-                if (loadingShown && mounted) {
-                  try {
-                    Navigator.pop(contextCopy);
-                  } catch (navError) {
-                    print('Error cerrando loading en catch: $navError');
-                  }
-                }
-                
                 if (mounted) {
-                  ScaffoldMessenger.of(contextCopy).showSnackBar(
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
                     SnackBar(
-                      content: Text('❌ Error al eliminar: ${e.toString()}'),
+                      content: Text('❌ Error eliminando gallo: $e'),
                       backgroundColor: Colors.red,
                     ),
                   );
