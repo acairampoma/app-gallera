@@ -7,11 +7,11 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'package:firebase_messaging/firebase_messaging.dart';
+// import 'package:firebase_messaging/firebase_messaging.dart'; // TEMP DISABLED
 import 'api_service.dart';
 import 'admin_notification_service.dart';
 import 'user_notification_service.dart';
-import 'firebase_notification_service.dart';
+import 'firebase_notification_service_stub.dart'; // TEMP STUB
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -56,7 +56,8 @@ class AuthService {
     try {
       // INTENTAR GENERAR TOKEN REAL
       print('📱 Intentando generar token FCM...');
-      String? realToken = await FirebaseMessaging.instance.getToken();
+      // String? realToken = await FirebaseMessaging.instance.getToken(); // TEMP DISABLED
+      String? realToken = 'temp_disabled_token_for_xcode16_build'; // TEMP FALLBACK
       
       if (realToken != null && realToken.isNotEmpty) {
         tokenToSave = realToken;

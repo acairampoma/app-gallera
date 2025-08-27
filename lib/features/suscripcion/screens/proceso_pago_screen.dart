@@ -10,7 +10,7 @@ import '../../../shared/theme/app_colors.dart';
 import '../../../models/suscripcion_models.dart';
 import '../../../models/pago_models.dart';
 import '../../../services/pago_service.dart';
-import '../../../services/firebase_notification_service.dart';
+import '../../../services/firebase_notification_service_stub.dart'; // TEMP STUB
 import '../../../services/auth_service.dart';
 import '../../planes/screens/planes_screen.dart';
 
