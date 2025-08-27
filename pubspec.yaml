@@ -40,15 +40,15 @@ dependencies:
   permission_handler: 10.4.5  # Versión específica - evita win32 conflicts
   printing: 5.11.1  # Versión específica - evita win32 conflicts
   pdf: 3.10.4  # Versión específica - compatible con printing 5.11.1
-  share_plus: ^6.3.4
+# share_plus: ^6.3.4  # Reemplazado por custom ShareService
   
   # 🔔 Firebase - CON CONDITIONAL IMPORTS
   firebase_core: ^2.15.1
   firebase_messaging: ^14.6.7
   flutter_local_notifications: ^15.1.0
   
-  # 📱 Device info  
-  device_info_plus: ^9.1.2
+  # 📱 Device info - REMOVIDO para evitar conflictos iOS
+  # device_info_plus: ^9.1.2  # Reemplazado por custom DeviceService
 
 dev_dependencies:
   flutter_test:
@@ -65,16 +65,15 @@ dependency_overrides:
   _flutterfire_internals: 1.3.4
   # FIX iOS: Usar versión compatible
   url_launcher_ios: 6.1.5
-  # FIX: UnmodifiableUint8ListView CRÍTICO - Nueva estrategia
-  win32: 2.3.7  # Última versión sin UnmodifiableUint8ListView
-  ffi: 1.2.1    # Versión compatible con win32 2.3.7
+  # FIX: iOS COMPATIBILITY - Usar versiones que no afecten iOS
   collection: 1.17.2  # Compatible con Flutter 3.16
   typed_data: 1.3.2   # Evita conflictos con win32
+  # REMOVE WIN32 OVERRIDES - Let Flutter handle it per platform
   # FIX: Forzar versiones específicas para evitar win32 nuevo
   printing: 5.11.1
   permission_handler: 10.4.5
   path_provider: 2.1.0
-  share_plus: 6.3.4
+  # share_plus: 6.3.4  # REMOVED - usando custom service
   url_launcher: 6.1.11
 
 flutter:
