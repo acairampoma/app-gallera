@@ -1,0 +1,126 @@
+/// 📱 DETECTOR DE DISPOSITIVOS CHINOS
+/// Detecta marcas chinas problemáticas y aplica fixes específicos
+/// 
+/// Basado en issues reales documentados en Flutter GitHub:
+/// - OPPO: Black screen issues, AndroidView problems
+/// - Xiaomi: HyperOS errors, Chinese character display
+/// - Vivo: Rendering issues similar a OPPO
+///
+/// Autor: Alan Cairampoma
+/// Fecha: 19 Agosto 2025
+
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+// REMOVIDO: device_info_plus - usando custom DeviceService
+// import 'package:device_info_plus/device_info_plus.dart';
+
+/// 🎯 Niveles de riesgo de compatibilidad
+enum ChineseDeviceRiskLevel {
+  CRITICAL, // OPPO - Black screens, AndroidView failures
+  HIGH,     // Xiaomi HyperOS, Vivo - Multiple rendering issues  
+  MEDIUM,   // Xiaomi MIUI, Honor - DPI scaling issues
+  LOW,      // Samsung, Motorola - Sin problemas
+}
+
+/// 📱 Información del dispositivo Android (reemplazo de AndroidDeviceInfo)
+class AndroidDeviceInfo {
+  final String brand;
+  final String manufacturer;
+  final String model;
+  final AndroidVersionInfo version;
+
+  AndroidDeviceInfo({
+    required this.brand,
+    required this.manufacturer,
+    required this.model,
+    required this.version,
+  });
+}
+
+/// 📱 Información de versión Android
+class AndroidVersionInfo {
+  final int sdkInt;
+  final String release;
+
+  AndroidVersionInfo({required this.sdkInt, required this.release});
+}
+
+/// 📱 Custom DeviceService para reemplazar device_info_plus
+class DeviceService {
+  static AndroidDeviceInfo? _cachedInfo;
+
+  /// 🔍 Obtiene información del dispositivo Android
+  static Future<AndroidDeviceInfo> getAndroidInfo() async {
+    if (_cachedInfo != null) return _cachedInfo!;
+
+    // Simulación de device info basada en Platform
+    // En producción, podrías usar channel methods o detectar via user agent
+    String brand = 'unknown';
+    String manufacturer = 'unknown'; 
+    String model = 'unknown';
+    int sdkInt = 30; // Android 11 por defecto
+
+    if (Platform.isAndroid) {
+      // Aquí podrías implementar detection via system properties
+      // Por ahora retornamos valores seguros
+      brand = 'generic';
+      manufacturer = 'generic';
+      model = 'android_device';
+      sdkInt = 30;
+    }
+
+    _cachedInfo = AndroidDeviceInfo(
+      brand: brand,
+      manufacturer: manufacturer,
+      model: model,
+      version: AndroidVersionInfo(sdkInt: sdkInt, release: '11'),
+    );
+
+    return _cachedInfo!;
+  }
+
+  /// 🔄 Limpia caché
+  static void clearCache() {
+    _cachedInfo = null;
+  }
+}
+
+/// 📱 Perfil del dispositivo chino
+class ChineseDeviceProfile {
+  final ChineseDeviceRiskLevel riskLevel;
+  final List<String> knownIssues;
+  final bool needsWorkarounds;
+  final List<String> problematicFlutterVersions;
+  final String brandName;
+  final String deviceOS;
+  final Map<String, dynamic> recommendedFixes;
+
+  const ChineseDeviceProfile({
+    required this.riskLevel,
+    required this.knownIssues,
+    required this.needsWorkarounds,
+    this.problematicFlutterVersions = const [],
+    this.brandName = 'Unknown',
+    this.deviceOS = 'Android',
+    this.recommendedFixes = const {},
+  });
+
+  /// ✅ Perfil estándar para dispositivos sin problemas
+  factory ChineseDeviceProfile.standard() {
+    return const ChineseDeviceProfile(
+      riskLevel: ChineseDeviceRiskLevel.LOW,
+      knownIssues: [],
+      needsWorkarounds: false,
+      brandName: 'Standard Device',
+    );
+  }
+
+  /// 🚨 Perfil desconocido - Para cuando no se puede detectar device info
+  factory ChineseDeviceProfile.unknown() {
+    return const ChineseDeviceProfile(
+      riskLevel: ChineseDeviceRiskLevel.LOW,
+      knownIssues: ['device_detection_failed'],
+      needsWorkarounds: false,
+      brandName: 'Unknown Device',
+      deviceOS: 'Unknown',
+      recommendedFixes:

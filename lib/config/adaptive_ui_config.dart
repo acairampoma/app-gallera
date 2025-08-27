@@ -1,18 +1,23 @@
-/// 🎨 CONFIGURACIÓN UI ADAPTATIVA PARA DISPOSITIVOS CHINOS
-/// Aplica fixes específicos basados en el nivel de riesgo detectado
+/// 🎨 CONFIGURACIÓN UI ADAPTATIVA SIMPLIFICADA
+/// Aplica ajustes básicos basados en plataforma y tamaño de pantalla
 /// 
-/// Basado en problemas reales:
-/// - OPPO: Reducir tamaños, aumentar weights
-/// - Xiaomi: Ajustar DPI, manejar HyperOS
-/// - Vivo: Similar a OPPO pero menos agresivo
+/// REFACTORIZADO: Ahora usa DeviceService en lugar de ChineseDeviceDetector
 ///
 /// Autor: Alan Cairampoma  
-/// Fecha: 19 Agosto 2025
+/// Fecha: 27 Agosto 2025
 
 import 'package:flutter/material.dart';
-import '../utils/chinese_device_detector.dart';
+import '../services/device_service.dart';
 
-/// 🎨 Configuración UI específica por nivel de riesgo
+/// 🎯 Niveles de ajuste UI simplificados
+enum UIAdaptationLevel {
+  STANDARD,    // Móvil estándar
+  COMPACT,     // Pantallas pequeñas
+  COMFORTABLE, // Pantallas grandes
+  WEB,         // Versión web
+}
+
+/// 🎨 Configuración UI específica por nivel
 class AdaptiveUIConfig {
   final double fontSize;
   final double gridSpacing;
@@ -44,7 +49,7 @@ class AdaptiveUIConfig {
     this.specificFixes = const {},
   });
 
-  /// ✅ Configuración estándar (Samsung, Motorola, etc.)
+  /// ✅ Configuración estándar móvil
   factory AdaptiveUIConfig.standard() {
     return AdaptiveUIConfig(
       fontSize: 16.0,
@@ -59,222 +64,145 @@ class AdaptiveUIConfig {
       borderRadius: BorderRadius.circular(12.0),
       elevation: 2.0,
       specificFixes: {
-        'needs_workarounds': false,
-        'rendering_mode': 'standard',
+        'adaptation_level': 'standard',
+        'platform_optimized': true,
       },
     );
   }
 
-  /// 🚨 Configuración para OPPO (Riesgo CRÍTICO)
-  factory AdaptiveUIConfig.forOPPO() {
+  /// 📱 Configuración para pantallas compactas
+  factory AdaptiveUIConfig.compact() {
     return AdaptiveUIConfig(
-      fontSize: 14.0,          // Reducido por problemas rendering
-      gridSpacing: 12.0,       // Más compacto
-      cardPadding: 14.0,       // Menos padding
-      buttonHeight: 44.0,      // Más pequeño
-      iconSize: 20.0,          // Iconos más pequeños
-      fontWeight: FontWeight.w600, // Más bold para legibilidad
-      letterSpacing: 0.5,      // Mejor separación
-      lineHeight: 1.2,         // Más compacto
-      screenPadding: const EdgeInsets.all(16.0),
-      borderRadius: BorderRadius.circular(8.0), // Bordes más simples
-      elevation: 1.0,          // Menos sombras
-      specificFixes: {
-        'needs_workarounds': true,
-        'rendering_mode': 'oppo_safe',
-        'disable_impeller': true,
-        'avoid_androidview': true,
-        'force_software_rendering': true,
-        'reduce_animations': true,
-        'simplify_shadows': true,
-      },
-    );
-  }
-
-  /// 🔴 Configuración para Xiaomi HyperOS (Riesgo ALTO)
-  factory AdaptiveUIConfig.forXiaomiHyperOS() {
-    return AdaptiveUIConfig(
-      fontSize: 15.0,          // Intermedio
-      gridSpacing: 14.0,       
-      cardPadding: 15.0,       
-      buttonHeight: 46.0,      
-      iconSize: 22.0,          
-      fontWeight: FontWeight.w500, // Medium weight
-      letterSpacing: 0.3,      
-      lineHeight: 1.3,         
-      screenPadding: const EdgeInsets.all(18.0),
-      borderRadius: BorderRadius.circular(10.0),
-      elevation: 1.5,          
-      specificFixes: {
-        'needs_workarounds': true,
-        'rendering_mode': 'hyperos_compatible',
-        'force_utf8_encoding': true,
-        'handle_surfacecontrol_errors': true,
-        'adjust_text_rendering': true,
-        'prevent_page_slide_crashes': true,
-        'chinese_char_specific_fixes': true,
-      },
-    );
-  }
-
-  /// 🟡 Configuración para Xiaomi MIUI (Riesgo MEDIO)  
-  factory AdaptiveUIConfig.forXiaomiMIUI() {
-    return AdaptiveUIConfig(
-      fontSize: 15.5,          
-      gridSpacing: 15.0,       
-      cardPadding: 16.0,       
-      buttonHeight: 47.0,      
-      iconSize: 23.0,          
+      fontSize: 14.0,
+      gridSpacing: 12.0,
+      cardPadding: 14.0,
+      buttonHeight: 44.0,
+      iconSize: 20.0,
       fontWeight: FontWeight.w500,
-      letterSpacing: 0.2,      
-      lineHeight: 1.35,        
-      screenPadding: const EdgeInsets.all(19.0),
-      borderRadius: BorderRadius.circular(11.0),
-      elevation: 2.0,          
+      letterSpacing: 0.2,
+      lineHeight: 1.3,
+      screenPadding: const EdgeInsets.all(16.0),
+      borderRadius: BorderRadius.circular(10.0),
+      elevation: 1.5,
       specificFixes: {
-        'needs_workarounds': true,
-        'rendering_mode': 'miui_optimized',
-        'adjust_dpi_scaling': true,
-        'modify_font_weights': true,
-        'miui_compatible_spacing': true,
-        'handle_aggressive_optimizations': true,
+        'adaptation_level': 'compact',
+        'space_optimized': true,
       },
     );
   }
 
-  /// 🔴 Configuración para Vivo (Riesgo ALTO)
-  factory AdaptiveUIConfig.forVivo() {
+  /// 🖥️ Configuración para pantallas grandes
+  factory AdaptiveUIConfig.comfortable() {
     return AdaptiveUIConfig(
-      fontSize: 14.5,          // Ligeramente más grande que OPPO
-      gridSpacing: 13.0,       
-      cardPadding: 14.5,       
-      buttonHeight: 45.0,      
-      iconSize: 21.0,          
-      fontWeight: FontWeight.w600, // Bold como OPPO
-      letterSpacing: 0.4,      
-      lineHeight: 1.25,        
-      screenPadding: const EdgeInsets.all(17.0),
-      borderRadius: BorderRadius.circular(9.0),
-      elevation: 1.2,          
-      specificFixes: {
-        'needs_workarounds': true,
-        'rendering_mode': 'vivo_safe',
-        'avoid_androidview': true,
-        'funtouch_specific_fixes': true,
-        'alternative_webview_handling': true,
-        'reduce_complex_animations': true,
-      },
-    );
-  }
-
-  /// 🟡 Configuración para Honor/Huawei (Riesgo MEDIO)
-  factory AdaptiveUIConfig.forHonorHuawei() {
-    return AdaptiveUIConfig(
-      fontSize: 15.5,          
-      gridSpacing: 15.5,       
-      cardPadding: 16.5,       
-      buttonHeight: 47.5,      
-      iconSize: 23.5,          
+      fontSize: 18.0,
+      gridSpacing: 20.0,
+      cardPadding: 20.0,
+      buttonHeight: 52.0,
+      iconSize: 28.0,
       fontWeight: FontWeight.w400,
-      letterSpacing: 0.1,      
-      lineHeight: 1.37,        
-      screenPadding: const EdgeInsets.all(19.5),
-      borderRadius: BorderRadius.circular(11.5),
-      elevation: 2.2,          
+      letterSpacing: 0.1,
+      lineHeight: 1.5,
+      screenPadding: const EdgeInsets.all(24.0),
+      borderRadius: BorderRadius.circular(14.0),
+      elevation: 3.0,
       specificFixes: {
-        'needs_workarounds': true,
-        'rendering_mode': 'emui_compatible',
-        'handle_emui_inheritance': true,
-        'magic_ui_adjustments': true,
-        'harmonyos_transition_support': true,
+        'adaptation_level': 'comfortable',
+        'large_screen_optimized': true,
+      },
+    );
+  }
+
+  /// 🌐 Configuración para web
+  factory AdaptiveUIConfig.web() {
+    return AdaptiveUIConfig(
+      fontSize: 16.0,
+      gridSpacing: 18.0,
+      cardPadding: 18.0,
+      buttonHeight: 50.0,
+      iconSize: 26.0,
+      fontWeight: FontWeight.w400,
+      letterSpacing: 0.05,
+      lineHeight: 1.45,
+      screenPadding: const EdgeInsets.all(22.0),
+      borderRadius: BorderRadius.circular(13.0),
+      elevation: 2.5,
+      specificFixes: {
+        'adaptation_level': 'web',
+        'web_optimized': true,
+        'hover_effects': true,
       },
     );
   }
 }
 
-/// 🎯 Manager principal para configuración adaptativa
+/// 🎯 Manager simplificado para configuración adaptativa
 class AdaptiveUIManager {
   static AdaptiveUIConfig? _cachedConfig;
-  static ChineseDeviceProfile? _cachedProfile;
+  static String? _cachedPlatform;
 
-  /// 🎨 Obtiene configuración óptima para el dispositivo actual
-  static Future<AdaptiveUIConfig> getOptimalConfig() async {
-    // Cache para evitar múltiples detecciones
-    if (_cachedConfig != null) {
+  /// 🎨 Obtiene configuración óptima basada en plataforma y pantalla
+  static Future<AdaptiveUIConfig> getOptimalConfig([BuildContext? context]) async {
+    // Cache básico
+    if (_cachedConfig != null && _cachedPlatform != null) {
       return _cachedConfig!;
     }
 
-    final profile = await ChineseDeviceDetector.detectCurrentDevice();
-    _cachedProfile = profile;
+    final deviceService = DeviceService.instance;
+    final platformName = await deviceService.getPlatformName();
+    _cachedPlatform = platformName;
 
-    switch (profile.riskLevel) {
-      case ChineseDeviceRiskLevel.CRITICAL:
-        // OPPO, Realme, OnePlus con ColorOS
-        _cachedConfig = AdaptiveUIConfig.forOPPO();
-        break;
-
-      case ChineseDeviceRiskLevel.HIGH:
-        // Vivo, Xiaomi HyperOS
-        if (profile.deviceOS == 'HyperOS') {
-          _cachedConfig = AdaptiveUIConfig.forXiaomiHyperOS();
-        } else {
-          _cachedConfig = AdaptiveUIConfig.forVivo();
-        }
-        break;
-
-      case ChineseDeviceRiskLevel.MEDIUM:
-        // Xiaomi MIUI, Honor, Huawei
-        if (profile.brandName == 'Xiaomi') {
-          _cachedConfig = AdaptiveUIConfig.forXiaomiMIUI();
-        } else {
-          _cachedConfig = AdaptiveUIConfig.forHonorHuawei();
-        }
-        break;
-
-      case ChineseDeviceRiskLevel.LOW:
-      default:
-        // Samsung, Motorola, etc.
+    // Determinar configuración basada en plataforma y contexto
+    if (deviceService.isWeb) {
+      _cachedConfig = AdaptiveUIConfig.web();
+    } else if (context != null) {
+      // Usar MediaQuery para determinar el mejor ajuste
+      final screenWidth = MediaQuery.of(context).size.width;
+      
+      if (screenWidth < 360) {
+        _cachedConfig = AdaptiveUIConfig.compact();
+      } else if (screenWidth > 600) {
+        _cachedConfig = AdaptiveUIConfig.comfortable();
+      } else {
         _cachedConfig = AdaptiveUIConfig.standard();
-        break;
+      }
+    } else {
+      // Fallback estándar
+      _cachedConfig = AdaptiveUIConfig.standard();
     }
 
     return _cachedConfig!;
   }
 
-  /// 📱 Obtiene perfil del dispositivo (cached)
-  static Future<ChineseDeviceProfile> getDeviceProfile() async {
-    if (_cachedProfile != null) {
-      return _cachedProfile!;
-    }
-
-    _cachedProfile = await ChineseDeviceDetector.detectCurrentDevice();
-    return _cachedProfile!;
+  /// 📱 Obtiene información básica del dispositivo
+  static Future<Map<String, dynamic>> getDeviceInfo() async {
+    final deviceService = DeviceService.instance;
+    return await deviceService.getDeviceInfo();
   }
 
-  /// 🔄 Limpia cache (usar cuando sea necesario re-detectar)
+  /// 🔄 Limpia cache
   static void clearCache() {
     _cachedConfig = null;
-    _cachedProfile = null;
+    _cachedPlatform = null;
   }
 
-  /// 📊 Información de debug
-  static Future<Map<String, dynamic>> getDebugInfo() async {
-    final config = await getOptimalConfig();
-    final profile = await getDeviceProfile();
+  /// 📊 Información de debug simplificada
+  static Future<Map<String, dynamic>> getDebugInfo([BuildContext? context]) async {
+    final config = await getOptimalConfig(context);
+    final deviceInfo = await getDeviceInfo();
 
     return {
-      'device_brand': profile.brandName,
-      'device_os': profile.deviceOS,
-      'risk_level': profile.riskLevel.toString(),
+      'device_info': deviceInfo,
       'config_applied': {
         'font_size': config.fontSize,
         'grid_spacing': config.gridSpacing,
         'font_weight': config.fontWeight.toString(),
-        'needs_workarounds': config.specificFixes['needs_workarounds'],
-        'rendering_mode': config.specificFixes['rendering_mode'],
+        'adaptation_level': config.specificFixes['adaptation_level'],
       },
-      'specific_fixes_count': config.specificFixes.length,
-      'known_issues_count': profile.knownIssues.length,
+      'screen_info': context != null ? {
+        'width': MediaQuery.of(context).size.width,
+        'height': MediaQuery.of(context).size.height,
+        'pixel_ratio': MediaQuery.of(context).devicePixelRatio,
+      } : null,
     };
   }
 }
@@ -295,7 +223,7 @@ class AdaptiveContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<AdaptiveUIConfig>(
-      future: AdaptiveUIManager.getOptimalConfig(),
+      future: AdaptiveUIManager.getOptimalConfig(context),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return child; // Fallback estándar
@@ -341,7 +269,7 @@ class AdaptiveText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<AdaptiveUIConfig>(
-      future: AdaptiveUIManager.getOptimalConfig(),
+      future: AdaptiveUIManager.getOptimalConfig(context),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return Text(text, style: style, textAlign: textAlign, maxLines: maxLines, overflow: overflow);
@@ -385,7 +313,7 @@ class AdaptiveCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<AdaptiveUIConfig>(
-      future: AdaptiveUIManager.getOptimalConfig(),
+      future: AdaptiveUIManager.getOptimalConfig(context),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return Card(child: child);
@@ -410,5 +338,37 @@ class AdaptiveCard extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+/// 🎯 Helper para obtener configuración de manera estática
+class ResponsiveHelper {
+  /// 📱 Determina si es pantalla pequeña
+  static bool isSmallScreen(BuildContext context) {
+    return MediaQuery.of(context).size.width < 360;
+  }
+  
+  /// 📟 Determina si es tablet/desktop
+  static bool isLargeScreen(BuildContext context) {
+    return MediaQuery.of(context).size.width > 600;
+  }
+  
+  /// 🎯 Obtiene número de columnas recomendadas
+  static int getRecommendedColumns(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width < 400) return 1;
+    if (width < 800) return 2;
+    if (width < 1200) return 3;
+    return 4;
+  }
+  
+  /// 📐 Obtiene padding adaptativo básico
+  static EdgeInsets getAdaptivePadding(BuildContext context) {
+    if (isSmallScreen(context)) {
+      return const EdgeInsets.all(12.0);
+    } else if (isLargeScreen(context)) {
+      return const EdgeInsets.all(24.0);
+    }
+    return const EdgeInsets.all(16.0);
   }
 }
