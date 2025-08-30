@@ -31,7 +31,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.castagallos.app"
-    compileSdkVersion 34
+    compileSdk = 36
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -52,8 +52,8 @@ android {
         applicationId "com.castagallos.app"  // 🔥 CORREGIDO PARA COINCIDIR CON FIREBASE Y PLAY CONSOLE
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion 21
-        targetSdkVersion 34
+        minSdkVersion 24
+        targetSdkVersion 36
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         
@@ -73,9 +73,9 @@ android {
         release {
             signingConfig signingConfigs.release
             
-            // 🔒 HABILITAR OFUSCACIÓN Y OPTIMIZACIÓN
-            minifyEnabled true
-            shrinkResources true
+            // 🔒 DESHABILITADO TEMPORALMENTE PARA COMPILAR
+            minifyEnabled false
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
