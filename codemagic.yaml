@@ -98,26 +98,19 @@ workflows:
         script: |
           flutter test || true  # No fallar si no hay tests
           
-      # 4. Build Android
-      - name: Build Android AAB
-        script: |
-          flutter build appbundle --release
-          
-      # 5. Build iOS IPA (AFTER privacy manifest copy)
+      # 5. Build iOS IPA (AFTER privacy manifest copy) - ANDROID DISABLED
       - name: Build iOS IPA
         script: |
           flutter build ipa --release
           
-      # 6. Build Web
-      - name: Build Web
-        script: |
-          flutter build web --release
+      # 6. Build Web - DISABLED (iOS only)
+      # - name: Build Web
+      #   script: |
+      #     flutter build web --release
           
     artifacts:
-      - build/app/outputs/**/*.aab
       - build/ios/ipa/*.ipa
       - build/ios/archive/*.xcarchive
-      - build/web/**
       
     publishing:
       email:
