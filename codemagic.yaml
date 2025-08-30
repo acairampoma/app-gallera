@@ -55,19 +55,43 @@ workflows:
           # Build iOS first
           flutter build ios --release --no-codesign
           
-          # Find build directory
-          BUILD_DIR="build/ios/Release-iphoneos"
-          if [ ! -d "$BUILD_DIR" ]; then
-            BUILD_DIR="build/ios/iphoneos"
-          fi
+          echo "🔍 SEARCHING ALL POSSIBLE BUILD DIRECTORIES..."
           
-          # Copy privacy manifest to EVERY framework
-          find "$BUILD_DIR" -name "*.framework" -type d | while read framework; do
-            echo "✅ Adding privacy manifest to: $(basename $framework)"
-            cp ios/Runner/PrivacyInfo.xcprivacy "$framework/" 2>/dev/null || true
+          # Search in ALL possible locations
+          SEARCH_DIRS=(
+            "build/ios/Release-iphoneos"
+            "build/ios/iphoneos" 
+            "build/ios/Runner.app"
+            "build/ios/Runner.app/Frameworks"
+            "build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app/Frameworks"
+            "ios/build/Release-iphoneos"
+            "ios/build/Runner.app/Frameworks"
+          )
+          
+          echo "📁 Listing all directories in build/:"
+          find build/ -type d -name "*.framework" 2>/dev/null || true
+          find build/ -type d -name "*.app" 2>/dev/null || true
+          
+          # Copy privacy manifest to EVERY framework found ANYWHERE
+          echo "🔧 COPYING PRIVACY MANIFEST TO ALL FRAMEWORKS..."
+          find . -name "*.framework" -type d 2>/dev/null | while read framework; do
+            echo "✅ Found framework: $framework"
+            echo "✅ Copying privacy manifest to: $(basename $framework)"
+            cp ios/Runner/PrivacyInfo.xcprivacy "$framework/PrivacyInfo.xcprivacy" 2>/dev/null || true
+            
+            # Verify the copy worked
+            if [ -f "$framework/PrivacyInfo.xcprivacy" ]; then
+              echo "✅ SUCCESS: Privacy manifest copied to $framework"
+            else
+              echo "❌ FAILED: Could not copy to $framework"
+            fi
           done
           
-          echo "✅ PRIVACY MANIFESTS COPIED TO ALL FRAMEWORKS!"
+          echo "✅ PRIVACY MANIFESTS SEARCH AND COPY COMPLETED!"
+          
+          # List all privacy manifests found
+          echo "📋 VERIFICATION - All privacy manifests in build:"
+          find build/ -name "PrivacyInfo.xcprivacy" -type f 2>/dev/null || true
           
       # 4. Tests (opcional)
       - name: Run tests
