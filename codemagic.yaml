@@ -132,13 +132,11 @@ workflows:
         credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
         track: internal
         
-      # App Store Connect - SOLO TESTFLIGHT (sin enviar a review)
+      # App Store Connect (si tienes configurado)  
       app_store_connect:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-        submit_to_testflight: true
-        # NO submit_to_app_store = NO va a review, solo TestFlight
         
       # Firebase App Distribution (opcional)
       firebase:
