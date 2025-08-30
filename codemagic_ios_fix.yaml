@@ -1,0 +1,66 @@
+workflows:
+  ios-privacy-fix:
+    name: iOS Build with Privacy Manifest Fix
+    max_build_duration: 60
+    environment:
+      flutter: 3.35.2  # Tu versión actual
+      xcode: 16.1      # Compatible con Flutter 3.35.2
+      cocoapods: default
+      groups:
+        - appstore_credentials
+        
+    scripts:
+      - name: Flutter doctor
+        script: |
+          flutter doctor -v
+          
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+          
+      - name: Setup iOS
+        script: |
+          cd ios
+          pod install --repo-update
+          cd ..
+          
+      - name: Build iOS
+        script: |
+          flutter build ios --release --no-codesign
+          
+      - name: Copy Privacy Manifests to ALL Frameworks
+        script: |
+          echo "🔧 Copying PrivacyInfo.xcprivacy to all frameworks..."
+          
+          # Find the build directory
+          BUILD_DIR="build/ios/Release-iphoneos"
+          if [ ! -d "$BUILD_DIR" ]; then
+            BUILD_DIR="build/ios/iphoneos"
+          fi
+          
+          # Copy privacy manifest to EACH framework
+          find "$BUILD_DIR" -name "*.framework" -type d | while read framework; do
+            echo "✅ Adding privacy manifest to: $(basename $framework)"
+            cp ios/Runner/PrivacyInfo.xcprivacy "$framework/" 2>/dev/null || true
+          done
+          
+          echo "✅ Privacy manifests added to all frameworks!"
+          
+      - name: Archive and sign
+        script: |
+          xcode-project use-profiles
+          xcode-project build-ipa \
+            --workspace ios/Runner.xcworkspace \
+            --scheme Runner \
+            --config Release \
+            --export-options-plist /tmp/export_options.plist
+            
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/ipa/*.dSYM.zip
+      
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
