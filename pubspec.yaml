@@ -1,7 +1,7 @@
 name: gallos_app_new
 description: "Casta de Gallos - Aplicación profesional para criadores de gallos de pelea"
 publish_to: 'none'
-version: 1.2.3+813
+version: 1.2.4+814
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -44,10 +44,10 @@ dependencies:
   pdf: ^3.10.8  # Compatible version
 # share_plus: ^6.3.4  # Reemplazado por custom ShareService
   
-  # 🔔 Firebase - LATEST VERSIONS WITH PRIVACY MANIFESTS (iOS SDK 10.22.0+)
-  firebase_core: ^3.15.2
-  firebase_messaging: ^15.1.10  
-  flutter_local_notifications: ^18.0.0
+  # 🔔 Firebase - ACTUAL LATEST VERSIONS with privacy manifests
+  firebase_core: ^3.8.0  
+  firebase_messaging: ^15.1.8
+  flutter_local_notifications: ^18.0.1
   
   # 📱 Device info - REMOVIDO para evitar conflictos iOS
   # device_info_plus: ^9.1.2  # Reemplazado por custom DeviceService

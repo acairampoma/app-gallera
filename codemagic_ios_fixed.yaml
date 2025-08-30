@@ -1,0 +1,64 @@
+name: iOS Build with Privacy Manifests Fix
+max_build_duration: 60
+instance_type: mac_mini_m2
+
+environment:
+  flutter: 3.24.5  # Versión estable más reciente con soporte completo de Privacy Manifests
+  xcode: 15.4  # NO usar 16.x que puede causar problemas
+  cocoapods: 1.15.2
+  
+  vars:
+    BUNDLE_ID: "com.galloapp.gallosAppNew"
+    APP_STORE_CONNECT_ISSUER_ID: Encrypted(...)  # Tu ID
+    APP_STORE_CONNECT_KEY_IDENTIFIER: Encrypted(...)  # Tu Key
+    APP_STORE_CONNECT_PRIVATE_KEY: Encrypted(...)  # Tu Private Key
+    CERTIFICATE_PRIVATE_KEY: Encrypted(...)  # Tu certificado
+    
+  groups:
+    - app_store_credentials
+    - certificate_credentials
+
+scripts:
+  - name: Set up local.properties
+    script: |
+      echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/android/local.properties"
+      
+  - name: Get Flutter packages
+    script: |
+      flutter packages pub get
+      
+  - name: Install pods with Privacy Manifest support
+    script: |
+      cd ios
+      # Limpiar instalación previa
+      rm -rf Pods Podfile.lock
+      pod cache clean --all
+      
+      # Actualizar repos de CocoaPods
+      pod repo update
+      
+      # Instalar con versiones específicas que incluyen Privacy Manifests
+      pod install --repo-update
+      cd ..
+      
+  - name: Flutter build iOS
+    script: |
+      flutter build ios --release \
+        --build-name=1.2.4 \
+        --build-number=$(($(app-store-connect get-latest-testflight-build-number "$APP_STORE_APP_ID") + 1)) \
+        --export-options-plist=/Users/builder/export_options.plist
+        
+artifacts:
+  - build/ios/ipa/*.ipa
+  - /tmp/xcodebuild_logs/*.log
+  - flutter_drive.log
+  
+publishing:
+  app_store_connect:
+    auth: integration
+    
+    # Submit to TestFlight
+    submit_to_testflight: true
+    
+    # Opcional: Submit to App Store
+    submit_to_app_store: false

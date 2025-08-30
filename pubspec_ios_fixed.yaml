@@ -1,0 +1,70 @@
+name: gallos_app_new
+description: "Casta de Gallos - Aplicación profesional para criadores de gallos de pelea"
+publish_to: 'none'
+version: 1.2.4+814  # Nueva versión para iOS
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  
+  # 🚀 DEPENDENCIAS ACTUALIZADAS CON PRIVACY MANIFESTS
+  provider: ^6.1.2
+  go_router: ^14.6.2
+  http: ^1.2.2
+  http_parser: ^4.1.0
+  
+  # UI y multimedia - VERSIONES CON PRIVACY MANIFESTS
+  image_picker: ^1.1.2  # Incluye privacy manifest desde 1.1.0
+  cached_network_image: ^3.4.1
+  video_player: ^2.9.2  # Incluye privacy manifest desde 2.9.0
+  
+  # Almacenamiento local - ACTUALIZADAS
+  shared_preferences: ^2.3.3  # Privacy manifest incluido
+  sqflite: ^2.4.1  # Privacy manifest incluido
+  
+  # Utilidades
+  intl: ^0.19.0  # Actualizada
+  uuid: ^4.5.1
+  cupertino_icons: ^1.0.8
+  crypto: ^3.0.5
+  fl_chart: ^0.69.0  # Actualizada
+  
+  # 📄 PDF y descargas - VERSIONES ESTABLES CON PRIVACY MANIFESTS
+  path_provider: ^2.1.5  # Privacy manifest incluido
+  url_launcher: ^6.3.1  # Privacy manifest incluido desde 6.3.0
+  flutter_plugin_android_lifecycle: ^2.0.22
+  permission_handler: ^11.3.1  # Privacy manifest incluido
+  printing: ^5.13.4  # Privacy manifest incluido
+  pdf: ^3.11.1  # Compatible con printing actualizado
+  
+  # 🔔 Firebase - VERSIONES MÁS RECIENTES CON PRIVACY MANIFESTS
+  # Firebase iOS SDK 11.0.0+ incluye todos los privacy manifests
+  firebase_core: ^3.8.1  # Usa Firebase iOS SDK 11.0.0+
+  firebase_messaging: ^15.2.1  # Privacy manifest incluido
+  flutter_local_notifications: ^18.0.1  # Privacy manifest incluido
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.2
+
+# No necesitamos overrides con estas versiones
+# dependency_overrides eliminados para evitar conflictos
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - lib/data/mock/
+    - assets/images/
+    - assets/images/gallos/
+    - assets/images/logo/
+    - assets/images/icono/
+    - assets/images/yape/
+    - assets/images/modulos/
