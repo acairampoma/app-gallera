@@ -49,5 +49,7 @@
 	<string>Esta aplicación necesita acceso a tu galería de fotos para permitirte seleccionar y subir imágenes de tus gallos para su registro y documentación en el pedigrí.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Esta aplicación necesita acceso a la cámara para permitirte tomar fotos de tus gallos para su registro y documentación en el pedigrí.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
