@@ -98,9 +98,11 @@ workflows:
         script: |
           flutter test || true  # No fallar si no hay tests
           
-      # 5. Build iOS IPA (AFTER privacy manifest copy) - ANDROID DISABLED
+      # 5. Build iOS IPA with Codemagic's built-in signing
       - name: Build iOS IPA
         script: |
+          # Let Codemagic handle the signing automatically
+          xcode-project use-profiles
           flutter build ipa --release
           
       # 6. Build Web - DISABLED (iOS only)
