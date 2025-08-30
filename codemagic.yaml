@@ -127,10 +127,10 @@ workflows:
           success: true
           failure: true
       
-      # Google Play (si tienes configurado)
-      google_play:
-        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
-        track: internal
+      # Google Play - DISABLED (only using iOS App Store)
+      # google_play:
+      #   credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+      #   track: internal
         
       # App Store Connect (si tienes configurado)  
       app_store_connect:
