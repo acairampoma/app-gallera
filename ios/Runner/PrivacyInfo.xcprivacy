@@ -26,6 +26,7 @@
     
     <key>NSPrivacyAccessedAPITypes</key>
     <array>
+        <!-- File Timestamp APIs (Flutter/Firebase) -->
         <dict>
             <key>NSPrivacyAccessedAPIType</key>
             <string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
@@ -34,6 +35,7 @@
                 <string>C617.1</string>
             </array>
         </dict>
+        <!-- UserDefaults APIs (SharedPreferences/Firebase) -->
         <dict>
             <key>NSPrivacyAccessedAPIType</key>
             <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
@@ -42,12 +44,31 @@
                 <string>CA92.1</string>
             </array>
         </dict>
+        <!-- System Boot Time (Flutter Framework) -->
         <dict>
             <key>NSPrivacyAccessedAPIType</key>
             <string>NSPrivacyAccessedAPICategorySystemBootTime</string>
             <key>NSPrivacyAccessedAPITypeReasons</key>
             <array>
                 <string>35F9.1</string>
+            </array>
+        </dict>
+        <!-- Disk Space APIs (Firebase/Flutter) -->
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryDiskSpace</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>E174.1</string>
+            </array>
+        </dict>
+        <!-- Active Keyboards (Flutter Framework) -->
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryActiveKeyboards</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>54BD.1</string>
             </array>
         </dict>
     </array>
