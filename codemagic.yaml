@@ -103,10 +103,10 @@ workflows:
         script: |
           flutter build appbundle --release
           
-      # 5. Build iOS
-      - name: Build iOS
+      # 5. Build iOS IPA (AFTER privacy manifest copy)
+      - name: Build iOS IPA
         script: |
-          flutter build ios --release --no-codesign
+          flutter build ipa --release
           
       # 6. Build Web
       - name: Build Web
@@ -138,17 +138,17 @@ workflows:
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         
-      # Firebase App Distribution (opcional)
-      firebase:
-        firebase_token: $FIREBASE_TOKEN
-        android:
-          app_id: 1:590199670157:android:xxxxx
-          groups:
-            - testers
-        ios:
-          app_id: 1:590199670157:ios:7a551caafe56d9a381a9c4
-          groups:
-            - testers
+      # Firebase App Distribution (opcional) - DISABLED for now
+      # firebase:
+      #   firebase_token: $FIREBASE_TOKEN
+      #   android:
+      #     app_id: 1:590199670157:android:xxxxx
+      #     groups:
+      #       - testers
+      #   ios:
+      #     app_id: 1:590199670157:ios:7a551caafe56d9a381a9c4
+      #     groups:
+      #       - testers
 
 # Workflow alternativo para desarrollo
   development-workflow:
