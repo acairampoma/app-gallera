@@ -16,6 +16,12 @@ RUN flutter pub get
 # Copiar el código fuente
 COPY . .
 
+# Sobrescribir pubspec.yaml con versión web después de copiar
+COPY pubspec.web.yaml ./pubspec.yaml
+
+# Re-instalar dependencias con pubspec web
+RUN flutter pub get
+
 # Construir la aplicación web
 RUN flutter build web --release --web-renderer canvaskit --base-href /
 
