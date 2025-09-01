@@ -20,7 +20,7 @@ class NativeSharePlugin: FlutterPlugin, MethodCallHandler {
     private lateinit var context: Context
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        channel = MethodChannel(flutterPluginBinding.binaryMessenger, "native_share")
+        channel = MethodChannel(flutterPluginBinding.binaryMessenger, "com.castagallos.app/native_share")
         channel.setMethodCallHandler(this)
         context = flutterPluginBinding.applicationContext
     }
@@ -31,13 +31,13 @@ class NativeSharePlugin: FlutterPlugin, MethodCallHandler {
 
     override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
-            "shareAndroid" -> shareAndroid(call, result)
+            "sharePDF" -> sharePDF(call, result)
             else -> result.notImplemented()
         }
     }
 
     /// 🤖 COMPARTIR PDF EN ANDROID USANDO Intent.ACTION_SEND NATIVO
-    private fun shareAndroid(call: MethodCall, result: Result) {
+    private fun sharePDF(call: MethodCall, result: Result) {
         try {
             Log.d("NativeShare", "🤖 Iniciando compartir Android nativo...")
 
