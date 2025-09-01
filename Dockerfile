@@ -21,8 +21,7 @@ RUN flutter build web --release --web-renderer canvaskit --base-href /
 # Etapa de producción - servidor HTTP ligero
 FROM python:3.11-alpine AS runtime
 
-# Instalar servidor HTTP
-RUN pip install --no-cache-dir http.server
+# http.server es built-in en Python, no necesita instalación
 
 # Crear usuario no-root para seguridad
 RUN addgroup -g 1000 flutteruser && \
