@@ -6,10 +6,11 @@ FROM ghcr.io/cirruslabs/flutter:3.24.5 AS build
 # Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos de configuración primero (para mejor cache)
-COPY pubspec.yaml pubspec.lock ./
+# Copiar archivos de configuración web-específico
+COPY pubspec.web.yaml ./pubspec.yaml
+COPY pubspec.lock ./
 
-# Instalar dependencias
+# Instalar dependencias (solo compatibles con web)
 RUN flutter pub get
 
 # Copiar el código fuente
