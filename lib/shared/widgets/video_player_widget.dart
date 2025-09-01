@@ -152,25 +152,46 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       );
     }
 
+    // 🎬 SOLUCIÓN CORRECTA DEL COMMIT ORIGINAL - CONSTRAINTS + ASPECTRATIO CENTRADO
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // Altura máxima para evitar estiramiento
+    final maxHeight = isLandscape 
+        ? MediaQuery.of(context).size.height * 0.8
+        : screenWidth * 0.6; // Máximo 60% del ancho en vertical
+
     return Container(
-      height: 200,
+      constraints: BoxConstraints(
+        maxHeight: maxHeight,
+      ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: AspectRatio(
-          aspectRatio: _controller!.value.aspectRatio,
-          child: Stack(
-            children: [
-              VideoPlayer(_controller!),
-              _VideoControls(controller: _controller!),
-            ],
-          ),
-        ),
+        borderRadius: BorderRadius.circular(12),
+        child: _controller != null && _controller!.value.isInitialized
+            ? Center(
+                child: AspectRatio(
+                  aspectRatio: _controller!.value.aspectRatio,
+                  child: Stack(
+                    children: [
+                      VideoPlayer(_controller!),
+                      _VideoControls(controller: _controller!),
+                    ],
+                  ),
+                ),
+              )
+            : SizedBox(
+                width: double.infinity,
+                height: 200,
+                child: Center(child: CircularProgressIndicator()),
+              ),
       ),
     );
   }
+
 }
 
 class _VideoControls extends StatefulWidget {

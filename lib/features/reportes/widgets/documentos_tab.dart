@@ -1,4 +1,5 @@
 // 📄🐓 TAB DE DOCUMENTOS ÉPICO - LISTA DE GALLOS CON EXPORT PDF
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/custom_widgets.dart';
@@ -7,7 +8,7 @@ import '../../../shared/widgets/error_widget.dart' as custom_error;
 import '../../../services/gallo_service.dart';
 import '../services/reportes_service.dart';
 import '../models/documentos_model.dart';
-import '../../../services/pdf_download_service.dart';
+import '../../../services/native_share_service.dart';
 import '../../../services/pdf_viewer_service.dart';
 import '../../../shared/constants/app_icons.dart';
 
@@ -461,41 +462,63 @@ class _DocumentosTabState extends State<DocumentosTab>
             },
             child: const Text('Ver Datos'),
           ),
-          // 🔥 VER/COMPARTIR PDF MEJORADO
+          // 🔥 VER/COMPARTIR PDF MEJORADO CON NATIVESHARE
           ElevatedButton.icon(
             onPressed: () async {
-              print('🔥 Abriendo opciones de PDF...');
+              print('🔥 Compartiendo PDF con NativeShareService...');
               Navigator.of(context).pop();
               
-              // Usar el nuevo servicio mejorado con preview
+              // Usar el nuevo servicio nativo
               final pdfBase64 = response['pdf_base64'] as String;
               final fileName = 'ficha_${nombreGallo}_${DateTime.now().millisecondsSinceEpoch}.pdf';
               
               try {
-                // Usar el nuevo servicio con opciones mejoradas
-                await PDFViewerService.showPDFOptions(
-                  context: context,
-                  pdfBase64: pdfBase64,
+                // Decodificar base64 a bytes
+                final pdfBytes = base64Decode(pdfBase64);
+                
+                // Usar el servicio nativo para compartir
+                await NativeShareService.sharePDF(
+                  pdfBytes: pdfBytes,
                   fileName: fileName,
-                  title: 'Ficha de $nombreGallo',
+                  nombreGallo: nombreGallo,
                 );
                 
-                print('✅ PDF procesado exitosamente');
+                print('✅ PDF compartido exitosamente');
+                
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(Icons.check_circle, color: Colors.white),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text('📄 PDF de "$nombreGallo" listo para compartir'),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: AppColors.success,
+                      duration: const Duration(seconds: 3),
+                    ),
+                  );
+                }
                 
               } catch (e) {
-                print('❌ Error descargando: $e');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('❌ Error descargando PDF: $e'),
-                    backgroundColor: AppColors.error,
-                  ),
-                );
+                print('❌ Error compartiendo PDF: $e');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('❌ Error compartiendo PDF: $e'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
               }
             },
-            icon: const Icon(Icons.picture_as_pdf, size: 18),
-            label: const Text('📄 Ver PDF'),
+            icon: const Icon(Icons.share, size: 18),
+            label: const Text('📄 Compartir PDF'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade600,
+              backgroundColor: Colors.green.shade600,
               foregroundColor: Colors.white,
             ),
           ),

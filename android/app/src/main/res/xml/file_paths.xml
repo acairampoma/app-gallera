@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 🤖 CONFIGURACIÓN FILEPROVIDER PARA COMPARTIR PDFs -->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Cache directory para archivos temporales -->
+    <cache-path name="shared_pdfs" path="shared_pdfs/" />
+    
+    <!-- Files directory para documentos -->
+    <files-path name="files" path="." />
+    
+    <!-- External files directory -->
+    <external-files-path name="external_files" path="." />
+    
+    <!-- External cache directory -->
+    <external-cache-path name="external_cache" path="." />
+</paths>
