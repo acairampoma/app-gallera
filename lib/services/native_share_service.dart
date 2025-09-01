@@ -107,18 +107,15 @@ class NativeShareService {
     try {
       print('📱 Compartiendo en iOS nativo...');
       
-      final result = await _channel.invokeMethod('shareIOS', {
+      // iOS usa sharePDF como método unificado
+      final result = await _channel.invokeMethod('sharePDF', {
         'pdfBytes': pdfBytes,
         'fileName': fileName,
         'text': 'Ficha de $nombreGallo',
         'subject': 'Ficha de Gallo - $nombreGallo',
       });
       
-      if (result['success'] == true) {
-        print('✅ iOS share completado: ${result['message']}');
-      } else {
-        throw Exception('Error iOS share: ${result['error']}');
-      }
+      print('✅ iOS share completado');
       
     } catch (e) {
       print('❌ Error compartiendo iOS: $e');
@@ -131,18 +128,15 @@ class NativeShareService {
     try {
       print('🤖 Compartiendo en Android nativo...');
       
-      final result = await _channel.invokeMethod('shareAndroid', {
+      // Android también usa sharePDF como método unificado
+      final result = await _channel.invokeMethod('sharePDF', {
         'pdfBytes': pdfBytes,
         'fileName': fileName,
         'text': 'Ficha de $nombreGallo',
         'mimeType': 'application/pdf',
       });
       
-      if (result['success'] == true) {
-        print('✅ Android share completado: ${result['message']}');
-      } else {
-        throw Exception('Error Android share: ${result['error']}');
-      }
+      print('✅ Android share completado');
       
     } catch (e) {
       print('❌ Error compartiendo Android: $e');
