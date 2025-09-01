@@ -6,21 +6,15 @@ FROM ghcr.io/cirruslabs/flutter:3.24.5 AS build
 # Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos de configuración web-específico
-COPY pubspec.web.yaml ./pubspec.yaml
+# Copiar archivos de configuración
+COPY pubspec.yaml ./
 COPY pubspec.lock ./
 
-# Instalar dependencias (solo compatibles con web)
+# Instalar dependencias
 RUN flutter pub get
 
 # Copiar el código fuente
 COPY . .
-
-# Sobrescribir pubspec.yaml con versión web después de copiar
-COPY pubspec.web.yaml ./pubspec.yaml
-
-# Re-instalar dependencias con pubspec web
-RUN flutter pub get
 
 # Construir la aplicación web
 RUN flutter build web --release --web-renderer canvaskit --base-href /
