@@ -37,6 +37,11 @@ dependencies:
   url_launcher: ^6.2.5
   printing: ^5.12.0
   pdf: ^3.10.8
+  
+  # 🔔 Firebase - WEB COMPATIBLE
+  firebase_core: ^3.8.0  
+  firebase_messaging: ^15.1.8
+  flutter_local_notifications: ^18.0.1
 
 dev_dependencies:
   flutter_test:
