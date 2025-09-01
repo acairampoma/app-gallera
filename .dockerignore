@@ -1,0 +1,57 @@
+# 🚫 Archivos a ignorar en Docker build
+# Optimizar build time y tamaño de imagen
+
+# Flutter specific
+.dart_tool/
+.packages
+build/
+!build/web
+
+# Development files
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+docs/
+README.md
+*.md
+
+# CI/CD
+.github/
+codemagic.yaml
+
+# Android specific (no necesario para web)
+android/
+!android/app/src/main/res/values/strings.xml
+
+# iOS specific (no necesario para web)
+ios/
+macos/
+windows/
+linux/
+
+# Test files
+test/
+integration_test/
+
+# Local env files
+.env
+.env.local
+
+# Logs
+*.log
+
+# Cache
+.cache/
+node_modules/
