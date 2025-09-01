@@ -17,7 +17,7 @@ RUN flutter pub get
 COPY . .
 
 # Construir la aplicación web
-RUN flutter build web --release --web-renderer canvaskit --base-href /
+RUN flutter build web --release --base-href /
 
 # Etapa de producción - servidor HTTP ligero
 FROM python:3.11-alpine AS runtime
