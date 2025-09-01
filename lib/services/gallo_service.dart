@@ -379,6 +379,41 @@ class GalloService {
     }
   }
 
+  // 📊 OBTENER CONTEOS DE RELACIONES - PARA CONFIRMACIÓN DE ELIMINACIÓN
+  static Future<Map<String, int>> fetchRelationsCounts(int galloId) async {
+    print('📊 Obteniendo conteos de relaciones para gallo $galloId...');
+    
+    try {
+      final headers = await _getAuthHeaders();
+      
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/v1/gallos/$galloId/relations-counts'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 10));
+      
+      print('📡 Status: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('📊 Conteos obtenidos: $data');
+        
+        return {
+          'peleas': data['peleas'] ?? 0,
+          'topes': data['topes'] ?? 0,
+          'vacunas': data['vacunas'] ?? 0,
+        };
+      } else {
+        print('❌ Error obteniendo conteos: ${response.body}');
+        // Fallback: devolver conteos en 0 si el endpoint no existe aún
+        return {'peleas': 0, 'topes': 0, 'vacunas': 0};
+      }
+    } catch (e) {
+      print('❌ Error obteniendo conteos: $e');
+      // Fallback para no bloquear la eliminación
+      return {'peleas': 0, 'topes': 0, 'vacunas': 0};
+    }
+  }
+
   // 🗑️ ELIMINAR GALLO - SOLO BACKEND REAL
   static Future<bool> deleteGallo(int id) async {
     print('🗑️ Eliminando gallo $id del backend...');

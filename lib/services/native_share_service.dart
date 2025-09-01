@@ -9,7 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 
 class NativeShareService {
-  static const MethodChannel _channel = MethodChannel('native_share');
+  static const MethodChannel _channel = MethodChannel('com.castagallos.app/native_share');
   
   /// 🔥 COMPARTIR PDF MULTIPLATAFORMA
   static Future<void> sharePDF({

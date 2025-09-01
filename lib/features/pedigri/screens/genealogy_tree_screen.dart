@@ -869,8 +869,8 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
     );
   }
 
-  // 🗑️ ELIMINAR GALLO
-  void _eliminarGallo(Map<String, dynamic> gallo) {
+  // 🗑️ ELIMINAR GALLO - MEJORADO CON CONTEOS Y LOADING
+  void _eliminarGallo(Map<String, dynamic> gallo) async {
     final galloId = gallo['id'];
     
     if (galloId == null) {
@@ -883,44 +883,189 @@ class _GenealogyTreeScreenState extends State<GenealogyTreeScreen> {
       return;
     }
     
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Eliminar Gallo'),
-        content: Text('¿Estás seguro de eliminar a ${gallo['nombre']}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+    try {
+      // Mostrar loading mientras obtenemos los conteos
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Obteniendo información...'),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context); // Cerrar diálogo
-              
-              try {
-                await GalloService.deleteGallo(galloId);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('🗑️ Gallo eliminado exitosamente'),
-                    backgroundColor: Colors.red,
+        ),
+      );
+
+      // Obtener conteos de relaciones
+      final conteos = await GalloService.fetchRelationsCounts(galloId);
+      
+      // Cerrar loading
+      if (mounted) Navigator.pop(context);
+
+      // Mostrar diálogo de confirmación con conteos
+      final parentContext = context;
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.warning, color: Colors.orange[700], size: 28),
+              const SizedBox(width: 12),
+              const Text('⚠️ Eliminar Gallo'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '¿Estás seguro de eliminar a "${gallo['nombre']}"?',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 16),
+              if (conteos['peleas']! > 0 || conteos['topes']! > 0 || conteos['vacunas']! > 0) ...[
+                const Text(
+                  'Este gallo tiene:',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                if (conteos['peleas']! > 0)
+                  Row(
+                    children: [
+                      const Icon(Icons.sports_mma, size: 16, color: Colors.red),
+                      const SizedBox(width: 8),
+                      Text('${conteos['peleas']} peleas'),
+                    ],
+                  ),
+                if (conteos['topes']! > 0)
+                  Row(
+                    children: [
+                      const Icon(Icons.event, size: 16, color: Colors.blue),
+                      const SizedBox(width: 8),
+                      Text('${conteos['topes']} topes'),
+                    ],
+                  ),
+                if (conteos['vacunas']! > 0)
+                  Row(
+                    children: [
+                      const Icon(Icons.vaccines, size: 16, color: Colors.green),
+                      const SizedBox(width: 8),
+                      Text('${conteos['vacunas']} vacunas'),
+                    ],
+                  ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange[300]!),
+                  ),
+                  child: const Text(
+                    'Al eliminar, estos registros dejarán de mostrarse en la app.',
+                    style: TextStyle(fontSize: 12, color: Colors.black87),
+                  ),
+                ),
+              ] else ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.green[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.green[300]!),
+                  ),
+                  child: const Text(
+                    'Este gallo no tiene peleas, topes o vacunas registradas.',
+                    style: TextStyle(fontSize: 12, color: Colors.black87),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context); // Cerrar diálogo
+                
+                // Mostrar overlay de procesamiento
+                showDialog(
+                  context: parentContext,
+                  barrierDismissible: false,
+                  builder: (context) => AlertDialog(
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 16),
+                        Text('Procesando eliminación de "${gallo['nombre']}"...'),
+                      ],
+                    ),
                   ),
                 );
-                _cargarArbolGenealogico(); // ←← RECARGAR ÁRBOL COMO EN PELEAS
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('❌ Error eliminando gallo: $e'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Eliminar'),
+                
+                try {
+                  await GalloService.deleteGallo(galloId);
+                  
+                  // Cerrar loading
+                  if (mounted) Navigator.pop(parentContext);
+                  
+                  if (mounted) {
+                    ScaffoldMessenger.of(parentContext).showSnackBar(
+                      SnackBar(
+                        content: Text('🗑️ Gallo "${gallo['nombre']}" eliminado correctamente'),
+                        backgroundColor: Colors.green,
+                        duration: const Duration(seconds: 3),
+                      ),
+                    );
+                  }
+                  
+                  // Recargar árbol genealógico
+                  _cargarArbolGenealogico();
+                  
+                } catch (e) {
+                  // Cerrar loading si hay error
+                  if (mounted) Navigator.pop(parentContext);
+                  
+                  if (mounted) {
+                    ScaffoldMessenger.of(parentContext).showSnackBar(
+                      SnackBar(
+                        content: Text('❌ Error eliminando gallo: $e'),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Eliminar'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      // Cerrar loading si falla obtener conteos
+      if (mounted) Navigator.pop(context);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error obteniendo información: $e'),
+            backgroundColor: Colors.red,
           ),
-        ],
-      ),
-    );
+        );
+      }
+    }
   }
 
   // 🔧 EDITAR GALLO
